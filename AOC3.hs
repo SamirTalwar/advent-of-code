@@ -1,22 +1,22 @@
-{-# LANGUAGE OverloadedStrings #-}
-
-import           Data.Text (Text)
-import qualified Data.Text as Text
-import qualified Data.Text.IO as IO
-
 data Triangle = Triangle Int Int Int
   deriving (Eq, Show)
 
-instance Read Triangle where
-  readsPrec prec input = [(Triangle a b c, cs) |
-                           (a, as) <- readsPrec prec input,
-                           (b, bs) <- readsPrec prec as,
-                           (c, cs) <- readsPrec prec bs]
-
 main = do
-  contents <- IO.getContents
-  let triangles = map (read . Text.unpack) $ Text.splitOn "\n" $ Text.strip contents
+  contents <- getContents
+  let triangles = readTriangles $ init contents
   let possibleTriangles = filter isPossible triangles
   print $ length possibleTriangles
+
+readTriangles "" = []
+readTriangles input =
+  let ([a, b, c], rest) = readNumbers input 3
+  in (Triangle a b c) : readTriangles rest
+  where
+  readNumbers :: String -> Int -> ([Int], String)
+  readNumbers string 0 = ([], string)
+  readNumbers string n =
+    let [(number, rest)] = readsPrec 0 string
+        (numbers, restOfString) = readNumbers rest (n - 1)
+    in ((number : numbers), restOfString)
 
 isPossible (Triangle a b c) = a + b > c && a + c > b && b + c > a
