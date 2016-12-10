@@ -1,3 +1,5 @@
+import           Control.Monad (mapM_)
+import qualified Data.Char as Char
 import qualified Data.List as List
 import           Data.Text (Text)
 import qualified Data.Text as Text
@@ -16,7 +18,9 @@ main = do
   lines <- Text.lines <$> IO.getContents
   let rooms = map parseRoom lines
   let realRooms = filter realRoom rooms
-  print $ sum $ map roomSectorId realRooms
+  let namedRooms = map decryptName realRooms
+  let northPoleObjectRooms = filter (\(Room name _ _) -> "northpole" `List.isInfixOf` name) namedRooms
+  mapM_ print northPoleObjectRooms
 
 parseRoom :: Text -> Room
 parseRoom text = case parse parser "" text of
@@ -39,3 +43,13 @@ nameOrder (an, ac) (bn, bc) =
     LT -> GT
     GT -> LT
     EQ -> compare ac bc
+
+decryptName (Room name sectorId checksum) = Room (map (rotate sectorId . dashToSpace) name) sectorId checksum
+  where
+  dashToSpace '-' = ' '
+  dashToSpace c = c
+
+  rotate _ ' ' = ' '
+  rotate 0 c = c
+  rotate n 'z' = rotate (n - 1) 'a'
+  rotate n c = rotate (n - 1) (Char.chr $ Char.ord c + 1)
