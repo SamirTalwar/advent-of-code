@@ -7,4 +7,4 @@ main = do
   let modalCharacters = map modal characters
   putStrLn modalCharacters
 
-modal = head . last . List.sortBy (Ord.comparing length) . List.group . List.sort
+modal = head . head . List.sortBy (Ord.comparing length) . List.group . List.sort
