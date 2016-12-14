@@ -1,0 +1,25 @@
+#!/usr/bin/env zsh
+
+set -e
+
+day=$1
+
+if [[ ! ( $day =~ '^[0-9]+$' ) ]]; then
+  echo >&2 "Usage: $0 <day>"
+  exit 2
+fi
+
+program="AOC${day}.hs"
+input="AOC${day}.input"
+
+if [[ ! -e $program ]]; then
+  echo "${program} does not exist."
+  exit 1
+fi
+
+if [[ ! -e $input ]]; then
+  echo "${input} does not exist."
+  exit 1
+fi
+
+stack exec runhaskell $program < $input
