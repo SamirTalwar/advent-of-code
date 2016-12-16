@@ -8,25 +8,23 @@ import           Text.Parsec
 import           Text.Parsec.Text
 
 data CompressedText =
-    Uncompressed Text
+    Uncompressed Int
   | Compressed Text Int
   deriving (Eq)
 
-instance Show CompressedText where
-  show (Uncompressed text) = Text.unpack text
-  show (Compressed text repetitions) = "(" ++ show (Text.length text) ++ "x" ++ show repetitions ++ ")" ++ Text.unpack text
-
 main = do
-  input <- Text.strip <$> IO.getContents
-  let parsedInput = parseInput input
-  let decompressedInput = Text.concat $ map decompress parsedInput
-  print $ Text.length decompressedInput
+  input <- Compressed <$> (Text.strip <$> IO.getContents) <*> return 1
+  print $ measureLength input
 
-parseInput :: Text -> [CompressedText]
-parseInput text = either (error . show) id $ parse parser "" text
+measureLength :: CompressedText -> Int
+measureLength (Uncompressed length) = length
+measureLength compressed@(Compressed text repetitions) = repetitions * sum (map measureLength (parseCompressed text))
+
+parseCompressed :: Text -> [CompressedText]
+parseCompressed text = either (error . show) id $ parse parser "" text
   where
   parser = many $ try uncompressed <|> compressed
-  uncompressed = Uncompressed <$> Text.pack <$> many1 alphaNum
+  uncompressed = Uncompressed <$> length <$> many1 alphaNum
   compressed = do
     char '('
     segmentLength :: Int <- read <$> many1 digit
@@ -35,6 +33,3 @@ parseInput text = either (error . show) id $ parse parser "" text
     char ')'
     compressedText <- Text.pack <$> count segmentLength anyChar
     return $ Compressed compressedText repetitions
-
-decompress (Uncompressed text) = text
-decompress (Compressed text repetitions) = Text.replicate repetitions text
