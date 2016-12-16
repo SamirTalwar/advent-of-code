@@ -2,15 +2,15 @@
 
 set -e
 
-day=$1
-
-if [[ ! ( $day =~ '^[0-9]+$' ) ]]; then
+if [[ ! ( $1 =~ '^[0-9]+$' ) ]]; then
   echo >&2 "Usage: $0 <day>"
   exit 2
 fi
 
-program="AOC${day}.hs"
-input="AOC${day}.input"
+day=$(printf '%02d' $1)
+
+program="AOC_${day}.hs"
+input="AOC_${day}.input"
 
 if [[ ! -e $program ]]; then
   echo "${program} does not exist."
