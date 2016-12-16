@@ -1,3 +1,4 @@
+import           Control.Monad (forM_)
 import           Data.Array
 import           Data.Ix
 import qualified Data.Text as Text
@@ -20,7 +21,10 @@ main = do
   input <- Text.lines <$> IO.getContents
   let commands = map parseCommand input
   let screen = foldl (flip applyCommand) emptyScreen commands
-  print $ countPixels screen
+  forM_ [0..screenHeight - 1] $ \y -> do
+    forM_ [0..screenWidth - 1] $ \x ->
+      putChar $ if screen ! (x, y) then '#' else ' '
+    putStrLn ""
 
 parseCommand :: Text.Text -> Command
 parseCommand text = either (error . show) id $ parse parser "" text
