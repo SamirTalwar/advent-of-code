@@ -22,7 +22,7 @@ directions = [U, D, L, R]
 
 main = do
   passcode <- strip <$> getContents
-  let solution = head $ List.sortBy (Ord.comparing length) $ solve passcode [] (fst bounds)
+  let solution = last $ List.sortBy (Ord.comparing length) $ solve passcode [] (fst bounds)
   putStrLn $ concatMap show solution
   print $ length solution
 
