@@ -57,7 +57,7 @@ parseInput text = either (error . show) id $ parse parser "" text
   number = read <$> (many1 digit <|> ((:) <$> char '-' <*> many1 digit))
 
 initialState :: RunState
-initialState = RunState 0 (listArray (minBound, maxBound) (repeat 0))
+initialState = RunState 0 (listArray (minBound, maxBound) [0, 0, 1, 0])
 
 execute :: RunState -> [Instruction] -> RunState
 execute state@(RunState counter registers) instructions =
