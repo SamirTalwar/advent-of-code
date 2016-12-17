@@ -21,7 +21,7 @@ data Value = Value Int
 
 data BotState = BotState (Maybe Value) (Maybe Value)
   deriving (Eq, Show)
-data OutputState = OutputState (Maybe Value)
+data OutputState = OutputState { unOutputState :: Maybe Value }
   deriving (Eq, Show)
 
 data Operation = Gave Carrier (Value, Carrier) (Value, Carrier)
@@ -36,8 +36,12 @@ main = do
   let startingOutputs = listArray theOutputRange $ repeat (OutputState Nothing)
   let (startingValues, gives) = splitUp instructions
   let startingBots = disseminate startingValues botsWithNothing
-  let operations = run (cycle gives) startingBots startingOutputs
-  print $ List.find (\(Gave source (lowValue, _) (highValue, _)) -> lowValue == Value 17 && highValue == Value 61) operations
+  let outputs = run (cycle gives) startingBots startingOutputs
+  print $ do
+    Value a <- unOutputState $ outputs ! 0
+    Value b <- unOutputState $ outputs ! 1
+    Value c <- unOutputState $ outputs ! 2
+    return $ a * b * c
 
 parseInput :: Text -> Instruction
 parseInput text = either (error . show) id $ parse parser "" text
@@ -95,20 +99,19 @@ disseminate startingValues bots = accum give bots startingValuesByBot
   where
   startingValuesByBot = map (\(StartingValue (Bot bot) value) -> (bot, value)) startingValues
 
-run :: [Instruction] -> Array Int BotState -> Array Int OutputState -> [Operation]
-run [] bots outputs = []
+run :: [Instruction] -> Array Int BotState -> Array Int OutputState -> Array Int OutputState
+run [] bots outputs = outputs
 run (Give carrier@(Bot bot) lowDestination highDestination : next) bots outputs =
   if all (\(BotState low high) -> Maybe.isNothing low || Maybe.isNothing high) (elems bots)
-  then []
+  then outputs
   else case bots ! bot of
     BotState (Just valueA) (Just valueB) ->
       let
         lowValue = min valueA valueB
         highValue = max valueA valueB
-        newOperation = Gave carrier (lowValue, lowDestination) (highValue, highDestination)
       in case (lowDestination, highDestination) of
         (Bot low, Bot high) ->
-          newOperation : run
+          run
             next
             (bots // [
               (low, give (bots ! low) lowValue),
@@ -117,7 +120,7 @@ run (Give carrier@(Bot bot) lowDestination highDestination : next) bots outputs 
             ])
             outputs
         (Bot low, Output high) ->
-          newOperation : run
+          run
             next
             (bots // [
               (low, give (bots ! low) lowValue),
@@ -127,7 +130,7 @@ run (Give carrier@(Bot bot) lowDestination highDestination : next) bots outputs 
               (high, OutputState (Just highValue))
             ])
         (Output low, Bot high) ->
-          newOperation : run
+          run
             next
             (bots // [
               (high, give (bots ! high) highValue),
@@ -137,7 +140,7 @@ run (Give carrier@(Bot bot) lowDestination highDestination : next) bots outputs 
               (low, OutputState (Just lowValue))
             ])
         (Output low, Output high) ->
-          newOperation : run
+          run
             next
             (bots // [
               (bot, BotState Nothing Nothing)
