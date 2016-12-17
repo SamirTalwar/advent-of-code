@@ -9,7 +9,7 @@ instance Show Bs where
   show (Bs (False : xs)) = '0' : show (Bs xs)
   show (Bs (True  : xs)) = '1' : show (Bs xs)
 
-desiredLength = 272
+desiredLength = 35651584
 
 main = do
   input <- parseInput <$> getContents
