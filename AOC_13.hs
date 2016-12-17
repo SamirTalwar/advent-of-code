@@ -1,27 +1,35 @@
-import           Control.Monad (forM_, mapM_)
+import           Control.Monad (forM_)
 import qualified Data.Bits as Bits
+import qualified Data.Set as Set
 
 data Location = OpenSpace | Wall
   deriving (Eq)
 
+instance Show Location where
+  show OpenSpace = "."
+  show Wall = "#"
+
 type Coordinates = (Int, Int)
 
 newtype FavoriteNumber = FavoriteNumber Int
+  deriving (Eq, Show)
 
 main = do
   fav <- FavoriteNumber <$> read <$> getContents
-  print $ go fav start finish
+  let paths = go fav limit [start]
+  let coordinates = foldl Set.union Set.empty $ map Set.fromList paths
+  forM_ [0..29] $ \y ->
+    putStrLn $ concatMap (\c -> if c `Set.member` coordinates then "O" else show (location fav c)) [(x, y) | x <- [0..29]]
+  print $ Set.size coordinates
 
 start = (1, 1)
-finish = (31, 39)
+limit = 50
 
-go :: FavoriteNumber -> Coordinates -> Coordinates -> Int
-go fav start finish = go' finish [[start]]
+go :: FavoriteNumber -> Int -> [Coordinates] -> [[Coordinates]]
+go _ 0 history = [history]
+go fav limit history = if null moves then [history] else concatMap (go fav (limit - 1)) moves
   where
-  go' destination (history@(current : past) : next) =
-    if current == destination
-      then length history - 1
-      else go' destination (next ++ movements fav history)
+  moves = movements fav history
 
 movements :: FavoriteNumber -> [Coordinates] -> [[Coordinates]]
 movements fav history@(current : _) = map (: history) $ filter (valid fav history) $ around current
