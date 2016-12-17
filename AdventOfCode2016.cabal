@@ -18,6 +18,7 @@ library
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , cryptonite
+                     , hashmap
                      , parsec
                      , text
   default-language:    Haskell2010
