@@ -1,5 +1,6 @@
 import           Crypto.Hash
 import           Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as Char8
 import qualified Data.List as List
 import           Data.Maybe (catMaybes, listToMaybe)
 import           Data.Text (Text)
@@ -8,12 +9,12 @@ import           Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import qualified Data.Text.IO as IO
 
 main = do
-  salt <- Text.strip <$> IO.getContents
+  salt <- Text.unpack <$> Text.strip <$> IO.getContents
   let keys = valid $ hashes salt
   mapM_ print $ take 64 keys
 
-valid :: [Digest MD5] -> [((Int, String), (Int, String))]
-valid keys = valid' $ zip [0..] (map show keys)
+valid :: [String] -> [((Int, String), (Int, String))]
+valid keys = valid' $ zip [0..] keys
   where
   valid' :: [(Int, String)] -> [((Int, String), (Int, String))]
   valid' (x@(index, key) : xs) =
@@ -30,14 +31,14 @@ valid keys = valid' $ zip [0..] (map show keys)
 searches :: [(String, String)]
 searches = map (\c -> (replicate 3 c, replicate 5 c)) "0123456789abcdef"
 
-hashes :: Text -> [Digest MD5]
-hashes salt = map md5 (salts salt)
+hashes :: String -> [String]
+hashes salt = map ((!! 2017) . iterate (show . md5)) (salts salt)
 
-salts :: Text -> [Text]
-salts salt = map ((salt `Text.append`) . Text.pack . show) [0..]
+salts :: String -> [String]
+salts salt = map ((salt ++) . show) [0..]
 
-md5 :: Text -> Digest MD5
-md5 = hash . encodeUtf8
+md5 :: String -> Digest MD5
+md5 = hash . Char8.pack
 
 windows :: Int -> [a] -> [[a]]
 windows n = takeWhile (\window -> length window == n) . List.transpose . take n . List.tails
