@@ -26,10 +26,12 @@ instance Show Item where
   show (Microchip element) = show element ++ "M"
 instance Hashable Item
 
-data Element = Cobalt | Polonium | Promethium | Ruthenium | Thulium
+data Element = Cobalt | Dilithium | Elerium | Polonium | Promethium | Ruthenium | Thulium
   deriving (Eq, Ord, Generic)
 instance Show Element where
   show Cobalt = "C"
+  show Dilithium = "D"
+  show Elerium = "E"
   show Polonium = "O"
   show Promethium = "P"
   show Ruthenium = "R"
@@ -48,11 +50,13 @@ floors = (1, 4)
 input :: State
 input = (State 0 (fst floors) (listArray floors [
     fromList [
+      Generator Cobalt, Microchip Cobalt,
+      Generator Dilithium, Microchip Dilithium,
+      Generator Elerium, Microchip Elerium,
       Generator Polonium,
-      Generator Thulium, Microchip Thulium,
       Generator Promethium,
       Generator Ruthenium, Microchip Ruthenium,
-      Generator Cobalt, Microchip Cobalt
+      Generator Thulium, Microchip Thulium
     ],
     fromList [
       Microchip Polonium,
@@ -68,11 +72,13 @@ expected = listArray floors [
     empty,
     empty,
     fromList [
+      Generator Cobalt, Microchip Cobalt,
+      Generator Dilithium, Microchip Dilithium,
+      Generator Elerium, Microchip Elerium,
       Generator Polonium, Microchip Polonium,
-      Generator Thulium, Microchip Thulium,
       Generator Promethium, Microchip Promethium,
       Generator Ruthenium, Microchip Ruthenium,
-      Generator Cobalt, Microchip Cobalt
+      Generator Thulium, Microchip Thulium
     ]
   ]
 
