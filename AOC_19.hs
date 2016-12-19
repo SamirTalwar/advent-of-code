@@ -9,4 +9,4 @@ winner count = winner' $ Seq.fromList [1..count]
   where
   winner' elves
     | Seq.length elves == 1 = elves `index` 0
-    | otherwise = winner' (Seq.drop 2 elves |> elves `index` 0)
+    | otherwise = winner' (Seq.drop 1 (Seq.deleteAt (Seq.length elves `div` 2) elves) |> elves `index` 0)
