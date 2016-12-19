@@ -10,14 +10,13 @@ instance Show Tile where
   show Safe = "."
   show Trap = "^"
 
-rowCount = 40
+rowCount = 400000
 
 main = do
   input <- Text.strip <$> IO.getContents
   let firstRow = parseInput input
   let rows = iterate nextRow firstRow
   let safeTileCount = length $ filter (== Safe) $ concat $ take rowCount rows
-  mapM_ (putStrLn . concatMap show) $ take rowCount rows
   print safeTileCount
 
 parseInput :: Text -> [Tile]
