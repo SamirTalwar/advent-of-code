@@ -17,9 +17,13 @@ if [[ ! -e $program ]]; then
   exit 1
 fi
 
-if [[ ! -e $input ]]; then
-  echo "${input} does not exist."
-  exit 1
-fi
+if [[ -t 0 ]]; then
+  if [[ ! -e $input ]]; then
+    echo "${input} does not exist."
+    exit 1
+  fi
 
-stack exec runhaskell $program < $input
+  stack exec runhaskell $program < $input
+else
+  stack exec runhaskell $program
+fi
