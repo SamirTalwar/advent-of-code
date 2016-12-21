@@ -25,11 +25,13 @@ data Direction = DLeft | DRight
 
 plaintext = "abcdefgh"
 
+cyphertext = "fbgdceah"
+
 main = do
   input <- Text.lines <$> IO.getContents
   let operations = map parseInput input
-  let cyphertexts = map toList $ List.scanl' (flip apply) (Seq.fromList plaintext) operations
-  mapM_ putStrLn cyphertexts
+  let plaintexts = map toList $ List.scanr unapply (Seq.fromList cyphertext) operations
+  putStrLn $ head plaintexts
 
 parseInput :: Text -> Operation
 parseInput text = either (error . show) id $ parse parser "" text
@@ -103,3 +105,22 @@ apply (MovePosition (Position x) (Position y)) plaintext =
   case plaintext !? x of
     Just a -> insertAt y a $ deleteAt x plaintext
     _ ->  error $ "Could not find the position " ++ show x ++ " in \"" ++ toList plaintext ++ "\"."
+
+unapply :: Operation -> Seq Char -> Seq Char
+unapply (SwapPositions (Position x) (Position y)) cyphertext =
+  apply (SwapPositions (Position y) (Position x)) cyphertext
+unapply operation@(SwapLetters (Letter a) (Letter b)) cyphertext =
+  apply operation cyphertext
+unapply (RotateDirection DLeft n) cyphertext =
+  apply (RotateDirection DRight n) cyphertext
+unapply (RotateDirection DRight n) cyphertext =
+  apply (RotateDirection DLeft n) cyphertext
+unapply operation@(RotatePosition (Letter a)) cyphertext =
+  case elemIndexL a cyphertext of
+    Just x ->
+      head $ dropWhile (\p -> apply operation p /= cyphertext) $ iterate (apply (RotateDirection DLeft 1)) cyphertext
+    _ ->  error $ "Could not find the letter " ++ [a] ++ " in \"" ++ toList plaintext ++ "\"."
+unapply operation@(ReversePositions (Position x) (Position y)) cyphertext =
+  apply operation cyphertext
+unapply (MovePosition (Position x) (Position y)) cyphertext =
+  apply (MovePosition (Position y) (Position x)) cyphertext
