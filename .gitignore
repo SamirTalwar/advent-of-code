@@ -1,2 +1,5 @@
 .stack-work
+exe
 *.input
+*.hi
+*.o

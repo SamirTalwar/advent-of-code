@@ -2,12 +2,17 @@
 
 set -e
 
+cd $(dirname $0)
+
 if [[ ! ( $1 =~ '^[0-9]+$' ) ]]; then
   echo >&2 "Usage: $0 <day>"
   exit 2
 fi
 
+TIMEFMT=$'\n%U user %S system %P cpu %*E total'
+
 day=$(printf '%02d' $1)
+executable=./exe
 
 program="AOC_${day}.hs"
 input="AOC_${day}.input"
@@ -17,13 +22,15 @@ if [[ ! -e $program ]]; then
   exit 1
 fi
 
+stack ghc -- -O2 -o $executable $program
+
 if [[ -t 0 ]]; then
   if [[ ! -e $input ]]; then
     echo "${input} does not exist."
     exit 1
   fi
 
-  stack exec runhaskell $program < $input
+  time $executable $program < $input
 else
-  stack exec runhaskell $program
+  time $executable $program
 fi
