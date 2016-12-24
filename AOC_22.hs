@@ -1,5 +1,12 @@
-import           Data.Ratio
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
+import           Data.Array
+import qualified Data.Ix as Ix
 import qualified Data.List as List
+import qualified Data.Ord as Ord
+import           Data.Ratio
+import           Data.Set (Set)
+import qualified Data.Set as Set
 import           Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as IO
@@ -9,22 +16,29 @@ import           Text.Parsec.Text
 data Disk = Disk {
     location :: Coordinate,
     size :: Size,
-    used :: Size,
-    available :: Size,
-    percentageUsed :: Ratio Int
-  } deriving (Eq, Show)
+    used :: Size
+  } deriving (Eq, Ord, Show)
+type Disks = Array Coordinate Disk
 type Coordinate = (Int, Int)
+type Movement = (Coordinate, Coordinate)
 newtype Size = Terabyte Int
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Num)
 
 instance Show Size where
   show (Terabyte magnitude) = show magnitude ++ "T"
 
+normalSize = Terabyte 100
+
 main = do
   input <- Text.lines <$> IO.getContents
-  let disks = map parseInput $ drop 2 input
-  let viablePairsOfDisks = viablePairs disks
-  print $ length viablePairsOfDisks
+  let disksList = map parseInput $ drop 2 input
+  let locations = map location disksList
+  let diskBounds = (head locations, last locations)
+  let disks = listArray diskBounds disksList
+  let source = topRight diskBounds
+  let destination = fst diskBounds
+  let solution = countMoves source destination disks
+  print solution
 
 parseInput :: Text -> Disk
 parseInput text = either (error . show) id $ parse parser "" text
@@ -39,10 +53,10 @@ parseInput text = either (error . show) id $ parse parser "" text
     whitespace
     used <- size
     whitespace
-    available <- size
+    size
     whitespace
-    percentageUsed <- percentage
-    return $ Disk (x, y) diskSize used available percentageUsed
+    percentage
+    return $ Disk (x, y) diskSize used
   size = do
     magnitude <- number
     char 'T'
@@ -54,19 +68,47 @@ parseInput text = either (error . show) id $ parse parser "" text
   number = read <$> many1 digit
   whitespace = many1 space
 
-viablePairs :: [Disk] -> [(Disk, Disk)]
-viablePairs disks = filter (uncurry viable) $ pairs disks
-  where
-  viable a b = (used a > Terabyte 0) && (used a <= available b)
+topRight :: (Coordinate, Coordinate) -> Coordinate
+topRight ((_, _), (highestX, highestY)) = (highestX, 0)
 
-pairs :: [a] -> [(a, a)]
-pairs = map (\[a, b] -> (a, b)) . permutations 2
-
-permutations :: Int -> [a] -> [[a]]
-permutations 0 _ = [[]]
-permutations n list = concatMap (\(x, xs) -> map (x :) $ permutations (n - 1) xs) $ pick list
+countMoves :: Coordinate -> Coordinate -> Disks -> Int
+countMoves source destination disks =
+  distance (location emptyDisk) leftOfSource disks
+    + 1
+    + 5 * naiveDistance destination leftOfSource
   where
-  pick :: [a] -> [(a, [a])]
-  pick = pick' []
-  pick' before [] = []
-  pick' before (current : after) = (current, before ++ after) : pick' (before ++ [current]) after
+  leftOfSource = leftOf source
+  leftOf (x, y) = (x - 1, y)
+  (Just emptyDisk) = List.find ((== Terabyte 0) . used) $ elems disks
+
+distance :: Coordinate -> Coordinate -> Disks -> Int
+distance from to disks = distance' Set.empty [(from, 0)]
+  where
+  massiveDisks = Set.fromList $ map location $ filter massive $ elems disks
+  distance' past ((location@(x, y), soFar) : future)
+    | location `Set.member` past = distance' past future
+    | location == to = soFar
+    | otherwise = distance' (Set.insert location past) (future ++ neighbours)
+    where
+    neighbours =
+      map (\n -> (n, soFar + 1))
+        $ filter (\n -> Ix.inRange (bounds disks) n && n `Set.notMember` massiveDisks && n `Set.notMember` past)
+        $ [(x, y - 1), (x + 1, y), (x, y + 1), (x - 1, y)]
+
+naiveDistance :: Coordinate -> Coordinate -> Int
+naiveDistance (aX, aY) (bX, bY) = abs (bX - aX) + abs (bY - aY)
+
+massive :: Disk -> Bool
+massive disk = size disk > normalSize
+
+showGrid :: Coordinate -> Coordinate -> Disks -> String
+showGrid source destination disks =
+  List.intercalate "\n" [List.intersperse ' ' [showDisk (disks ! (x, y)) | x <- [0..maxX]] | y <- [0..maxY]]
+  where
+  showDisk disk
+    | location disk == source = 'G'
+    | location disk == destination = '!'
+    | used disk == 0 = '_'
+    | used disk > normalSize = '#'
+    | otherwise = '.'
+  (maxX, maxY) = snd $ bounds disks
