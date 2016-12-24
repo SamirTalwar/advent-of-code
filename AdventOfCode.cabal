@@ -1,8 +1,8 @@
-name:                AdventOfCode2016
+name:                AdventOfCode
 version:             0.1.0.0
-synopsis:            Advent of Code 2016 solutions
+synopsis:            Advent of Code solutions
 description:         Please see README.md
-homepage:            https://github.com/SamirTalwar/AdventOfCode2016#readme
+homepage:            https://github.com/SamirTalwar/advent-of-code#readme
 license:             MIT
 license-file:        LICENSE
 author:              Samir Talwar
@@ -27,4 +27,4 @@ library
 
 source-repository head
   type:     git
-  location: https://github.com/SamirTalwar/AdventOfCode2016
+  location: https://github.com/SamirTalwar/advent-of-code
