@@ -23,7 +23,7 @@ main = do
   let wireCoordinates = exposedWires ductMap
   let coordinatePairs = map (normalize . toTuple) $ combinations 2 (startCoordinates : wireCoordinates)
   let distances = Map.fromList $ map (\cs -> (cs, distance ductMap cs)) coordinatePairs
-  let distancePermutations = map (map ((distances Map.!) . normalize) . pairs . (startCoordinates :)) $ List.permutations wireCoordinates
+  let distancePermutations = map (map ((distances Map.!) . normalize) . pairs . (++ [startCoordinates]) . (startCoordinates :)) $ List.permutations wireCoordinates
   print $ head $ List.sort $ map sum distancePermutations
 
 parseInput :: String -> DuctMap
