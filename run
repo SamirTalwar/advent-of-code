@@ -4,18 +4,19 @@ set -e
 
 cd $(dirname $0)
 
-if [[ ! ( $1 =~ '^[0-9]+$' ) ]]; then
-  echo >&2 "Usage: $0 <day>"
+if [[ ! -d $1 || ! ( $2 =~ '^[0-9]+$' ) ]]; then
+  echo >&2 "Usage: $0 <year> <day>"
   exit 2
 fi
 
 TIMEFMT=$'\n%U user %S system %P cpu %*E total'
 
-day=$(printf '%02d' $1)
+year=$1
+day=$(printf '%02d' $2)
 executable=./exe
 
-program="AOC_${day}.hs"
-input="AOC_${day}.input"
+program="${year}/AOC_${day}.hs"
+input="${year}/AOC_${day}.input"
 
 if [[ ! -e $program ]]; then
   echo "${program} does not exist."
