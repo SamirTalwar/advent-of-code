@@ -1,5 +1,5 @@
 .stack-work
-exe
+*.exe
 *.input
 *.hi
 *.o

@@ -13,10 +13,10 @@ TIMEFMT=$'\n%U user %S system %P cpu %*E total'
 
 year=$1
 day=$(printf '%02d' $2)
-executable=./exe
 
 program="${year}/AOC_${day}.hs"
 input="${year}/AOC_${day}.input"
+executable="${year}/AOC_${day}.exe"
 
 if [[ ! -e $program ]]; then
   echo "${program} does not exist."
