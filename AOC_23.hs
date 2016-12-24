@@ -7,9 +7,11 @@ import           Text.Parsec
 import           Text.Parsec.Text
 
 data Instruction =
-    Copy Value Register
-  | Increment Register
-  | Decrement Register
+    Skip
+  | Copy Value Register
+  | Bump Direction Register
+  | Add Direction Register Register
+  | MultiplyAndAdd Direction Register Register Register
   | Jump Value Value
   | Toggle Value
   | InvalidToggle Instruction Int
@@ -25,14 +27,17 @@ data Value =
   | Indirect Register
   deriving (Eq, Show)
 
+data Direction = Up | Down
+  deriving (Eq, Show)
+
 data RunState = RunState { programCounter :: Int, registers :: Array Register Int }
   deriving (Eq, Show)
 
-numberOfEggs = 7
+numberOfEggs = 12
 
 main = do
   input <- Text.lines <$> IO.getContents
-  let instructionList = map parseInput input
+  let instructionList = complicate $ map parseInput input
   let instructions = listArray (0, length instructionList - 1) instructionList
   let finalState = execute initialState instructions
   print finalState
@@ -47,8 +52,8 @@ parseInput text = either (error . show) id $ parse parser "" text
     string " "
     to <- register
     return $ Copy from to
-  inc = Increment <$> (string "inc " >> register)
-  dec = Decrement <$> (string "dec " >> register)
+  inc = Bump Up <$> (string "inc " >> register)
+  dec = Bump Down <$> (string "dec " >> register)
   jnz = do
     string "jnz "
     condition <- value
@@ -76,14 +81,24 @@ execute state@(RunState counter registers) instructions =
     then state
     else execute' (instructions ! counter)
   where
+  execute' Skip =
+    execute nextState instructions
   execute' (Copy (Direct value) destination) =
     execute (nextState { registers = registers // [(destination, value)] }) instructions
   execute' (Copy (Indirect source) destination) =
     execute' (Copy (Direct (registers ! source)) destination)
-  execute' (Increment register) =
+  execute' (Bump Up register) =
     execute (nextState { registers = registers // [(register, (registers ! register) + 1)] }) instructions
-  execute' (Decrement register) =
+  execute' (Bump Down register) =
     execute (nextState { registers = registers // [(register, (registers ! register) - 1)] }) instructions
+  execute' (Add direction destination source) =
+    execute (nextState { registers = registers // [(destination, result)] }) instructions
+    where
+    result = op direction (registers ! destination) (registers ! source)
+  execute' (MultiplyAndAdd direction destination multiplicand multiplier) =
+    execute (nextState { registers = registers // [(destination, result)] }) instructions
+    where
+    result = op direction (registers ! destination) ((registers ! multiplicand) * (registers ! multiplier))
   execute' (Jump (Direct 0) distance) =
     execute nextState instructions
   execute' (Jump (Direct _) (Direct distance)) =
@@ -105,8 +120,37 @@ toggleInstruction index instructions
   | otherwise = instructions
   where
   toggled instruction@(Toggle (Direct value)) = InvalidToggle instruction 1
-  toggled (Increment register) = Decrement register
-  toggled (Decrement register) = Increment register
+  toggled (Bump Up register) = Bump Down register
+  toggled (Bump Down register) = Bump Up register
   toggled (Copy value destination) = Jump value (Indirect destination)
   toggled (Jump condition (Indirect source)) = Copy condition source
   toggled instruction@(Jump _ _) = InvalidToggle instruction 1
+  toggled instruction = instruction
+
+complicate :: [Instruction] -> [Instruction]
+complicate (a@(Bump direction destination) : b@(Bump _ source) : c@(Jump (Indirect source') (Direct (-2))) : rest)
+  | source == source' =
+    complicate
+      $ Add direction destination source
+      : Copy (Direct 0) source
+      : Skip
+      : rest
+  | otherwise = a : b : c : complicate rest
+complicate (a@(Add direction destination multiplicand) : b@(Copy (Direct 0) multiplicand') : c@Skip
+              : d@(Bump _ multiplier) : e@(Jump (Indirect multiplier') (Direct (-5)))
+              : rest)
+  | multiplicand == multiplicand' && multiplier == multiplier' =
+    complicate
+      $ MultiplyAndAdd direction destination multiplicand multiplier
+      : Copy (Direct 0) multiplicand
+      : Copy (Direct 0) multiplier
+      : Skip
+      : Skip
+      : rest
+  | otherwise = a : b : c : d : e : complicate rest
+complicate [] = []
+complicate (x : xs) = x : complicate xs
+
+op :: Direction -> (Int -> Int -> Int)
+op Up = (+)
+op Down = (-)
