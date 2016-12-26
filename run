@@ -5,7 +5,7 @@ set -e
 cd $(dirname $0)
 
 if [[ ! -d $1 || ! ( $2 =~ '^[0-9]+$' ) ]]; then
-  echo >&2 "Usage: $0 <year> <day>"
+  echo >&2 "Usage: $0 <year> <day> <exercise>"
   exit 2
 fi
 
@@ -13,17 +13,31 @@ TIMEFMT=$'\n%U user %S system %P cpu %*E total'
 
 year=$1
 day=$(printf '%02d' $2)
+exercise=$3
 
-program="${year}/AOC_${day}.hs"
 input="${year}/AOC_${day}.input"
-executable="${year}/AOC_${day}.exe"
+output_directory="build/${year}"
+if [[ -n $exercise ]]; then
+  name="AOC_${day}_${exercise}"
+else
+  name="AOC_${day}"
+fi
+program="${year}/${name}.hs"
+executable="${output_directory}/${name}"
 
 if [[ ! -e $program ]]; then
   echo "${program} does not exist."
   exit 1
 fi
 
-stack ghc -- -O2 -o $executable $program
+mkdir -p $output_directory
+
+stack ghc -- \
+  -O2 \
+  -o $executable \
+  -odir $output_directory -osuf "${name}.o" \
+  -hidir $output_directory -hisuf "${name}.hi" \
+  $program
 
 if [[ -t 0 ]]; then
   if [[ ! -e $input ]]; then

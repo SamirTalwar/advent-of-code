@@ -1,5 +1,3 @@
 .stack-work
-*.exe
+build
 *.input
-*.hi
-*.o
