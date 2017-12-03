@@ -11,7 +11,7 @@ main :-
   print(Result).
 
 corner(Depth, Corner) :-
-  numbers(Depth),
+  integers(Depth),
   Corner is (Depth * 2 + 1) ^ 2.
 
 side(0, 1, 1).
@@ -26,8 +26,3 @@ side(Input, Depth, Corner, Side) :-
     Side is Corner - Depth * 5;
     Side is Corner - Depth * 7
   ).
-
-numbers(0).
-numbers(X) :-
-  numbers(Y),
-  X is Y + 1.
