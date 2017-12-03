@@ -37,7 +37,7 @@ if [[ -e "${year}/${name}.hs" ]]; then
     "${year}/${name}.hs"
 elif [[ -e "${year}/${name}.pl" ]]; then
   gplc \
-    -o $executable \
+    --output $executable \
     "${year}/${name}.pl" ${year}/helpers/*.pl
 else
   echo "The program does not exist."
