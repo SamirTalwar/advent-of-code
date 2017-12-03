@@ -1,6 +1,8 @@
 #!/usr/bin/env zsh
 
 set -e
+set -u
+set -o pipefail
 
 cd $(dirname $0)
 
@@ -48,7 +50,7 @@ if [[ -t 0 ]]; then
     exit 1
   fi
 
-  time $executable $program < $input
+  time $executable < $input
 else
-  time $executable $program
+  time $executable
 fi
