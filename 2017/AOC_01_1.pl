@@ -16,9 +16,3 @@ matches_next([A, A | Rest], Matches, Output) :-
   matches_next([A | Rest], [A | Matches], Output).
 matches_next([_, B | Rest], Matches, Output) :-
   matches_next([B | Rest], Matches, Output).
-
-sum(Values, Result) :- sum(Values, 0, Result).
-sum([], Result, Result).
-sum([V | Vs], Accumulator, Result) :-
-  Next is Accumulator + V,
-  sum(Vs, Next, Result).
