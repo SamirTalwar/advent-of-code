@@ -12,16 +12,16 @@ difference(List, Difference) :-
   smallest(List, Smallest),
   Difference is Largest - Smallest.
 
-largest([H | T], Result) :- largest(T, H, Result).
-largest([], Result, Result).
-largest([H | T], Current, Result) :-
-  H > Current
-  ->  largest(T, H, Result)
-  ;   largest(T, Current, Result).
+largest(List, Value) :-
+  select(Value, List, Rest),
+  \+ (
+    member(Another, Rest),
+    Value < Another
+  ).
 
-smallest([H | T], Result) :- smallest(T, H, Result).
-smallest([], Result, Result).
-smallest([H | T], Current, Result) :-
-  H < Current
-  ->  smallest(T, H, Result)
-  ;   smallest(T, Current, Result).
+smallest(List, Value) :-
+  select(Value, List, Rest),
+  \+ (
+    member(Another, Rest),
+    Value > Another
+  ).
