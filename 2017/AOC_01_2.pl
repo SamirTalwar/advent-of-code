@@ -2,7 +2,7 @@
 
 main :-
   current_input(S),
-  read_numbers(S, Ns),
+  read_digits(S, Ns),
   append(As, Bs, Ns),
   length(As, ALength),
   length(Bs, BLength),

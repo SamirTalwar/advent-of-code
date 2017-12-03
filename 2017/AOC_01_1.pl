@@ -2,7 +2,7 @@
 
 main :-
   current_input(S),
-  read_numbers(S, Ns),
+  read_digits(S, Ns),
   [Head | _] = Ns,
   append(Ns, [Head], CycledNs),
   matches_next(CycledNs, Matches),

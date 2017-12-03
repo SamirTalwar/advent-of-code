@@ -1,6 +1,6 @@
 % vim: set syntax=prolog
 
-read_numbers(S, Ns) :-
+read_digits(S, Ns) :-
   read_line(S, [], Cs),
   maplist(code_to_number, Cs, Ns).
 
