@@ -4,6 +4,28 @@ read_digits(S, Ns) :-
   read_line(S, [], Output),
   maplist(code_to_number, Output, Ns).
 
+read_lines_of_words(S, Words) :-
+  read_lines(S, Lines),
+  maplist(parse_words, Lines, Words).
+
+read_words(S, Words) :-
+  read_line(S, Line),
+  parse_words(Line, Words).
+
+parse_words(Line, Words) :- parse_words(Line, [], Words).
+parse_words([], Output, Words) :- reverse(Output, Words).
+parse_words([L | Ls], Output, Words) :-
+  take_word([L | Ls], Word, Rest),
+  parse_words(Rest, [Word | Output], Words).
+
+take_word(Line, Word, Rest) :- take_word(Line, [], Word, Rest).
+take_word([], Output, Word, []) :- reverse(Output, Word).
+take_word([C | Cs], Output, Word, Rest) :-
+  is_whitespace(C)
+  ->  drop_whitespace(Cs, Rest),
+      reverse(Output, Word)
+  ;   take_word(Cs, [C | Output], Word, Rest).
+
 read_table(S, Table) :-
   read_lines(S, Lines),
   parse_table(Lines, Table).
@@ -20,8 +42,9 @@ parse_line(Line, Tokens, Result) :-
   parse_line(Rest, [Token | Tokens], Result).
 
 read_codes(S, Output) :-
-  read_line(S, [], Output).
+  read_line(S, Output).
 
+read_line(S, Output) :- read_line(S, [], Output).
 read_line(S, SoFar, Output) :-
     get_code(S, C),
     ( (C == 0'\n ; C == -1)
