@@ -1,5 +1,8 @@
 % vim: set syntax=prolog
 
+:- consult('helpers/run').
+:- use_module('helpers/io').
+
 main :-
   current_input(S),
   read_digits(S, Ns),
@@ -9,7 +12,7 @@ main :-
   ALength = BLength,
   zip(As, Bs, Pairs),
   matches(Pairs, Matches),
-  sum(Matches, Sum),
+  sum_list(Matches, Sum),
   DoubleSum is Sum * 2,
   format("~d\n", [DoubleSum]).
 

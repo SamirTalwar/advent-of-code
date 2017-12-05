@@ -24,11 +24,11 @@ if [[ -n $exercise ]]; then
 else
   name="AOC_${day}"
 fi
-executable="${output_directory}/${name}"
 
 mkdir -p $output_directory
 
 if [[ -e "${year}/${name}.hs" ]]; then
+  executable="${output_directory}/${name}"
   stack ghc -- \
     -O2 \
     -o $executable \
@@ -36,9 +36,7 @@ if [[ -e "${year}/${name}.hs" ]]; then
     -hidir $output_directory -hisuf "${name}.hi" \
     "${year}/${name}.hs"
 elif [[ -e "${year}/${name}.pl" ]]; then
-  gplc \
-    --output $executable \
-    "${year}/${name}.pl" ${year}/helpers/*.pl
+  executable=(swipl "${year}/${name}.pl")
 else
   echo "The program does not exist."
   exit 1

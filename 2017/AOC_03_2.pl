@@ -2,9 +2,14 @@
 
 :- dynamic(value/2).
 
+:- consult('helpers/run').
+:- use_module(library(apply)).
+:- use_module('helpers/numbers').
+
 main :-
   current_input(S),
-  read_token(S, Input),
+  read_line_to_codes(S, Line),
+  number_codes(Input, Line),
   integers(N),
   value(N, Value),
   Value > Input,
@@ -26,7 +31,7 @@ neighbors(N, Neighbors) :-
   maplist(plus(Y), [-1, 0, 1, 0, -1, 1, -1, 1], Ys),
   maplist(position, Ns, Xs, Ys),
   sort(Ns, PossibleNeighbors),
-  filter(valid_neighbor(N), PossibleNeighbors, Neighbors).
+  include(valid_neighbor(N), PossibleNeighbors, Neighbors).
 
 valid_neighbor(N, Neighbor) :-
   between(1, N, Neighbor).

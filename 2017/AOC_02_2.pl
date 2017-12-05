@@ -1,10 +1,13 @@
 % vim: set syntax=prolog
 
+:- consult('helpers/run').
+:- use_module('helpers/io').
+
 main :-
   current_input(S),
-  read_table(S, Table),
+  read_number_table(S, Table),
   maplist(evenly_divisible, Table, Divided),
-  sum(Divided, Sum),
+  sum_list(Divided, Sum),
   print(Sum).
 
 evenly_divisible(List, Divided) :-

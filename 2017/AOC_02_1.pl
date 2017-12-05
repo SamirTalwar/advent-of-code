@@ -1,10 +1,13 @@
 % vim: set syntax=prolog
 
+:- consult('helpers/run').
+:- use_module('helpers/io').
+
 main :-
   current_input(S),
-  read_table(S, Table),
+  read_number_table(S, Table),
   maplist(difference, Table, Differences),
-  sum(Differences, Sum),
+  sum_list(Differences, Sum),
   print(Sum).
 
 difference(List, Difference) :-

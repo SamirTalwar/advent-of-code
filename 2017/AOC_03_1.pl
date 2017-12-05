@@ -1,8 +1,12 @@
 % vim: set syntax=prolog
 
+:- consult('helpers/run').
+:- use_module('helpers/numbers').
+
 main :-
   current_input(S),
-  read_token(S, Input),
+  read_line_to_codes(S, Line),
+  number_codes(Input, Line),
   corner(Depth, Corner),
   Input =< Corner,
   !,

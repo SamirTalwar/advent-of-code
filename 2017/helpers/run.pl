@@ -1,4 +1,5 @@
 % vim: set syntax=prolog
 
-:- initialization(main).
-:- initialization(halt).
+:- initialization(main, main).
+
+main(_) :- main.

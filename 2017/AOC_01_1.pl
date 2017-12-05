@@ -1,12 +1,15 @@
 % vim: set syntax=prolog
 
+:- consult('helpers/run').
+:- use_module('helpers/io').
+
 main :-
   current_input(S),
   read_digits(S, Ns),
   [Head | _] = Ns,
   append(Ns, [Head], CycledNs),
   matches_next(CycledNs, Matches),
-  sum(Matches, Sum),
+  sum_list(Matches, Sum),
   format("~d\n", [Sum]).
 
 matches_next(Ns, Matches) :- matches_next(Ns, [], Matches).
