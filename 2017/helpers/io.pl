@@ -4,6 +4,7 @@
   read_digits/2,
   read_lines/2,
   read_number_table/2,
+  read_numbers/2,
   read_word_table/2,
   read_words/2
 ]).
@@ -33,6 +34,16 @@ read_number_table(S, Output, Table) :-
     ;   split_string(Line, "\t", "", Cells),
         maplist(number_codes, Numbers, Cells),
         read_number_table(S, [Numbers | Output], Table)
+  ).
+
+read_numbers(S, Numbers) :- read_numbers(S, [], Numbers).
+read_numbers(S, Output, Numbers) :-
+  read_line_to_codes(S, Line),
+  (
+    Line = end_of_file
+    ->  reverse(Output, Numbers)
+    ;   number_codes(Number, Line),
+        read_numbers(S, [Number | Output], Numbers)
   ).
 
 read_word_table(S, Table) :- read_word_table(S, [], Table).
