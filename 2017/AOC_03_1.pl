@@ -15,7 +15,7 @@ main :-
   print(Result).
 
 corner(Depth, Corner) :-
-  integers(Depth),
+  natural(Depth),
   Corner is (Depth * 2 + 1) ^ 2.
 
 side(0, 1, 1).

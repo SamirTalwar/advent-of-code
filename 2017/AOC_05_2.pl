@@ -3,11 +3,13 @@
 :- consult('helpers/run').
 :- use_module(library(rbtrees)).
 :- use_module('helpers/io').
+:- use_module('helpers/lists').
 
 main :-
   current_input(S),
   read_numbers(S, JumpList),
-  convert_list_to_rbtree(JumpList, JumpTree),
+  enumerate(JumpList, EnumeratedJumpList),
+  list_to_rbtree(EnumeratedJumpList, JumpTree),
   traverse(JumpTree, Count),
   format("~p\n", [Count]).
 
@@ -30,12 +32,3 @@ traverse(Index, Jumps, Min, Max, Count, Result) :-
         traverse(NewIndex, NewJumps, Min, Max, NewCount, Result)
     ;   Result is Count + 1
   ).
-
-convert_list_to_rbtree(List, Tree) :-
-  rb_empty(Empty),
-  convert_list_to_rbtree(List, 0, Empty, Tree).
-convert_list_to_rbtree([], _, Result, Result).
-convert_list_to_rbtree([H | T], Index, Tree, Result) :-
-  rb_insert_new(Tree, Index, H, NewTree),
-  NewIndex is Index + 1,
-  convert_list_to_rbtree(T, NewIndex, NewTree, Result).

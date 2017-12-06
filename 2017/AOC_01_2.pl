@@ -2,6 +2,7 @@
 
 :- consult('helpers/run').
 :- use_module('helpers/io').
+:- use_module('helpers/lists').
 
 main :-
   current_input(S),
@@ -15,12 +16,6 @@ main :-
   sum_list(Matches, Sum),
   DoubleSum is Sum * 2,
   format("~d\n", [DoubleSum]).
-
-zip(As, Bs, Pairs) :- zip(As, Bs, [], Pairs).
-zip([], _, Result, Result).
-zip(_, [], Result, Result).
-zip([A | As], [B | Bs], Pairs, Result) :-
-  zip(As, Bs, [[A, B] | Pairs], Result).
 
 matches(Pairs, Matches) :- matches(Pairs, [], Matches).
 matches([], Result, Result).

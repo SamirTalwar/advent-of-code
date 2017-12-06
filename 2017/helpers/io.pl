@@ -1,6 +1,6 @@
 % vim: set syntax=prolog
 
-:- module(io, [
+:- module(io_helpers, [
   read_digits/2,
   read_lines/2,
   read_number_table/2,

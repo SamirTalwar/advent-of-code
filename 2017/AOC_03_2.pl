@@ -10,7 +10,7 @@ main :-
   current_input(S),
   read_line_to_codes(S, Line),
   number_codes(Input, Line),
-  integers(N),
+  natural(N),
   value(N, Value),
   Value > Input,
   !,
@@ -73,7 +73,7 @@ position(N, X, Y) :-
   !.
 
 corner(Depth, Corner) :-
-  integers(Depth),
+  natural(Depth),
   Corner is (Depth * 2 + 1) ^ 2.
 
 plus(A, B, C) :-
