@@ -3,6 +3,7 @@
 :- module(list_helpers, [
   enumerate/2,
   pair/3,
+  repeated/2,
   zip/3
 ]).
 
@@ -14,6 +15,12 @@ enumerate(List, Enumerated) :-
   pairs_keys_values(Enumerated, Indices, List).
 
 pair(A, B, [A, B]).
+
+repeated(Value, List) :-
+  freeze(List, (
+    List=[Value];
+    List=[Value | Tail],
+    repeated(Value, Tail))).
 
 zip(As, Bs, Pairs) :-
   maplist(pair, As, Bs, Pairs).
