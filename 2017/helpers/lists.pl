@@ -14,11 +14,11 @@ enumerate(List, Enumerated) :-
   naturals(Indices),
   pairs_keys_values(Enumerated, Indices, List).
 
-pair(A, B, [A, B]).
+pair(A, B, A - B).
 
 repeated(Value, List) :-
   freeze(List, (
-    List=[Value];
+    List=[];
     List=[Value | Tail],
     repeated(Value, Tail))).
 

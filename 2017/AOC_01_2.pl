@@ -19,8 +19,8 @@ main :-
 
 matches(Pairs, Matches) :- matches(Pairs, [], Matches).
 matches([], Result, Result).
-matches([[A, A] | Tail], Matches, Result) :-
+matches([A - A | Tail], Matches, Result) :-
   matches(Tail, [A | Matches], Result).
-matches([[A, B] | Tail], Matches, Result) :-
+matches([A - B | Tail], Matches, Result) :-
   A \= B,
   matches(Tail, Matches, Result).
