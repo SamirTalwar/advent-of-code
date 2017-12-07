@@ -10,7 +10,6 @@
   read_words/2
 ]).
 
-:- use_module(library(csv)).
 :- use_module(library(readutil)).
 
 read_digits(S, Digits) :-
