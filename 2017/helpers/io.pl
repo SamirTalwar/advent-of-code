@@ -4,6 +4,7 @@
   read_digits/2,
   read_lines/2,
   read_number_line/2,
+  read_number_line/3,
   read_number_table/2,
   read_numbers/2,
   read_word_table/2,
@@ -25,9 +26,11 @@ read_lines(S, Output, Lines) :-
     ;   read_lines(S, [Line | Output], Lines)
   ).
 
-read_number_line(S, Numbers) :-
+read_number_line(S, Numbers) :- read_number_line(S, "\t", Numbers).
+
+read_number_line(S, Separator, Numbers) :-
   read_line_to_codes(S, Line),
-  split_string(Line, "\t", "", Cells),
+  split_string(Line, Separator, "", Cells),
   maplist(number_codes, Numbers, Cells).
 
 read_number_table(S, Table) :- read_number_table(S, [], Table).
