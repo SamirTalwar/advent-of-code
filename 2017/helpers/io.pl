@@ -8,7 +8,8 @@
   read_number_table/2,
   read_numbers/2,
   read_word_table/2,
-  read_words/2
+  read_words/2,
+  read_words/3
 ]).
 
 :- use_module(library(readutil)).
@@ -64,9 +65,11 @@ read_word_table(S, Output, Table) :-
         read_word_table(S, [Words | Output], Table)
   ).
 
-read_words(S, Words) :-
+read_words(S, Words) :- read_words(S, " ", Words).
+
+read_words(S, Separator, Words) :-
   read_line_to_codes(S, Line),
-  split_string(Line, " ", "", Words).
+  split_string(Line, Separator, "", Words).
 
 code_to_number(C, N) :-
   N is C - 0'0.
