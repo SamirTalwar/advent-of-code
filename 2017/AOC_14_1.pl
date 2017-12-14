@@ -3,12 +3,29 @@
 :- consult('helpers/run').
 :- use_module('helpers/io').
 :- use_module('helpers/lists').
+:- use_module('helpers/numbers').
 
 main :-
+  RowCount = 128,
   current_input(S),
-  read_line_to_codes(S, Line),
-  hash(Line, Hash),
-  format("~s\n", [Hash]).
+  read_line_to_codes(S, Key),
+  repeated(Key, Keys),
+  naturals(Rows),
+  length(Rows, RowCount),
+  maplist(row_input, Keys, Rows, Inputs),
+  maplist(count_ones, Inputs, Counts),
+  sumlist(Counts, Count),
+  format("~p\n", Count).
+
+row_input(Key, RowNumber, Input) :-
+  Infix = "-",
+  string_codes(Infix, InfixCodes),
+  number_codes(RowNumber, RowString),
+  append([Key, InfixCodes, RowString], Input).
+
+count_ones(Input, Count) :-
+  hash(Input, Hash),
+  sumlist(Hash, Count).
 
 hash(Input, Hash) :-
   RoundCount = 64,
@@ -20,15 +37,16 @@ hash(Input, Hash) :-
   repeated(Lengths, Rounds),
   length(Rounds, RoundCount),
   append(Rounds, AllLengths),
-  foldl(iterate, AllLengths, 0 - Sequence, MaxSkipSize - RotatedSparseHash),
   sumlist(AllLengths, TotalLength),
+  foldl(iterate, AllLengths, 0 - Sequence, MaxSkipSize - RotatedSparseHash),
   TotalSkipSize is MaxSkipSize * (MaxSkipSize - 1) / 2,
   Rotation is -(TotalLength + TotalSkipSize) mod Size,
   rotate(RotatedSparseHash, Rotation, SparseHash),
   chunked(SparseHash, ChunkSize, SparseChunks),
   maplist(dense_hash, SparseChunks, DenseChunks),
-  maplist(hex_byte, DenseChunks, NestedHex),
-  flatten(NestedHex, Hash).
+  maplist(bits, DenseChunks, NestedBits),
+  flatten(NestedBits, Hash),
+  !.
 
 iterate(Length, SkipSize - Sequence, NewSkipSize - NewSequence) :-
   append(Picked, Suffix, Sequence),
@@ -57,25 +75,13 @@ dense_hash(Chunk, Hash) :-
 
 xor(A, B, Xored) :- Xored is A xor B.
 
-hex_byte(Number, Hex) :-
-  divmod(Number, 16, High, Low),
-  hex_nibble(High, HighHex),
-  hex_nibble(Low, LowHex),
-  Hex = [HighHex, LowHex].
+bits(Number, Bits) :- bits(Number, 128, Bits).
+bits(Number, 1, [Number]) :- !.
+bits(Number, Divisor, [Bit | Bits]) :-
+  divmod(Number, Divisor, Bit, Rest),
+  NextDivisor is Divisor div 2,
+  bits(Rest, NextDivisor, Bits).
 
-hex_nibble( 0, 0'0).
-hex_nibble( 1, 0'1).
-hex_nibble( 2, 0'2).
-hex_nibble( 3, 0'3).
-hex_nibble( 4, 0'4).
-hex_nibble( 5, 0'5).
-hex_nibble( 6, 0'6).
-hex_nibble( 7, 0'7).
-hex_nibble( 8, 0'8).
-hex_nibble( 9, 0'9).
-hex_nibble(10, 0'a).
-hex_nibble(11, 0'b).
-hex_nibble(12, 0'c).
-hex_nibble(13, 0'd).
-hex_nibble(14, 0'e).
-hex_nibble(15, 0'f).
+print_hash(Hash) :-
+  forall(member(Bit, Hash), (Bit = 1 -> format("#", []) ; format(".", []))),
+  format("\n", []).
