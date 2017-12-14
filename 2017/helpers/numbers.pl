@@ -5,15 +5,14 @@
   naturals/1
 ]).
 
-naturals(List) :- naturals(0, List).
-naturals(Count, List) :-
-  freeze(List, (
-    List=[Count];
-    List=[Count | Tail],
+naturals(Ns) :- naturals(0, Ns).
+naturals(Count, Ns) :-
+  freeze(Ns, (
+    Ns=[Count];
+    Ns=[Count | Tail],
     Incremented is Count + 1,
     naturals(Incremented, Tail))).
 
-natural(0).
-natural(X) :-
-  natural(Y),
-  X is Y + 1.
+natural(N) :-
+  naturals(Ns),
+  member(N, Ns).
