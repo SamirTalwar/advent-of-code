@@ -2,6 +2,7 @@
 
 :- module(list_helpers, [
   enumerate/2,
+  member_of/2,
   pair/3,
   repeated/2,
   zip/3
@@ -13,6 +14,9 @@
 enumerate(List, Enumerated) :-
   naturals(Indices),
   pairs_keys_values(Enumerated, Indices, List).
+
+member_of(List, Element) :-
+  member(Element, List).
 
 pair(A, B, A - B).
 
