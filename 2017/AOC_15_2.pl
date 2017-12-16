@@ -2,6 +2,7 @@
 
 :- consult('helpers/run').
 :- use_module(library(regex)).
+:- use_module('helpers/execution').
 :- use_module('helpers/io').
 :- use_module('helpers/lists').
 
@@ -20,18 +21,15 @@ read_generator(S, Name - StartingValue) :-
   number_codes(StartingValue, StartingValueCodes).
 
 count(Times, A, B, Count) :-
-  count(Times, A, B, 0, Count).
-count(0, _, _, Count, Count).
-count(Times, A, B, Count, Result) :-
-  NewTimes is Times - 1,
+  times(Times, count_passes, A - B - 0, _ - _ - Count).
+
+count_passes(A - B - Count, NextA - NextB - NewCount) :-
   next(A, NextA),
   next(B, NextB),
-  !,
   (
     judge(NextA, NextB)
-    ->  NewCount is Count + 1,
-        count(NewTimes, NextA, NextB, NewCount, Result)
-    ;   count(NewTimes, NextA, NextB, Count, Result)
+    ->  NewCount is Count + 1
+    ;   NewCount = Count
   ).
 
 next("A" - PreviousValue, "A" - NextValue) :-
