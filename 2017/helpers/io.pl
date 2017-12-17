@@ -3,6 +3,7 @@
 :- module(io_helpers, [
   read_digits/2,
   read_lines/2,
+  read_number/2,
   read_number_line/2,
   read_number_line/3,
   read_number_table/2,
@@ -26,6 +27,10 @@ read_lines(S, Output, Lines) :-
     ->  reverse(Output, Lines)
     ;   read_lines(S, [Line | Output], Lines)
   ).
+
+read_number(S, Number) :-
+  read_line_to_codes(S, Line),
+  number_codes(Number, Line).
 
 read_number_line(S, Numbers) :- read_number_line(S, "\t", Numbers).
 
