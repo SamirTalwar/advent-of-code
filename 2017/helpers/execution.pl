@@ -7,6 +7,7 @@
 
 times(0, _, Output, Output).
 times(Times, Goal, Input, Output) :-
+  Times > 0,
   call(Goal, Input, Accumulator),
   !,
   NewTimes is Times - 1,
