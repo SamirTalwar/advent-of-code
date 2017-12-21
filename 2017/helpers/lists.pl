@@ -6,6 +6,7 @@
   min/3,
   pair/3,
   repeated/2,
+  split_at/4,
   zip/3
 ]).
 
@@ -39,6 +40,10 @@ repeated(Value, List) :-
     List=[];
     List=[Value | Tail],
     repeated(Value, Tail))).
+
+split_at(N, List, Before, After) :-
+  length(Before, N),
+  append(Before, After, List).
 
 zip(As, Bs, Pairs) :-
   maplist(pair, As, Bs, Pairs).
