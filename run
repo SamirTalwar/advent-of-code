@@ -37,6 +37,11 @@ if [[ -e "${year}/${name}.hs" ]]; then
     "${year}/${name}.hs"
 elif [[ -e "${year}/${name}.pl" ]]; then
   executable=(swipl "${year}/${name}.pl")
+elif [[ -e "${year}/${name}.swift" ]]; then
+  files=("${year}/${name}.swift" ${year}/Helpers/*.swift)
+  executable="${output_directory}/${name}"
+  swiftformat $files
+  swiftc -O -o $executable $files
 else
   echo "The program does not exist."
   exit 1
