@@ -1,5 +1,3 @@
-import Foundation
-
 struct Claim {
     let id: Int
     let positions: Set<Position>
@@ -27,13 +25,13 @@ func main() {
     print(claimedByMany.count)
 }
 
-let claimParser = try! NSRegularExpression(pattern: "^#(\\d+) @ (\\d+),(\\d+): (\\d+)x(\\d+)$")
+let claimParser = try! RegExp(pattern: "^#(\\d+) @ (\\d+),(\\d+): (\\d+)x(\\d+)$")
 
 func parseClaim(string: String) -> Claim {
-    guard let match = claimParser.firstMatch(in: string, range: NSMakeRange(0, string.count)) else {
+    guard let match = claimParser.firstMatch(in: string) else {
         fatalError("This claim was unparseable: \(string)")
     }
-    let extract = { Int(string[Range(match.range(at: $0), in: string)!])! }
+    let extract = { Int(match[$0])! }
     return Claim(
         id: extract(1),
         left: extract(2),
