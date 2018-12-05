@@ -42,6 +42,8 @@ elif [[ -e "${year}/${name}.swift" ]]; then
   executable="${output_directory}/${name}"
   swiftformat $files
   swiftc -O -o $executable $files
+  echo 'Compiled.'
+  echo
 else
   echo "The program does not exist."
   exit 1
