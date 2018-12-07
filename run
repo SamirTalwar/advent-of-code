@@ -17,6 +17,10 @@ year=$1
 day=$(printf '%02d' $2)
 exercise=$3
 
+shift
+shift
+shift
+
 input="${year}/AOC_${day}.input"
 output_directory="build/${year}"
 if [[ -n $exercise ]]; then
@@ -55,7 +59,7 @@ if [[ -t 0 ]]; then
     exit 1
   fi
 
-  time $executable < $input
+  time $executable "$@" < $input
 else
-  time $executable
+  time $executable "$@"
 fi
