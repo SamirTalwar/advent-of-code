@@ -73,10 +73,14 @@ struct PointsOfLight: CustomStringConvertible {
 
 func main() {
     var points = PointsOfLight(points: StdIn().map(parseLine))
+    var count = 0
     while !points.aligned() {
         points = points.move()
+        count += 1
     }
     print(points)
+    print()
+    print("The elves would have needed to wait for \(count) seconds.")
 }
 
 func parseLine(string: String) -> PointOfLight {
