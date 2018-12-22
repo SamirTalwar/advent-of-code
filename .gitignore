@@ -1,3 +1,6 @@
-.stack-work
+.envrc
 build
 *.input
+
+# Haskell
+.stack-work

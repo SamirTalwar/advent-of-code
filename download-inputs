@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+from collections import namedtuple
+from datetime import datetime, timedelta, timezone
+from urllib.request import Request, urlopen
+
+Day = namedtuple('Day', ['year', 'day'])
+
+EST = timezone(offset=timedelta(hours=-5), name='EST')
+now = datetime.now(tz=EST)
+
+last_day = 25
+earliest = Day(year=2015, day=1)
+latest = Day(year=now.year, day=now.day)
+
+if 'SESSION_KEY' not in os.environ:
+    print('You must set the SESSION_KEY environment variable.',
+          file=sys.stderr)
+    sys.exit(1)
+
+def download(year, day):
+    filename = f'{year}/AOC_{day:02}.input'
+    try:
+        with open(filename, 'xb') as f:
+            print(f'Downloading {year}/{day:02}...')
+            request = Request(
+                url=f'https://adventofcode.com/{year}/day/{day}/input',
+                headers={
+                    'Cookie': f'session={os.environ["SESSION_KEY"]}',
+                })
+            with urlopen(request) as response:
+                for line in response:
+                    f.write(line)
+            print(f'Downloaded {year}/{day:02}.')
+    except FileExistsError:
+        print(f'Skipped {year}/{day:02}.')
+    except:
+        os.remove(filename)
+        raise
+
+for year in range(earliest.year, latest.year):
+    for day in range(earliest.day, last_day + 1):
+        download(year, day)
+
+for day in range(earliest.day, latest.day + 1):
+    download(latest.year, day)
