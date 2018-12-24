@@ -79,9 +79,8 @@ struct Cave: CustomStringConvertible {
         if blocked.contains(end) || !isOpen(position: end) {
             return nil
         }
-        return AStar<Position>(
-            neighbors: neighbors(excluding: blocked),
-            costEstimate: { start, end in start.distance(from: end) }
+        return BreadthFirstSearch<Position>(
+            neighbors: neighbors(excluding: blocked)
         ).shortestPath(from: start, to: end)
     }
 
