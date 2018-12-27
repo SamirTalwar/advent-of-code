@@ -6,10 +6,15 @@ struct Registers: Equatable {
     typealias Address = Int
     typealias Value = Int
 
-    let values: [Value]
+    var values: [Value]
 
     subscript(index: Address) -> Value {
-        return values[index]
+        get {
+            return values[index]
+        }
+        set(value) {
+            values[index] = value
+        }
     }
 
     func with(value newValue: Value, at index: Address) -> Registers {
@@ -77,6 +82,45 @@ enum Operation: CaseIterable, CustomStringConvertible {
             return "eqri"
         case .eqrr:
             return "eqrr"
+        }
+    }
+
+    static func value(of string: String) -> Operation {
+        switch string {
+        case "addr":
+            return .addr
+        case "addi":
+            return .addi
+        case "mulr":
+            return .mulr
+        case "muli":
+            return .muli
+        case "banr":
+            return .banr
+        case "bani":
+            return .bani
+        case "borr":
+            return .borr
+        case "bori":
+            return .bori
+        case "setr":
+            return .setr
+        case "seti":
+            return .seti
+        case "gtir":
+            return .gtir
+        case "gtri":
+            return .gtri
+        case "gtrr":
+            return .gtrr
+        case "eqir":
+            return .eqir
+        case "eqri":
+            return .eqri
+        case "eqrr":
+            return .eqrr
+        default:
+            fatalError("Could not process the operation \"\(string)\".")
         }
     }
 }
