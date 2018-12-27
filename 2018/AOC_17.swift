@@ -175,7 +175,8 @@ func main() {
     }
 
     print(ground)
-    print(ground.tilesReachedByWater)
+    print("Tiles reached by water:", ground.tilesReachedByWater)
+    print("Water tiles left after the spring runs dry:", ground.settledWater.count)
 }
 
 func parseInput(line: String) -> Set<Position> {
