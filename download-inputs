@@ -13,7 +13,8 @@ now = datetime.now(tz=EST)
 
 last_day = 25
 earliest = Day(year=2015, day=1)
-latest = Day(year=now.year, day=now.day)
+latest = Day(year=now.year, day=min(last_day, now.day)) if now.month == 12 \
+    else Day(year=now.year - 1, day=last_day)
 
 if 'SESSION_KEY' not in os.environ:
     print('You must set the SESSION_KEY environment variable.',
