@@ -106,7 +106,8 @@ func main() {
     let directions = parseInput(readLine()!)
     var distances: [Room: Distance] = [:]
     _ = roomDistances(directions: directions, room: Room(x: 0, y: 0), currentDistance: 0, record: &distances)
-    print(distances.values.max()!)
+    print("Part 1:", distances.values.max()!)
+    print("Part 2:", distances.values.filter({ $0 >= 1000 }).count)
 }
 
 func roomDistances(directions: Directions, room: Room, currentDistance: Distance, record: inout [Room: Distance]) -> Set<Room> {
