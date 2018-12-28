@@ -6,8 +6,14 @@ set -o pipefail
 
 cd $(dirname $0)
 
+optimize=false
+if [[ $1 == '-O' ]]; then
+  optimize=true
+  shift
+fi
+
 if [[ ! -d $1 || ! ( $2 =~ '^[0-9]+$' ) ]]; then
-  echo >&2 "Usage: $0 <year> <day> <exercise>"
+  echo >&2 "Usage: $0 [-O] <year> <day> [<exercise>]"
   exit 2
 fi
 
@@ -33,8 +39,13 @@ mkdir -p $output_directory
 
 if [[ -e "${year}/${name}.hs" ]]; then
   executable="${output_directory}/${name}"
+  if $optimize; then
+    compilation_args=('-O2')
+  else
+    compilation_args=()
+  fi
   stack ghc -- \
-    -O2 \
+    $compilation_args \
     -o $executable \
     -odir $output_directory -osuf "${name}.o" \
     -hidir $output_directory -hisuf "${name}.hi" \
@@ -44,8 +55,13 @@ elif [[ -e "${year}/${name}.pl" ]]; then
 elif [[ -e "${year}/${name}.swift" ]]; then
   files=("${year}/${name}.swift" ${year}/Helpers/*.swift)
   executable="${output_directory}/${name}"
+  if $optimize; then
+    compilation_args=('-O')
+  else
+    compilation_args=()
+  fi
   swiftformat $files
-  swiftc -o $executable $files
+  swiftc $compilation_args -o $executable $files
   echo 'Compiled.'
   echo
 else
