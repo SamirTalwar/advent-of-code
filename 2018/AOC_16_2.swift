@@ -6,25 +6,25 @@ typealias OpCode = Int
 
 let allOpCodes: [OpCode] = Array(0 ..< 16)
 
-typealias UnknownInstruction = (OpCode, Input, Input, Output)
+typealias UnknownInstruction = (OpCode, ElfCode.Input, ElfCode.Input, ElfCode.Output)
 
 struct Sample {
     let instruction: UnknownInstruction
-    let before: Registers
-    let after: Registers
+    let before: ElfCode.Registers
+    let after: ElfCode.Registers
 }
 
 func main() {
     let (samples, program) = parse(lines: Array(StdIn()))
     let opCodeMappings = figureOutOpCodes(from: samples)
     let instructions = program.map({ opCode, a, b, output in
-        Instruction(operation: opCodeMappings[opCode]!, inputA: a, inputB: b, output: output)
+        ElfCode.Instruction(operation: opCodeMappings[opCode]!, inputA: a, inputB: b, output: output)
     })
-    let registers = execute(instructions: instructions, registers: Registers(values: [0, 0, 0, 0]))
+    let registers = execute(instructions: instructions, registers: ElfCode.Registers(values: [0, 0, 0, 0]))
     print("Registers:", registers.values)
 }
 
-func execute(instructions: [Instruction], registers: Registers) -> Registers {
+func execute(instructions: [ElfCode.Instruction], registers: ElfCode.Registers) -> ElfCode.Registers {
     var currentRegisters = registers
     for instruction in instructions {
         currentRegisters = instruction.apply(to: currentRegisters)
@@ -32,18 +32,18 @@ func execute(instructions: [Instruction], registers: Registers) -> Registers {
     return currentRegisters
 }
 
-func figureOutOpCodes(from samples: [Sample]) -> [OpCode: Operation] {
+func figureOutOpCodes(from samples: [Sample]) -> [OpCode: ElfCode.Operation] {
     let allOpCodes: Set<OpCode> = Set(samples.map({ sample in sample.instruction.0 }))
-    let allOperations: Set<Operation> = Set(Operation.allCases)
-    var validOperations: [OpCode: Set<Operation>] = Dictionary(
+    let allOperations: Set<ElfCode.Operation> = Set(ElfCode.Operation.allCases)
+    var validOperations: [OpCode: Set<ElfCode.Operation>] = Dictionary(
         uniqueKeysWithValues: allOpCodes.map({ opCode in (opCode, allOperations) })
     )
 
     for sample in samples {
         let sampleValidOperations =
-            Operation.allCases
+            ElfCode.Operation.allCases
             .filter({ operation in
-                let instruction = Instruction(
+                let instruction = ElfCode.Instruction(
                     operation: operation,
                     inputA: sample.instruction.1,
                     inputB: sample.instruction.2,
@@ -63,7 +63,7 @@ func figureOutOpCodes(from samples: [Sample]) -> [OpCode: Operation] {
         }
     }
 
-    let opCodeMappings = validOperations.mapValues({ operations -> Operation in
+    let opCodeMappings = validOperations.mapValues({ operations -> ElfCode.Operation in
         if operations.count != 1 {
             fatalError("Multiple operations for an opcode: \(operations)")
         }
@@ -75,7 +75,7 @@ func figureOutOpCodes(from samples: [Sample]) -> [OpCode: Operation] {
     return opCodeMappings
 }
 
-func findUniqueOperation(in validOperations: [OpCode: Set<Operation>]) -> (OpCode, Operation)? {
+func findUniqueOperation(in validOperations: [OpCode: Set<ElfCode.Operation>]) -> (OpCode, ElfCode.Operation)? {
     for (opCode, operations) in validOperations {
         if operations.count == 1 {
             let operation = operations.first!
@@ -116,11 +116,11 @@ func parseInstruction(_ string: String) -> UnknownInstruction {
     return (values[0], values[1], values[2], values[3])
 }
 
-func parseBeforeAfter(_ string: String) -> Registers {
+func parseBeforeAfter(_ string: String) -> ElfCode.Registers {
     guard let match = beforeAfterParser.firstMatch(in: string) else {
         fatalError("Could not parse \"\(string)\".")
     }
-    return Registers(
+    return ElfCode.Registers(
         values: match[1]
             .split(separator: ",")
             .map({ value in Int(value.trimmingCharacters(in: CharacterSet.whitespaces))! })

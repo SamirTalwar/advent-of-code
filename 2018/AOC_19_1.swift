@@ -5,7 +5,7 @@ func main() {
     let instructionPointerAddress = parseInstructionPointerAssignment(readLine()!)
     let instructions = StdIn().map(parseInstruction)
 
-    var registers = Registers(values: [0, 0, 0, 0, 0, 0])
+    var registers = ElfCode.Registers(values: [0, 0, 0, 0, 0, 0])
     var instructionPointer = registers[instructionPointerAddress]
     while instructions.indices.contains(instructionPointer) {
         registers[instructionPointerAddress] = instructionPointer
@@ -16,21 +16,21 @@ func main() {
     print(registers)
 }
 
-func parseInstructionPointerAssignment(_ string: String) -> Registers.Address {
+func parseInstructionPointerAssignment(_ string: String) -> ElfCode.Registers.Address {
     guard let match = instructionPointerAssignmentParser.firstMatch(in: string) else {
         fatalError("Could not parse the instruction pointer assignment:\n\"\(string)\"")
     }
-    return Registers.Address(match[1])!
+    return ElfCode.Registers.Address(match[1])!
 }
 
-func parseInstruction(_ string: String) -> Instruction {
+func parseInstruction(_ string: String) -> ElfCode.Instruction {
     guard let match = instructionParser.firstMatch(in: string) else {
         fatalError("Could not parse the instruction:\n\"\(string)\"")
     }
-    return Instruction(
-        operation: Operation.value(of: String(match[1])),
-        inputA: Input(match[2])!,
-        inputB: Input(match[3])!,
-        output: Output(match[4])!
+    return ElfCode.Instruction(
+        operation: ElfCode.Operation.value(of: String(match[1])),
+        inputA: ElfCode.Input(match[2])!,
+        inputB: ElfCode.Input(match[3])!,
+        output: ElfCode.Output(match[4])!
     )
 }
