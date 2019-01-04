@@ -13,7 +13,7 @@ class BreadthFirstSearch<T> where T: Hashable {
 
         while let current = queue.first {
             if current == end {
-                return reconstructPath(to: current, cameFrom: cameFrom)
+                return reconstructRoute(to: current, cameFrom: cameFrom)
             }
 
             queue.remove(at: 0)
@@ -28,7 +28,7 @@ class BreadthFirstSearch<T> where T: Hashable {
         return nil
     }
 
-    private func reconstructPath(to end: T, cameFrom: [T: T]) -> Route {
+    private func reconstructRoute(to end: T, cameFrom: [T: T]) -> Route {
         var current = end
         var totalPath = [current]
         while let previous = cameFrom[current] {
