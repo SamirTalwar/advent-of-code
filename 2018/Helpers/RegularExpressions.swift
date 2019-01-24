@@ -24,6 +24,13 @@ struct RegExpMatch {
     }
 
     subscript(index: Int) -> Substring {
-        return string[Range(match.range(at: index), in: string)!]
+        return matched(at: index)!
+    }
+
+    func matched(at index: Int) -> Substring? {
+        guard let range = Range(match.range(at: index), in: string) else {
+            return nil
+        }
+        return string[range]
     }
 }
