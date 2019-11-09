@@ -38,17 +38,19 @@ fi
 mkdir -p $output_directory
 
 if [[ -e "${year}/${name}.hs" ]]; then
-  executable="${output_directory}/${name}"
+  output_directory="${output_directory}/${name}"
+  mkdir -p $output_directory
+  executable="${output_directory}/run"
   if $optimize; then
     compilation_args=('-O2')
   else
     compilation_args=()
   fi
-  stack ghc -- \
+  ghc \
     $compilation_args \
     -o $executable \
-    -odir $output_directory -osuf "${name}.o" \
-    -hidir $output_directory -hisuf "${name}.hi" \
+    -odir $output_directory \
+    -hidir $output_directory \
     "${year}/${name}.hs"
 elif [[ -e "${year}/${name}.pl" ]]; then
   executable=(swipl "${year}/${name}.pl")
