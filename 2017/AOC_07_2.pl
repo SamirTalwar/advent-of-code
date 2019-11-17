@@ -6,6 +6,8 @@
 :- use_module('helpers/io').
 :- use_module('helpers/lists').
 
+:- dynamic(weight/2).
+
 main :-
   read_input(Nodes),
   node_with_wrong_weight(Nodes, Node, Siblings),
