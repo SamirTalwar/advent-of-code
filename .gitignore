@@ -4,3 +4,6 @@ build
 
 # Haskell
 .stack-work
+
+# Prolog
+prolog/packs

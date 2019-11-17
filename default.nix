@@ -23,5 +23,6 @@ stdenv.mkDerivation {
 
   buildInputs = [
     ghc
+    swiProlog
   ];
 }

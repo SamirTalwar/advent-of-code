@@ -53,7 +53,7 @@ if [[ -e "${year}/${name}.hs" ]]; then
     -hidir $output_directory \
     "${year}/${name}.hs"
 elif [[ -e "${year}/${name}.pl" ]]; then
-  executable=(swipl "${year}/${name}.pl")
+  executable=(swipl -s prolog/packs.pl "${year}/${name}.pl")
 elif [[ -e "${year}/${name}.swift" ]]; then
   files=("${year}/${name}.swift" ${year}/Helpers/*.swift)
   executable="${output_directory}/${name}"
