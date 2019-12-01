@@ -73,8 +73,7 @@ fi
 
 if [[ -t 0 ]]; then
   if [[ ! -e $input ]]; then
-    echo "${input} does not exist."
-    exit 1
+    ./download-inputs $year $day
   fi
 
   time $executable "$@" < $input

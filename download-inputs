@@ -17,15 +17,14 @@ latest = Day(year=now.year, day=min(last_day, now.day)) if now.month == 12 \
     else Day(year=now.year - 1, day=last_day)
 
 if 'SESSION_KEY' not in os.environ:
-    print('You must set the SESSION_KEY environment variable.',
-          file=sys.stderr)
+    print('You must set the SESSION_KEY environment variable.', file=sys.stderr)
     sys.exit(1)
 
 def download(year, day):
     filename = f'{year}/AOC_{day:02}.input'
     try:
         with open(filename, 'xb') as f:
-            print(f'Downloading {year}/{day:02}...')
+            print(f'Downloading {year}/{day:02}...', file=sys.stderr)
             request = Request(
                 url=f'https://adventofcode.com/{year}/day/{day}/input',
                 headers={
@@ -34,16 +33,22 @@ def download(year, day):
             with urlopen(request) as response:
                 for line in response:
                     f.write(line)
-            print(f'Downloaded {year}/{day:02}.')
+            print(f'Downloaded {year}/{day:02}.', file=sys.stderr)
     except FileExistsError:
-        print(f'Skipped {year}/{day:02}.')
+        print(f'Skipped {year}/{day:02}.', file=sys.stderr)
     except:
         os.remove(filename)
         raise
 
-for year in range(earliest.year, latest.year):
-    for day in range(earliest.day, last_day + 1):
-        download(year, day)
+arg_count = len(sys.argv)
+if arg_count == 3:
+    days = [(int(sys.argv[1]), int(sys.argv[2]))]
+elif arg_count == 1:
+    days = [(year, day) for year in range(earliest.year, latest.year)
+                        for day in range(earliest.day, last_day + 1)] \
+         + [(latest.year, day) for day in range(earliest.day, latest.day + 1)]
+else:
+    raise ArgumentError("Expected 0 to 2 arguments.")
 
-for day in range(earliest.day, latest.day + 1):
-    download(latest.year, day)
+for year, day in days:
+    download(year, day)

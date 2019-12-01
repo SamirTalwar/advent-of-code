@@ -23,6 +23,7 @@ stdenv.mkDerivation {
 
   buildInputs = [
     ghc
+    python3
     swiProlog
   ];
 }
