@@ -22,6 +22,7 @@ stdenv.mkDerivation {
   name = "advent-of-code";
 
   buildInputs = [
+    cargo
     ghc
     python3
     rustc
