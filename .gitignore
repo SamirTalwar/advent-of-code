@@ -2,8 +2,5 @@
 build
 *.input
 
-# Haskell
-.stack-work
-
 # Prolog
 prolog/packs
