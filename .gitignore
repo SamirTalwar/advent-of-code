@@ -4,3 +4,6 @@ build
 
 # Prolog
 prolog/packs
+
+# Rust
+/*/Cargo.toml

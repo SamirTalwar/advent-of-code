@@ -1,0 +1,7 @@
+[package]
+name = "advent-of-code-2019"
+version = "1.0.0"
+authors = ["Samir Talwar <samir@noodlesandwich.com>"]
+edition = "2018"
+
+[dependencies]

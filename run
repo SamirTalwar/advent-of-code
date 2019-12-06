@@ -65,6 +65,14 @@ elif [[ -e "${year}/${name}.rs" ]]; then
     executable="${output_directory}/debug/${executable_name}"
     compilation_args=()
   fi
+  cargo_file="${year}/Cargo.toml"
+  cp -f "${year}/Cargo.template.toml" $cargo_file
+  for bin in ${year}/*.rs; do
+    echo >> $cargo_file
+    echo '[[bin]]' >> $cargo_file
+    echo "name = \"$(basename $bin .rs | sed "s/^AOC_/aoc_${year}_/")\"" >> $cargo_file
+    echo "path = \"$(basename $bin)\"" >> $cargo_file
+  done
   cargo build $compilation_args --target-dir $output_directory --bin $executable_name
   echo >&2
 elif [[ -e "${year}/${name}.swift" ]]; then
