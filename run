@@ -67,7 +67,7 @@ elif [[ -e "${year}/${name}.rs" ]]; then
   fi
   cargo_file="${year}/Cargo.toml"
   cp -f "${year}/Cargo.template.toml" $cargo_file
-  for bin in ${year}/*.rs; do
+  for bin in ${year}/AOC_*.rs; do
     echo >> $cargo_file
     echo '[[bin]]' >> $cargo_file
     echo "name = \"$(basename $bin .rs | sed "s/^AOC_/aoc_${year}_/")\"" >> $cargo_file
