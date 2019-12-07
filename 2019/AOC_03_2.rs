@@ -4,9 +4,11 @@ use std::io;
 use std::io::Read;
 
 use nom::{
-    character::complete as character, combinator::map, combinator::map_opt, combinator::map_res,
-    combinator::opt, multi::many1, sequence::pair, sequence::terminated, sequence::tuple, IResult,
+    character::complete as character, combinator::map, combinator::map_opt, combinator::opt,
+    multi::many1, sequence::pair, sequence::terminated, sequence::tuple, IResult,
 };
+
+mod parse;
 
 type WirePath = Vec<Movement>;
 
@@ -121,7 +123,7 @@ fn parse_wire_path(input: &str) -> IResult<&str, WirePath> {
 
 fn parse_movement(input: &str) -> IResult<&str, Movement> {
     map(
-        pair(parse_direction, parse_amount),
+        pair(parse_direction, parse::digits),
         |(direction, amount)| Movement { direction, amount },
     )(input)
 }
@@ -134,8 +136,4 @@ fn parse_direction(input: &str) -> IResult<&str, Direction> {
         'U' => Some(Direction::Up),
         _ => None,
     })(input)
-}
-
-fn parse_amount(input: &str) -> IResult<&str, Amount> {
-    map_res(character::digit1, |digits: &str| digits.parse::<Amount>())(input)
 }

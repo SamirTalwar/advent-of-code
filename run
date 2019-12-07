@@ -57,7 +57,6 @@ elif [[ -e "${year}/${name}.pl" ]]; then
 elif [[ -e "${year}/${name}.rs" ]]; then
   file="${year}/${name}.rs"
   executable_name="aoc_${year}_${day}_${exercise}"
-  rustfmt $file
   if $optimize; then
     executable="${output_directory}/release/${executable_name}"
     compilation_args=('--release')
@@ -73,6 +72,7 @@ elif [[ -e "${year}/${name}.rs" ]]; then
     echo "name = \"$(basename $bin .rs | sed "s/^AOC_/aoc_${year}_/")\"" >> $cargo_file
     echo "path = \"$(basename $bin)\"" >> $cargo_file
   done
+  cargo fmt
   cargo build $compilation_args --target-dir $output_directory --bin $executable_name
   echo >&2
 elif [[ -e "${year}/${name}.swift" ]]; then
