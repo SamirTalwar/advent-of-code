@@ -1,5 +1,6 @@
 use std::io;
 
+mod digits;
 mod intcode;
 
 fn main() -> io::Result<()> {
@@ -9,9 +10,10 @@ fn main() -> io::Result<()> {
     let mut codes = intcode::parse(&input)?;
     codes[1] = 12;
     codes[2] = 2;
-    intcode::evaluate(&mut codes);
+    let mut program = intcode::program(codes);
+    intcode::evaluate(&mut program);
 
-    println!("{}", codes[0]);
+    println!("{}", program.codes[0]);
 
     Ok(())
 }

@@ -1,5 +1,6 @@
 use std::io;
 
+mod digits;
 mod intcode;
 use intcode::Code;
 
@@ -21,8 +22,9 @@ fn main() -> io::Result<()> {
             let mut codes = starting_codes.clone();
             codes[1] = *noun;
             codes[2] = *verb;
-            intcode::evaluate(&mut codes);
-            codes[0] == EXPECTED_OUTPUT
+            let mut program = intcode::program(codes);
+            intcode::evaluate(&mut program);
+            program.codes[0] == EXPECTED_OUTPUT
         })
         .ok_or(io::ErrorKind::NotFound)?;
 
