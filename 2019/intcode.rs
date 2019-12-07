@@ -28,6 +28,10 @@ enum Opcode {
     Multiply,
     Save,
     Output,
+    JumpIfTrue,
+    JumpIfFalse,
+    LessThan,
+    Equals,
     Stop,
 }
 
@@ -46,6 +50,22 @@ struct Instruction {
 impl Program {
     fn output(&mut self, code: &Code) {
         self.outputs.push(*code);
+    }
+
+    pub fn ensure_no_test_outputs(&self) -> io::Result<()> {
+        if self.outputs.len() == 1 {
+            Ok(())
+        } else if self.outputs.len() == 0 {
+            Err(io::Error::new(
+                io::ErrorKind::Other,
+                "There were no outputs at all.",
+            ))
+        } else {
+            Err(io::Error::new(
+                io::ErrorKind::Other,
+                format!("There were some test outputs.\n{:?}", self.outputs),
+            ))
+        }
     }
 
     pub fn validate_test_outputs(&self) -> io::Result<()> {
@@ -109,18 +129,26 @@ impl Opcode {
             2 => Opcode::Multiply,
             3 => Opcode::Save,
             4 => Opcode::Output,
+            5 => Opcode::JumpIfTrue,
+            6 => Opcode::JumpIfFalse,
+            7 => Opcode::LessThan,
+            8 => Opcode::Equals,
             99 => Opcode::Stop,
             invalid => panic!("Invalid opcode: {}", invalid),
         }
     }
 
     fn size(&self) -> usize {
-        match self {
-            Opcode::Add => 4,
-            Opcode::Multiply => 4,
-            Opcode::Save => 2,
-            Opcode::Output => 2,
-            Opcode::Stop => 1,
+        1 + match self {
+            Opcode::Add => 3,
+            Opcode::Multiply => 3,
+            Opcode::Save => 1,
+            Opcode::Output => 1,
+            Opcode::JumpIfTrue => 2,
+            Opcode::JumpIfFalse => 2,
+            Opcode::LessThan => 3,
+            Opcode::Equals => 3,
+            Opcode::Stop => 0,
         }
     }
 }
@@ -147,29 +175,58 @@ impl Instruction {
         Instruction { opcode, modes }
     }
 
-    fn evaluate(self, program: &mut Program, position: Position) -> Position {
+    fn evaluate(&self, mut program: &mut Program, position: Position) -> Position {
         match self.opcode {
-            Opcode::Add => {
-                let a = program.codes.at(position + 1, self.modes[0]);
-                let b = program.codes.at(position + 2, self.modes[1]);
-                program.codes.set(position + 3, a + b, self.modes[2]);
-            }
-            Opcode::Multiply => {
-                let a = program.codes.at(position + 1, self.modes[0]);
-                let b = program.codes.at(position + 2, self.modes[1]);
-                program.codes.set(position + 3, a * b, self.modes[2]);
-            }
+            Opcode::Add => self.operate(&mut program, position, |a, b| a + b),
+            Opcode::Multiply => self.operate(&mut program, position, |a, b| a * b),
             Opcode::Save => {
                 let destination = program.codes[position].try_into().unwrap();
                 program.codes.set(destination, program.input, self.modes[0]);
+                position + self.opcode.size()
             }
             Opcode::Output => {
                 let value = program.codes.at(position + 1, self.modes[0]);
                 program.output(&value);
+                position + self.opcode.size()
+            }
+            Opcode::JumpIfTrue => self.jump_if(&mut program, position, |value| value != 0),
+            Opcode::JumpIfFalse => self.jump_if(&mut program, position, |value| value == 0),
+            Opcode::LessThan => {
+                self.operate(&mut program, position, |a, b| if a < b { 1 } else { 0 })
+            }
+            Opcode::Equals => {
+                self.operate(&mut program, position, |a, b| if a == b { 1 } else { 0 })
             }
             Opcode::Stop => panic!("Attempted to evaluate a Stop instruction."),
         }
+    }
+
+    fn operate<F>(&self, program: &mut Program, position: Position, operation: F) -> Position
+    where
+        F: Fn(Code, Code) -> Code,
+    {
+        let a = program.codes.at(position + 1, self.modes[0]);
+        let b = program.codes.at(position + 2, self.modes[1]);
+        program
+            .codes
+            .set(position + 3, operation(a, b), self.modes[2]);
         position + self.opcode.size()
+    }
+
+    fn jump_if<F>(&self, program: &mut Program, position: Position, predicate: F) -> Position
+    where
+        F: Fn(Code) -> bool,
+    {
+        let value = program.codes.at(position + 1, self.modes[0]);
+        if predicate(value) {
+            program
+                .codes
+                .at(position + 2, self.modes[1])
+                .try_into()
+                .unwrap()
+        } else {
+            position + self.opcode.size()
+        }
     }
 }
 
