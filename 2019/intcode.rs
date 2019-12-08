@@ -13,11 +13,10 @@ pub type Input = Code;
 pub type Outputs = Vec<Code>;
 
 #[derive(Debug, Clone)]
-pub struct Codes(Vec<Code>);
+pub struct Program(Vec<Code>);
 
 #[derive(Debug)]
-pub struct Program {
-    pub codes: Codes,
+pub struct Device {
     input: Input,
     outputs: Outputs,
 }
@@ -47,7 +46,21 @@ struct Instruction {
     modes: Vec<ParameterMode>,
 }
 
-impl Program {
+impl Device {
+    pub fn empty() -> Device {
+        Device {
+            input: 0,
+            outputs: Vec::new(),
+        }
+    }
+
+    pub fn with_input(input: Code) -> Device {
+        Device {
+            input,
+            outputs: Vec::new(),
+        }
+    }
+
     fn output(&mut self, code: &Code) {
         self.outputs.push(*code);
     }
@@ -85,7 +98,7 @@ impl Program {
     }
 }
 
-impl Codes {
+impl Program {
     fn at(&self, position: Position, mode: ParameterMode) -> Code {
         match mode {
             ParameterMode::PositionMode => {
@@ -109,14 +122,80 @@ impl Codes {
     }
 }
 
-impl Index<Position> for Codes {
+impl Instruction {
+    fn parse(code: Code) -> Instruction {
+        let opcode = Opcode::parse(code);
+        let mut modes = digits::to_digits((code / 100) as u32)
+            .iter()
+            .map(|digit| ParameterMode::parse(*digit))
+            .collect::<Vec<_>>();
+        modes.reverse();
+        modes.resize(opcode.size() - 1, ParameterMode::PositionMode);
+        Instruction { opcode, modes }
+    }
+
+    fn evaluate(
+        &self,
+        mut program: &mut Program,
+        device: &mut Device,
+        position: Position,
+    ) -> Position {
+        match self.opcode {
+            Opcode::Add => self.operate(&mut program, position, |a, b| a + b),
+            Opcode::Multiply => self.operate(&mut program, position, |a, b| a * b),
+            Opcode::Save => {
+                let destination = program[position].try_into().unwrap();
+                program.set(destination, device.input, self.modes[0]);
+                position + self.opcode.size()
+            }
+            Opcode::Output => {
+                let value = program.at(position + 1, self.modes[0]);
+                device.output(&value);
+                position + self.opcode.size()
+            }
+            Opcode::JumpIfTrue => self.jump_if(&mut program, position, |value| value != 0),
+            Opcode::JumpIfFalse => self.jump_if(&mut program, position, |value| value == 0),
+            Opcode::LessThan => {
+                self.operate(&mut program, position, |a, b| if a < b { 1 } else { 0 })
+            }
+            Opcode::Equals => {
+                self.operate(&mut program, position, |a, b| if a == b { 1 } else { 0 })
+            }
+            Opcode::Stop => panic!("Attempted to evaluate a Stop instruction."),
+        }
+    }
+
+    fn operate<F>(&self, program: &mut Program, position: Position, operation: F) -> Position
+    where
+        F: Fn(Code, Code) -> Code,
+    {
+        let a = program.at(position + 1, self.modes[0]);
+        let b = program.at(position + 2, self.modes[1]);
+        program.set(position + 3, operation(a, b), self.modes[2]);
+        position + self.opcode.size()
+    }
+
+    fn jump_if<F>(&self, program: &mut Program, position: Position, predicate: F) -> Position
+    where
+        F: Fn(Code) -> bool,
+    {
+        let value = program.at(position + 1, self.modes[0]);
+        if predicate(value) {
+            program.at(position + 2, self.modes[1]).try_into().unwrap()
+        } else {
+            position + self.opcode.size()
+        }
+    }
+}
+
+impl Index<Position> for Program {
     type Output = Code;
     fn index(&self, index: Position) -> &Code {
         &self.0[index]
     }
 }
 
-impl IndexMut<Position> for Codes {
+impl IndexMut<Position> for Program {
     fn index_mut(&mut self, index: Position) -> &mut Code {
         &mut self.0[index]
     }
@@ -163,86 +242,7 @@ impl ParameterMode {
     }
 }
 
-impl Instruction {
-    fn parse(code: Code) -> Instruction {
-        let opcode = Opcode::parse(code);
-        let mut modes = digits::to_digits((code / 100) as u32)
-            .iter()
-            .map(|digit| ParameterMode::parse(*digit))
-            .collect::<Vec<_>>();
-        modes.reverse();
-        modes.resize(opcode.size() - 1, ParameterMode::PositionMode);
-        Instruction { opcode, modes }
-    }
-
-    fn evaluate(&self, mut program: &mut Program, position: Position) -> Position {
-        match self.opcode {
-            Opcode::Add => self.operate(&mut program, position, |a, b| a + b),
-            Opcode::Multiply => self.operate(&mut program, position, |a, b| a * b),
-            Opcode::Save => {
-                let destination = program.codes[position].try_into().unwrap();
-                program.codes.set(destination, program.input, self.modes[0]);
-                position + self.opcode.size()
-            }
-            Opcode::Output => {
-                let value = program.codes.at(position + 1, self.modes[0]);
-                program.output(&value);
-                position + self.opcode.size()
-            }
-            Opcode::JumpIfTrue => self.jump_if(&mut program, position, |value| value != 0),
-            Opcode::JumpIfFalse => self.jump_if(&mut program, position, |value| value == 0),
-            Opcode::LessThan => {
-                self.operate(&mut program, position, |a, b| if a < b { 1 } else { 0 })
-            }
-            Opcode::Equals => {
-                self.operate(&mut program, position, |a, b| if a == b { 1 } else { 0 })
-            }
-            Opcode::Stop => panic!("Attempted to evaluate a Stop instruction."),
-        }
-    }
-
-    fn operate<F>(&self, program: &mut Program, position: Position, operation: F) -> Position
-    where
-        F: Fn(Code, Code) -> Code,
-    {
-        let a = program.codes.at(position + 1, self.modes[0]);
-        let b = program.codes.at(position + 2, self.modes[1]);
-        program
-            .codes
-            .set(position + 3, operation(a, b), self.modes[2]);
-        position + self.opcode.size()
-    }
-
-    fn jump_if<F>(&self, program: &mut Program, position: Position, predicate: F) -> Position
-    where
-        F: Fn(Code) -> bool,
-    {
-        let value = program.codes.at(position + 1, self.modes[0]);
-        if predicate(value) {
-            program
-                .codes
-                .at(position + 2, self.modes[1])
-                .try_into()
-                .unwrap()
-        } else {
-            position + self.opcode.size()
-        }
-    }
-}
-
-pub fn program(codes: Codes) -> Program {
-    program_with_input(codes, 0)
-}
-
-pub fn program_with_input(codes: Codes, input: Code) -> Program {
-    Program {
-        codes,
-        input,
-        outputs: Vec::new(),
-    }
-}
-
-pub fn parse(input: &str) -> io::Result<Codes> {
+pub fn parse(input: &str) -> io::Result<Program> {
     input
         .trim()
         .split(",")
@@ -251,17 +251,17 @@ pub fn parse(input: &str) -> io::Result<Codes> {
                 .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
         })
         .collect::<io::Result<_>>()
-        .map(Codes)
+        .map(Program)
 }
 
-pub fn evaluate(mut program: &mut Program) {
+pub fn evaluate(mut program: &mut Program, mut device: &mut Device) {
     let mut position = 0;
 
     loop {
-        let instruction = Instruction::parse(program.codes[position]);
+        let instruction = Instruction::parse(program[position]);
         if instruction.opcode == Opcode::Stop {
             break;
         }
-        position = instruction.evaluate(&mut program, position);
+        position = instruction.evaluate(&mut program, &mut device, position);
     }
 }

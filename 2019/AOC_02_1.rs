@@ -4,16 +4,14 @@ mod digits;
 mod intcode;
 
 fn main() -> io::Result<()> {
-    let mut input: String = String::new();
+    let mut input = String::new();
     io::stdin().read_line(&mut input)?;
 
-    let mut codes = intcode::parse(&input)?;
-    codes[1] = 12;
-    codes[2] = 2;
-    let mut program = intcode::program(codes);
-    intcode::evaluate(&mut program);
+    let mut program = intcode::parse(&input)?;
+    let mut device = intcode::Device::empty();
+    intcode::evaluate(&mut program, &mut device);
 
-    println!("{}", program.codes[0]);
+    println!("{}", program[0]);
 
     Ok(())
 }
