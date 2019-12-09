@@ -14,7 +14,7 @@ fn main() -> io::Result<()> {
     intcode::evaluate(&mut program, &mut device);
 
     device.validate_test_outputs()?;
-    println!("{}", device.diagnostic_code_output());
+    println!("{}", device.last_output());
 
     Ok(())
 }

@@ -1,6 +1,6 @@
-use core::ops::{Index, IndexMut};
 use std::convert::TryInto;
 use std::io;
+use std::ops::{Index, IndexMut};
 
 use super::digits;
 
@@ -8,17 +8,13 @@ type Position = usize;
 
 pub type Code = i32;
 
-pub type Input = Code;
-
-pub type Outputs = Vec<Code>;
-
 #[derive(Debug, Clone)]
 pub struct Program(Vec<Code>);
 
 #[derive(Debug)]
 pub struct Device {
-    input: Input,
-    outputs: Outputs,
+    inputs: Vec<Code>,
+    outputs: Vec<Code>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -47,16 +43,17 @@ struct Instruction {
 }
 
 impl Device {
-    pub fn empty() -> Device {
-        Device {
-            input: 0,
-            outputs: Vec::new(),
-        }
+    pub fn empty() -> Self {
+        Self::with_input(0)
     }
 
-    pub fn with_input(input: Code) -> Device {
-        Device {
-            input,
+    pub fn with_input(input: Code) -> Self {
+        Self::with_inputs(vec![input])
+    }
+
+    pub fn with_inputs(inputs: Vec<Code>) -> Self {
+        Self {
+            inputs,
             outputs: Vec::new(),
         }
     }
@@ -93,7 +90,7 @@ impl Device {
         }
     }
 
-    pub fn diagnostic_code_output(&self) -> Code {
+    pub fn last_output(&self) -> Code {
         self.outputs[self.outputs.len() - 1]
     }
 }
@@ -116,7 +113,7 @@ impl Program {
                 self[destination.try_into().unwrap()] = value;
             }
             ParameterMode::ImmediateMode => {
-                self[position] = value;
+                panic!("Parameters that an instruction writes to will never be in immediate mode.");
             }
         }
     }
@@ -144,8 +141,8 @@ impl Instruction {
             Opcode::Add => self.operate(&mut program, position, |a, b| a + b),
             Opcode::Multiply => self.operate(&mut program, position, |a, b| a * b),
             Opcode::Save => {
-                let destination = program[position].try_into().unwrap();
-                program.set(destination, device.input, self.modes[0]);
+                let input = device.inputs.remove(0);
+                program.set(position + 1, input, self.modes[0]);
                 position + self.opcode.size()
             }
             Opcode::Output => {
