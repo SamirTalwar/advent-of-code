@@ -4,13 +4,13 @@ use std::io;
 use nom;
 
 mod digits;
+mod errors;
 mod parse;
 
 fn main() -> io::Result<()> {
     let mut input = String::new();
     io::stdin().read_line(&mut input)?;
-    let (_, (start, end)) =
-        parse(&input).map_err(|err| io::Error::new(io::ErrorKind::Other, format!("{:?}", err)))?;
+    let (_, (start, end)) = parse(&input).map_err(errors::debug_to_io)?;
 
     let valid: HashSet<u32> = (start..end + 1)
         .map(digits::to_digits)

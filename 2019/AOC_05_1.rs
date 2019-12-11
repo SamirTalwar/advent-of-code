@@ -1,6 +1,7 @@
 use std::io;
 
 mod digits;
+mod errors;
 mod intcode;
 
 const INPUT: intcode::Code = 1;

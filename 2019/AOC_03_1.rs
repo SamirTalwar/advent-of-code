@@ -8,6 +8,7 @@ use nom::{
     multi::many1, sequence::pair, sequence::terminated, sequence::tuple, IResult,
 };
 
+mod errors;
 mod parse;
 
 type WirePath = Vec<Movement>;
@@ -75,8 +76,7 @@ impl Eq for Coordinates {}
 fn main() -> io::Result<()> {
     let mut input: String = String::new();
     io::stdin().read_to_string(&mut input)?;
-    let (_, (wire_a, wire_b)) = parse_wire_paths(&input)
-        .map_err(|err| io::Error::new(io::ErrorKind::Other, format!("{:?}", err)))?;
+    let (_, (wire_a, wire_b)) = parse_wire_paths(&input).map_err(errors::debug_to_io)?;
 
     let wire_a_locations = all_locations(&wire_a);
     let wire_b_locations = all_locations(&wire_b);

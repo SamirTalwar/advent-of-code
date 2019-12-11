@@ -5,6 +5,7 @@ use std::thread;
 use permutohedron;
 
 mod digits;
+mod errors;
 mod intcode;
 
 fn main() -> io::Result<()> {
@@ -44,11 +45,7 @@ fn main() -> io::Result<()> {
             })
             .collect::<Vec<_>>()
             .into_iter()
-            .map(|thread| {
-                thread
-                    .join()
-                    .map_err(|err| io::Error::new(io::ErrorKind::Other, format!("{:?}", err)))
-            })
+            .map(|thread| thread.join().map_err(errors::debug_to_io))
             .collect::<io::Result<Vec<_>>>()
             .unwrap();
         let result = outputs[0];

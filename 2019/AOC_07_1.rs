@@ -3,6 +3,7 @@ use std::io;
 use permutohedron;
 
 mod digits;
+mod errors;
 mod intcode;
 
 fn main() -> io::Result<()> {

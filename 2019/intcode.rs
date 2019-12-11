@@ -4,6 +4,7 @@ use std::ops::{Index, IndexMut};
 use std::sync::mpsc;
 
 use super::digits;
+use super::errors;
 
 type Position = usize;
 
@@ -287,10 +288,7 @@ pub fn parse(input: &str) -> io::Result<Program> {
     input
         .trim()
         .split(",")
-        .map(|code| {
-            code.parse::<Code>()
-                .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
-        })
+        .map(|code| code.parse::<Code>().map_err(errors::to_io))
         .collect::<io::Result<_>>()
         .map(Program)
 }

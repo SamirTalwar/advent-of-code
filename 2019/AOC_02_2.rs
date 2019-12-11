@@ -1,6 +1,7 @@
 use std::io;
 
 mod digits;
+mod errors;
 mod intcode;
 use intcode::Code;
 

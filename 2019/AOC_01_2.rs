@@ -2,18 +2,15 @@ use std::io;
 use std::io::BufRead;
 use std::iter;
 
+mod errors;
+
 type Mass = i32;
 type Fuel = i32;
 
 fn main() -> io::Result<()> {
     let module_masses: Vec<Mass> = io::BufReader::new(io::stdin())
         .lines()
-        .map(|input| {
-            input.and_then(|line| {
-                line.parse::<Mass>()
-                    .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
-            })
-        })
+        .map(|input| input.and_then(|line| line.parse::<Mass>().map_err(errors::to_io)))
         .collect::<io::Result<_>>()?;
 
     let total_fuel: Fuel = module_masses
