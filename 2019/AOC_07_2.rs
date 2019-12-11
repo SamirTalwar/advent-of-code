@@ -32,10 +32,10 @@ fn main() -> io::Result<()> {
             .into_iter()
             .enumerate()
             .map(|(index, channel)| {
-                let mut program = starting_program.clone();
+                let program = starting_program.clone();
                 let mut device = intcode::Device::from_channel(channel);
                 thread::spawn(move || {
-                    intcode::evaluate(&mut program, &mut device);
+                    intcode::evaluate(program, &mut device);
                     if index == 0 {
                         device.next_input()
                     } else {

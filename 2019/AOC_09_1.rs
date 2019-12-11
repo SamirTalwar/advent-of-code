@@ -14,7 +14,7 @@ fn main() -> io::Result<()> {
     let mut device = intcode::Device::with_input(INPUT);
     intcode::evaluate(program, &mut device);
 
-    device.validate_test_outputs()?;
+    device.ensure_no_test_outputs()?;
     println!("{}", device.last_output());
 
     Ok(())

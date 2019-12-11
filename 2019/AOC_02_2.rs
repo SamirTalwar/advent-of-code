@@ -20,12 +20,12 @@ fn main() -> io::Result<()> {
     let (noun, verb) = program_inputs
         .iter()
         .find(|(noun, verb)| {
-            let mut program = starting_program.clone();
-            program[1] = *noun;
-            program[2] = *verb;
+            let mut input_program = starting_program.clone();
+            input_program[1] = *noun;
+            input_program[2] = *verb;
             let mut device = intcode::Device::empty();
-            intcode::evaluate(&mut program, &mut device);
-            program[0] == EXPECTED_OUTPUT
+            let output_program = intcode::evaluate(input_program, &mut device);
+            output_program[0] == EXPECTED_OUTPUT
         })
         .ok_or(io::ErrorKind::NotFound)?;
 

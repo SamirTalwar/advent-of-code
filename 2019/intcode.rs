@@ -6,12 +6,23 @@ use std::sync::mpsc;
 use super::digits;
 use super::errors;
 
+const DEFAULT_CODE: Code = 0;
+
+pub type Code = i128;
+
 type Position = usize;
 
-pub type Code = i32;
+type RelativeBase = Code;
 
 #[derive(Debug, Clone)]
 pub struct Program(Vec<Code>);
+
+#[derive(Debug)]
+struct ProgramState {
+    program: Program,
+    position: Position,
+    relative_base: RelativeBase,
+}
 
 #[derive(Debug)]
 pub enum Device {
@@ -38,6 +49,7 @@ enum Opcode {
     JumpIfFalse,
     LessThan,
     Equals,
+    AdjustRelativeBase,
     Stop,
 }
 
@@ -45,6 +57,7 @@ enum Opcode {
 enum ParameterMode {
     PositionMode,
     ImmediateMode,
+    RelativeMode,
 }
 
 #[derive(Debug)]
@@ -140,25 +153,59 @@ impl Device {
     }
 }
 
-impl Program {
+impl Index<Position> for Program {
+    type Output = Code;
+    fn index(&self, index: Position) -> &Code {
+        self.0.get(index).unwrap_or(&DEFAULT_CODE)
+    }
+}
+
+impl IndexMut<Position> for Program {
+    fn index_mut(&mut self, index: Position) -> &mut Code {
+        if index >= self.0.len() {
+            self.0.resize(index + 1, DEFAULT_CODE);
+        }
+        &mut self.0[index]
+    }
+}
+
+impl ProgramState {
+    fn next_instruction(&self) -> Instruction {
+        Instruction::parse(self.program[self.position])
+    }
+
     fn at(&self, position: Position, mode: ParameterMode) -> Code {
         match mode {
             ParameterMode::PositionMode => {
-                let source = self[position];
-                self[source.try_into().unwrap()]
+                let source = self.program[position];
+                self.program[source.try_into().expect(&format!("source was {}", source))]
             }
-            ParameterMode::ImmediateMode => self[position],
+            ParameterMode::ImmediateMode => self.program[position],
+            ParameterMode::RelativeMode => {
+                let source = self.program[position];
+                self.program[(source + self.relative_base)
+                    .try_into()
+                    .expect(&format!("source was {}", source))]
+            }
         }
     }
 
     fn set(&mut self, position: Position, value: Code, mode: ParameterMode) {
         match mode {
             ParameterMode::PositionMode => {
-                let destination = self[position];
-                self[destination.try_into().unwrap()] = value;
+                let destination = self.program[position];
+                self.program[destination
+                    .try_into()
+                    .expect(&format!("destination was {}", destination))] = value;
             }
             ParameterMode::ImmediateMode => {
                 panic!("Parameters that an instruction writes to will never be in immediate mode.");
+            }
+            ParameterMode::RelativeMode => {
+                let destination = self.program[position];
+                self.program[(destination + self.relative_base)
+                    .try_into()
+                    .expect(&format!("destination was {}", destination))] = value;
             }
         }
     }
@@ -176,70 +223,55 @@ impl Instruction {
         Instruction { opcode, modes }
     }
 
-    fn evaluate(
-        &self,
-        mut program: &mut Program,
-        device: &mut Device,
-        position: Position,
-    ) -> Position {
+    fn evaluate(&self, state: &mut ProgramState, device: &mut Device) {
         match self.opcode {
-            Opcode::Add => self.operate(&mut program, position, |a, b| a + b),
-            Opcode::Multiply => self.operate(&mut program, position, |a, b| a * b),
+            Opcode::Add => self.operate(state, |a, b| a + b),
+            Opcode::Multiply => self.operate(state, |a, b| a * b),
             Opcode::Save => {
                 let input = device.next_input();
-                program.set(position + 1, input, self.modes[0]);
-                position + self.opcode.size()
+                state.set(state.position + 1, input, self.modes[0]);
+                state.position += self.opcode.size();
             }
             Opcode::Output => {
-                let value = program.at(position + 1, self.modes[0]);
+                let value = state.at(state.position + 1, self.modes[0]);
                 device.output(value);
-                position + self.opcode.size()
+                state.position += self.opcode.size();
             }
-            Opcode::JumpIfTrue => self.jump_if(&mut program, position, |value| value != 0),
-            Opcode::JumpIfFalse => self.jump_if(&mut program, position, |value| value == 0),
-            Opcode::LessThan => {
-                self.operate(&mut program, position, |a, b| if a < b { 1 } else { 0 })
-            }
-            Opcode::Equals => {
-                self.operate(&mut program, position, |a, b| if a == b { 1 } else { 0 })
+            Opcode::JumpIfTrue => self.jump_if(state, |value| value != 0),
+            Opcode::JumpIfFalse => self.jump_if(state, |value| value == 0),
+            Opcode::LessThan => self.operate(state, |a, b| if a < b { 1 } else { 0 }),
+            Opcode::Equals => self.operate(state, |a, b| if a == b { 1 } else { 0 }),
+            Opcode::AdjustRelativeBase => {
+                state.relative_base += state.at(state.position + 1, self.modes[0]);
+                state.position += self.opcode.size();
             }
             Opcode::Stop => panic!("Attempted to evaluate a Stop instruction."),
         }
     }
 
-    fn operate<F>(&self, program: &mut Program, position: Position, operation: F) -> Position
+    fn operate<F>(&self, state: &mut ProgramState, operation: F)
     where
         F: Fn(Code, Code) -> Code,
     {
-        let a = program.at(position + 1, self.modes[0]);
-        let b = program.at(position + 2, self.modes[1]);
-        program.set(position + 3, operation(a, b), self.modes[2]);
-        position + self.opcode.size()
+        let a = state.at(state.position + 1, self.modes[0]);
+        let b = state.at(state.position + 2, self.modes[1]);
+        state.set(state.position + 3, operation(a, b), self.modes[2]);
+        state.position += self.opcode.size();
     }
 
-    fn jump_if<F>(&self, program: &mut Program, position: Position, predicate: F) -> Position
+    fn jump_if<F>(&self, state: &mut ProgramState, predicate: F)
     where
         F: Fn(Code) -> bool,
     {
-        let value = program.at(position + 1, self.modes[0]);
+        let value = state.at(state.position + 1, self.modes[0]);
         if predicate(value) {
-            program.at(position + 2, self.modes[1]).try_into().unwrap()
+            state.position = state
+                .at(state.position + 2, self.modes[1])
+                .try_into()
+                .unwrap();
         } else {
-            position + self.opcode.size()
+            state.position += self.opcode.size();
         }
-    }
-}
-
-impl Index<Position> for Program {
-    type Output = Code;
-    fn index(&self, index: Position) -> &Code {
-        &self.0[index]
-    }
-}
-
-impl IndexMut<Position> for Program {
-    fn index_mut(&mut self, index: Position) -> &mut Code {
-        &mut self.0[index]
     }
 }
 
@@ -254,6 +286,7 @@ impl Opcode {
             6 => Opcode::JumpIfFalse,
             7 => Opcode::LessThan,
             8 => Opcode::Equals,
+            9 => Opcode::AdjustRelativeBase,
             99 => Opcode::Stop,
             invalid => panic!("Invalid opcode: {}", invalid),
         }
@@ -269,6 +302,7 @@ impl Opcode {
             Opcode::JumpIfFalse => 2,
             Opcode::LessThan => 3,
             Opcode::Equals => 3,
+            Opcode::AdjustRelativeBase => 1,
             Opcode::Stop => 0,
         }
     }
@@ -279,6 +313,7 @@ impl ParameterMode {
         match digit {
             0 => ParameterMode::PositionMode,
             1 => ParameterMode::ImmediateMode,
+            2 => ParameterMode::RelativeMode,
             invalid => panic!("Invalid mode: {}", invalid),
         }
     }
@@ -293,14 +328,22 @@ pub fn parse(input: &str) -> io::Result<Program> {
         .map(Program)
 }
 
-pub fn evaluate(mut program: &mut Program, mut device: &mut Device) {
-    let mut position = 0;
-
+pub fn evaluate(mut program: Program, mut device: &mut Device) -> Program {
+    let mut state = ProgramState {
+        program,
+        position: 0,
+        relative_base: 0,
+    };
     loop {
-        let instruction = Instruction::parse(program[position]);
+        let instruction = state.next_instruction();
+        // println!("{} / {:?}", state.position, instruction);
+        // println!("{:?}", state.program);
         if instruction.opcode == Opcode::Stop {
             break;
+        } else {
+            instruction.evaluate(&mut state, &mut device);
+            // println!("{:?}", state.program);
         }
-        position = instruction.evaluate(&mut program, &mut device, position);
     }
+    state.program
 }

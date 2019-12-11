@@ -8,11 +8,11 @@ fn main() -> io::Result<()> {
     let mut input = String::new();
     io::stdin().read_line(&mut input)?;
 
-    let mut program = intcode::parse(&input)?;
+    let input_program = intcode::parse(&input)?;
     let mut device = intcode::Device::empty();
-    intcode::evaluate(&mut program, &mut device);
+    let output_program = intcode::evaluate(input_program, &mut device);
 
-    println!("{}", program[0]);
+    println!("{}", output_program[0]);
 
     Ok(())
 }
