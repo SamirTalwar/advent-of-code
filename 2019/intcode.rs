@@ -347,3 +347,17 @@ pub fn evaluate(mut program: Program, mut device: &mut Device) -> Program {
     }
     state.program
 }
+
+pub fn read_parse_and_evaluate(inputs: Vec<Code>) -> io::Result<()> {
+    let mut input = String::new();
+    io::stdin().read_line(&mut input)?;
+
+    let program = parse(&input)?;
+    let mut device = Device::with_inputs(inputs);
+    evaluate(program, &mut device);
+
+    device.ensure_no_test_outputs()?;
+    println!("{}", device.last_output());
+
+    Ok(())
+}
