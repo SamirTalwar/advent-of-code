@@ -1,6 +1,7 @@
 use std::convert::TryInto;
 use std::io;
 use std::ops::{Index, IndexMut};
+use std::sync::mpsc;
 
 use super::digits;
 
@@ -12,10 +13,19 @@ pub type Code = i32;
 pub struct Program(Vec<Code>);
 
 #[derive(Debug)]
-pub struct Device {
-    inputs: Vec<Code>,
-    outputs: Vec<Code>,
+pub enum Device {
+    Empty,
+    Sync {
+        inputs: Vec<Code>,
+        outputs: Vec<Code>,
+    },
+    Async {
+        receiver: mpsc::Receiver<Code>,
+        sender: mpsc::Sender<Code>,
+    },
 }
+
+pub type Channel<T> = (mpsc::Receiver<T>, mpsc::Sender<T>);
 
 #[derive(Debug, PartialEq)]
 enum Opcode {
@@ -44,54 +54,88 @@ struct Instruction {
 
 impl Device {
     pub fn empty() -> Self {
-        Self::with_input(0)
+        Device::Empty
     }
 
-    pub fn with_input(input: Code) -> Self {
+    pub fn with_input(input: Code) -> Device {
         Self::with_inputs(vec![input])
     }
 
-    pub fn with_inputs(inputs: Vec<Code>) -> Self {
-        Self {
+    pub fn with_inputs(inputs: Vec<Code>) -> Device {
+        Device::Sync {
             inputs,
             outputs: Vec::new(),
         }
     }
 
-    fn output(&mut self, code: &Code) {
-        self.outputs.push(*code);
+    pub fn from_channel(channel: Channel<Code>) -> Self {
+        match channel {
+            (receiver, sender) => Device::Async { receiver, sender },
+        }
+    }
+
+    pub fn next_input(&mut self) -> Code {
+        match self {
+            Device::Empty => panic!("Can't read an input from an empty device."),
+            Device::Sync { inputs, .. } => inputs.remove(0),
+            Device::Async { receiver, .. } => receiver.recv().unwrap(),
+        }
+    }
+
+    fn output(&mut self, code: Code) {
+        match self {
+            Device::Empty => panic!("Can't write an output to an empty device."),
+            Device::Sync { outputs, .. } => outputs.push(code),
+            Device::Async { sender, .. } => sender.send(code).unwrap(),
+        };
     }
 
     pub fn ensure_no_test_outputs(&self) -> io::Result<()> {
-        if self.outputs.len() == 1 {
-            Ok(())
-        } else if self.outputs.len() == 0 {
-            Err(io::Error::new(
-                io::ErrorKind::Other,
-                "There were no outputs at all.",
-            ))
-        } else {
-            Err(io::Error::new(
-                io::ErrorKind::Other,
-                format!("There were some test outputs.\n{:?}", self.outputs),
-            ))
+        match self {
+            Device::Empty => panic!("An empty device doesn't have outputs."),
+            Device::Async { .. } => panic!("Can't read outputs from an async device."),
+            Device::Sync { outputs, .. } => {
+                if outputs.len() == 1 {
+                    Ok(())
+                } else if outputs.len() == 0 {
+                    Err(io::Error::new(
+                        io::ErrorKind::Other,
+                        "There were no outputs at all.",
+                    ))
+                } else {
+                    Err(io::Error::new(
+                        io::ErrorKind::Other,
+                        format!("There were some test outputs.\n{:?}", outputs),
+                    ))
+                }
+            }
         }
     }
 
     pub fn validate_test_outputs(&self) -> io::Result<()> {
-        let end = self.outputs.len() - 1;
-        if self.outputs[..end].iter().all(|value| *value == 0) {
-            Ok(())
-        } else {
-            Err(io::Error::new(
-                io::ErrorKind::Other,
-                format!("Test outputs were not valid.\n{:?}", self.outputs),
-            ))
+        match self {
+            Device::Empty => panic!("An empty device doesn't have outputs."),
+            Device::Async { .. } => panic!("Can't read outputs from an async device."),
+            Device::Sync { outputs, .. } => {
+                let end = outputs.len() - 1;
+                if outputs[..end].iter().all(|value| *value == 0) {
+                    Ok(())
+                } else {
+                    Err(io::Error::new(
+                        io::ErrorKind::Other,
+                        format!("Test outputs were not valid.\n{:?}", outputs),
+                    ))
+                }
+            }
         }
     }
 
     pub fn last_output(&self) -> Code {
-        self.outputs[self.outputs.len() - 1]
+        match self {
+            Device::Empty => panic!("An empty device doesn't have outputs."),
+            Device::Async { .. } => panic!("Can't read outputs from an async device."),
+            Device::Sync { outputs, .. } => outputs[outputs.len() - 1],
+        }
     }
 }
 
@@ -141,13 +185,13 @@ impl Instruction {
             Opcode::Add => self.operate(&mut program, position, |a, b| a + b),
             Opcode::Multiply => self.operate(&mut program, position, |a, b| a * b),
             Opcode::Save => {
-                let input = device.inputs.remove(0);
+                let input = device.next_input();
                 program.set(position + 1, input, self.modes[0]);
                 position + self.opcode.size()
             }
             Opcode::Output => {
                 let value = program.at(position + 1, self.modes[0]);
-                device.output(&value);
+                device.output(value);
                 position + self.opcode.size()
             }
             Opcode::JumpIfTrue => self.jump_if(&mut program, position, |value| value != 0),
