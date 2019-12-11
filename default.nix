@@ -27,6 +27,7 @@ stdenv.mkDerivation {
     python3
     rustc
     rustfmt
+    rustracer
     swiProlog
   ];
 }

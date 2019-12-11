@@ -1,4 +1,4 @@
-.envrc
+.envrc.local
 build
 *.input
 
@@ -7,3 +7,4 @@ prolog/packs
 
 # Rust
 /*/Cargo.toml
+/target
