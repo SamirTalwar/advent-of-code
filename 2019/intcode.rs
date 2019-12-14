@@ -37,8 +37,6 @@ pub enum Device {
     },
 }
 
-pub type Channel<T> = (mpsc::Receiver<T>, mpsc::Sender<T>);
-
 #[derive(Debug, PartialEq)]
 enum Opcode {
     Add,
@@ -82,10 +80,8 @@ impl Device {
         }
     }
 
-    pub fn from_channel(channel: Channel<Code>) -> Self {
-        match channel {
-            (receiver, sender) => Device::Async { receiver, sender },
-        }
+    pub fn from_channel(receiver: mpsc::Receiver<Code>, sender: mpsc::Sender<Code>) -> Self {
+        Device::Async { receiver, sender }
     }
 
     pub fn next_input(&mut self) -> Code {
@@ -328,7 +324,7 @@ pub fn parse(input: &str) -> io::Result<Program> {
         .map(Program)
 }
 
-pub fn evaluate(mut program: Program, mut device: &mut Device) -> Program {
+pub fn evaluate(program: Program, mut device: &mut Device) -> Program {
     let mut state = ProgramState {
         program,
         position: 0,

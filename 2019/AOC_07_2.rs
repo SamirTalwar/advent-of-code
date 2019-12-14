@@ -31,9 +31,9 @@ fn main() -> io::Result<()> {
         let outputs = channels
             .into_iter()
             .enumerate()
-            .map(|(index, channel)| {
+            .map(|(index, (receiver, sender))| {
                 let program = starting_program.clone();
-                let mut device = intcode::Device::from_channel(channel);
+                let mut device = intcode::Device::from_channel(receiver, sender);
                 thread::spawn(move || {
                     intcode::evaluate(program, &mut device);
                     if index == 0 {
@@ -59,7 +59,7 @@ fn main() -> io::Result<()> {
 
 fn wire_up_channels<T>(
     channels: Vec<(mpsc::Sender<T>, mpsc::Receiver<T>)>,
-) -> Vec<intcode::Channel<T>> {
+) -> Vec<(mpsc::Receiver<T>, mpsc::Sender<T>)> {
     let (mut senders, receivers): (Vec<mpsc::Sender<T>>, Vec<mpsc::Receiver<T>>) =
         channels.into_iter().unzip();
     let first_sender = senders.remove(0);
