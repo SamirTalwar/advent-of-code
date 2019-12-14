@@ -142,6 +142,46 @@ impl Device for ChannelDevice {
     }
 }
 
+pub struct CooperativeDevice<F>
+where
+    F: FnMut(Code) -> Vec<Code>,
+{
+    inputs: Vec<Code>,
+    behavior: F,
+}
+
+impl<F> CooperativeDevice<F>
+where
+    F: FnMut(Code) -> Vec<Code>,
+{
+    pub fn new(starting_inputs: Vec<Code>, behavior: F) -> Self {
+        CooperativeDevice {
+            inputs: starting_inputs,
+            behavior,
+        }
+    }
+}
+
+impl<F> Device for CooperativeDevice<F>
+where
+    F: FnMut(Code) -> Vec<Code>,
+{
+    type DeviceResult = ();
+
+    fn next_input(&mut self) -> Code {
+        self.inputs.remove(0)
+    }
+
+    fn output(&mut self, code: Code) {
+        let mut new_inputs = (self.behavior)(code);
+        self.inputs.append(&mut new_inputs)
+    }
+
+    fn result(self) -> Self::DeviceResult {
+        ()
+    }
+}
+
 impl Index<Position> for Program {
     type Output = Code;
     fn index(&self, index: Position) -> &Code {
