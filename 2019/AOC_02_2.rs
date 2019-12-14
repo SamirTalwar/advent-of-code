@@ -23,8 +23,8 @@ fn main() -> io::Result<()> {
             let mut input_program = starting_program.clone();
             input_program[1] = *noun;
             input_program[2] = *verb;
-            let mut device = intcode::Device::empty();
-            let output_program = intcode::evaluate(input_program, &mut device);
+            let device = intcode::EmptyDevice::new();
+            let (output_program, _) = intcode::evaluate(input_program, device);
             output_program[0] == EXPECTED_OUTPUT
         })
         .ok_or(io::ErrorKind::NotFound)?;

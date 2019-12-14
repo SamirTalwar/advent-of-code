@@ -24,17 +24,14 @@ struct ProgramState {
     relative_base: RelativeBase,
 }
 
-#[derive(Debug)]
-pub enum Device {
-    Empty,
-    Sync {
-        inputs: Vec<Code>,
-        outputs: Vec<Code>,
-    },
-    Async {
-        receiver: mpsc::Receiver<Code>,
-        sender: mpsc::Sender<Code>,
-    },
+pub trait Device {
+    type DeviceResult;
+
+    fn next_input(&mut self) -> Code;
+
+    fn output(&mut self, code: Code);
+
+    fn result(self) -> Self::DeviceResult;
 }
 
 #[derive(Debug, PartialEq)]
@@ -64,88 +61,84 @@ struct Instruction {
     modes: Vec<ParameterMode>,
 }
 
-impl Device {
-    pub fn empty() -> Self {
-        Device::Empty
+pub struct EmptyDevice {}
+
+impl EmptyDevice {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Device for EmptyDevice {
+    type DeviceResult = ();
+
+    fn next_input(&mut self) -> Code {
+        panic!("Can't read an input from an empty device.");
     }
 
-    pub fn with_input(input: Code) -> Device {
-        Self::with_inputs(vec![input])
+    fn output(&mut self, code: Code) {
+        panic!("Can't write an output to an empty device.");
     }
 
-    pub fn with_inputs(inputs: Vec<Code>) -> Device {
-        Device::Sync {
+    fn result(self) -> Self::DeviceResult {
+        ()
+    }
+}
+
+pub struct VecDevice {
+    inputs: Vec<Code>,
+    outputs: Vec<Code>,
+}
+
+impl VecDevice {
+    pub fn new(inputs: Vec<Code>) -> Self {
+        Self {
             inputs,
             outputs: Vec::new(),
         }
     }
+}
 
-    pub fn from_channel(receiver: mpsc::Receiver<Code>, sender: mpsc::Sender<Code>) -> Self {
-        Device::Async { receiver, sender }
-    }
+impl Device for VecDevice {
+    type DeviceResult = Vec<Code>;
 
-    pub fn next_input(&mut self) -> Code {
-        match self {
-            Device::Empty => panic!("Can't read an input from an empty device."),
-            Device::Sync { inputs, .. } => inputs.remove(0),
-            Device::Async { receiver, .. } => receiver.recv().unwrap(),
-        }
+    fn next_input(&mut self) -> Code {
+        self.inputs.remove(0)
     }
 
     fn output(&mut self, code: Code) {
-        match self {
-            Device::Empty => panic!("Can't write an output to an empty device."),
-            Device::Sync { outputs, .. } => outputs.push(code),
-            Device::Async { sender, .. } => sender.send(code).unwrap(),
-        };
+        self.outputs.push(code);
     }
 
-    pub fn ensure_no_test_outputs(&self) -> io::Result<()> {
-        match self {
-            Device::Empty => panic!("An empty device doesn't have outputs."),
-            Device::Async { .. } => panic!("Can't read outputs from an async device."),
-            Device::Sync { outputs, .. } => {
-                if outputs.len() == 1 {
-                    Ok(())
-                } else if outputs.len() == 0 {
-                    Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        "There were no outputs at all.",
-                    ))
-                } else {
-                    Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        format!("There were some test outputs.\n{:?}", outputs),
-                    ))
-                }
-            }
-        }
+    fn result(self) -> Self::DeviceResult {
+        self.outputs
+    }
+}
+
+pub struct ChannelDevice {
+    receiver: mpsc::Receiver<Code>,
+    sender: mpsc::Sender<Code>,
+}
+
+impl ChannelDevice {
+    pub fn new(receiver: mpsc::Receiver<Code>, sender: mpsc::Sender<Code>) -> Self {
+        Self { receiver, sender }
+    }
+}
+
+impl Device for ChannelDevice {
+    type DeviceResult = (mpsc::Receiver<Code>, mpsc::Sender<Code>);
+
+    fn next_input(&mut self) -> Code {
+        self.receiver.recv().unwrap()
     }
 
-    pub fn validate_test_outputs(&self) -> io::Result<()> {
-        match self {
-            Device::Empty => panic!("An empty device doesn't have outputs."),
-            Device::Async { .. } => panic!("Can't read outputs from an async device."),
-            Device::Sync { outputs, .. } => {
-                let end = outputs.len() - 1;
-                if outputs[..end].iter().all(|value| *value == 0) {
-                    Ok(())
-                } else {
-                    Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        format!("Test outputs were not valid.\n{:?}", outputs),
-                    ))
-                }
-            }
-        }
+    fn output(&mut self, code: Code) {
+        self.sender.send(code).unwrap();
     }
 
-    pub fn last_output(&self) -> Code {
-        match self {
-            Device::Empty => panic!("An empty device doesn't have outputs."),
-            Device::Async { .. } => panic!("Can't read outputs from an async device."),
-            Device::Sync { outputs, .. } => outputs[outputs.len() - 1],
-        }
+    fn result(self) -> Self::DeviceResult {
+        (self.receiver, self.sender)
     }
 }
 
@@ -219,7 +212,10 @@ impl Instruction {
         Instruction { opcode, modes }
     }
 
-    fn evaluate(&self, state: &mut ProgramState, device: &mut Device) {
+    fn evaluate<D, R>(&self, state: &mut ProgramState, device: &mut D)
+    where
+        D: Device<DeviceResult = R>,
+    {
         match self.opcode {
             Opcode::Add => self.operate(state, |a, b| a + b),
             Opcode::Multiply => self.operate(state, |a, b| a * b),
@@ -324,7 +320,10 @@ pub fn parse(input: &str) -> io::Result<Program> {
         .map(Program)
 }
 
-pub fn evaluate(program: Program, mut device: &mut Device) -> Program {
+pub fn evaluate<D, R>(program: Program, mut device: D) -> (Program, R)
+where
+    D: Device<DeviceResult = R>,
+{
     let mut state = ProgramState {
         program,
         position: 0,
@@ -341,7 +340,7 @@ pub fn evaluate(program: Program, mut device: &mut Device) -> Program {
             // println!("{:?}", state.program);
         }
     }
-    state.program
+    (state.program, device.result())
 }
 
 pub fn read_parse_and_evaluate(inputs: Vec<Code>) -> io::Result<()> {
@@ -349,11 +348,36 @@ pub fn read_parse_and_evaluate(inputs: Vec<Code>) -> io::Result<()> {
     io::stdin().read_line(&mut input)?;
 
     let program = parse(&input)?;
-    let mut device = Device::with_inputs(inputs);
-    evaluate(program, &mut device);
+    let device = VecDevice::new(inputs);
+    let (_, outputs) = evaluate(program, device);
 
-    device.ensure_no_test_outputs()?;
-    println!("{}", device.last_output());
+    ensure_no_test_outputs(&outputs)?;
+    println!("{}", outputs[0]);
 
     Ok(())
+}
+
+pub fn ensure_no_test_outputs(outputs: &Vec<Code>) -> io::Result<()> {
+    if outputs.len() == 1 {
+        Ok(())
+    } else if outputs.len() == 0 {
+        Err(errors::io("There were no outputs at all."))
+    } else {
+        Err(errors::io(&format!(
+            "There were some test outputs.\n{:?}",
+            outputs
+        )))
+    }
+}
+
+pub fn validate_test_outputs(outputs: &Vec<Code>) -> io::Result<()> {
+    let end = outputs.len() - 1;
+    if outputs[..end].iter().all(|value| *value == 0) {
+        Ok(())
+    } else {
+        Err(errors::io(&format!(
+            "Test outputs were not valid.\n{:?}",
+            outputs
+        )))
+    }
 }

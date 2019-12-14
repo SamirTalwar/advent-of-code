@@ -33,11 +33,11 @@ fn main() -> io::Result<()> {
             .enumerate()
             .map(|(index, (receiver, sender))| {
                 let program = starting_program.clone();
-                let mut device = intcode::Device::from_channel(receiver, sender);
+                let device = intcode::ChannelDevice::new(receiver, sender);
                 thread::spawn(move || {
-                    intcode::evaluate(program, &mut device);
+                    let (_, (receiver, _)) = intcode::evaluate(program, device);
                     if index == 0 {
-                        device.next_input()
+                        receiver.recv().unwrap()
                     } else {
                         0
                     }

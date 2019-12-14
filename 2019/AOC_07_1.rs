@@ -17,9 +17,9 @@ fn main() -> io::Result<()> {
     permutohedron::heap_recursive(&mut phase_values, |phases| {
         let result = phases.iter().fold(0, |input, phase| {
             let program = starting_program.clone();
-            let mut device = intcode::Device::with_inputs(vec![*phase, input]);
-            intcode::evaluate(program, &mut device);
-            device.last_output()
+            let device = intcode::VecDevice::new(vec![*phase, input]);
+            let (_, outputs) = intcode::evaluate(program, device);
+            outputs[outputs.len() - 1]
         });
         largest = largest.max(result);
     });

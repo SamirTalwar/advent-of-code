@@ -9,8 +9,8 @@ fn main() -> io::Result<()> {
     io::stdin().read_line(&mut input)?;
 
     let input_program = intcode::parse(&input)?;
-    let mut device = intcode::Device::empty();
-    let output_program = intcode::evaluate(input_program, &mut device);
+    let device = intcode::EmptyDevice::new();
+    let (output_program, _) = intcode::evaluate(input_program, device);
 
     println!("{}", output_program[0]);
 
