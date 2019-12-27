@@ -7,10 +7,19 @@ set -o pipefail
 cd $(dirname $0)
 
 optimize=false
-if [[ $1 == '-O' ]]; then
-  optimize=true
-  shift
-fi
+input_mechanism=stdin
+while [[ $1 =~ ^- ]]; do
+  case $1 in
+    -O)
+      optimize=true
+      shift
+      ;;
+    --input-as-arg)
+      input_mechanism=arg
+      shift
+      ;;
+  esac
+done
 
 if [[ ! -d $1 || ! ( $2 =~ '^[0-9]+$' ) ]]; then
   echo >&2 "Usage: $0 [-O] <year> <day> [<exercise>]"
@@ -98,7 +107,11 @@ if [[ -t 0 ]]; then
     ./download-inputs $year $day
   fi
 
-  time $executable "$@" < $input
+  if [[ $input_mechanism == 'arg' ]]; then
+    time $executable "$@" $input
+  else
+    time $executable "$@" < $input
+  fi
 else
   time $executable "$@"
 fi

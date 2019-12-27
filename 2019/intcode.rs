@@ -76,7 +76,7 @@ impl Device for EmptyDevice {
         panic!("Can't read an input from an empty device.");
     }
 
-    fn output(&mut self, code: Code) {
+    fn output(&mut self, _code: Code) {
         panic!("Can't write an output to an empty device.");
     }
 
