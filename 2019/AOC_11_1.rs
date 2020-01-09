@@ -89,7 +89,7 @@ impl Robot {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum Color {
     Black,
     White,
@@ -112,8 +112,6 @@ impl Color {
     }
 }
 
-type Panels = HashMap<Coordinates, Color>;
-
 enum DeviceMode {
     Paint,
     Move,
@@ -123,36 +121,37 @@ fn main() -> io::Result<()> {
     let mut code = String::new();
     io::stdin().read_line(&mut code)?;
 
-    let mut robot = Robot {
-        direction: Direction::Up,
-        location: Coordinates { x: 0, y: 0 },
-    };
-
-    let mut panels: Panels = HashMap::new();
-
-    let mut device_mode = DeviceMode::Paint;
-    let device =
-        intcode::CooperativeDevice::new(vec![Color::Black.to_code()], |output| match device_mode {
+    let device = intcode::CooperativeDevice::new(
+        (
+            Robot {
+                direction: Direction::Up,
+                location: Coordinates { x: 0, y: 0 },
+            },
+            DeviceMode::Paint,
+            HashMap::new(),
+        ),
+        vec![Color::Black.to_code()],
+        |(mut robot, device_mode, mut panels), output| match device_mode {
             DeviceMode::Paint => {
                 let new_color = Color::from_code(output);
                 panels.insert(robot.location, new_color);
 
-                device_mode = DeviceMode::Move;
-                vec![]
+                ((robot, DeviceMode::Move, panels), vec![])
             }
             DeviceMode::Move => {
                 robot.turn(Turning::from_code(output));
                 robot.move_forward();
 
                 let old_color = panels.get(&robot.location).unwrap_or(&Color::Black);
+                let old_color_code = old_color.to_code();
 
-                device_mode = DeviceMode::Paint;
-                vec![old_color.to_code()]
+                ((robot, DeviceMode::Paint, panels), vec![old_color_code])
             }
-        });
+        },
+    );
 
     let program = intcode::parse(&code)?;
-    intcode::evaluate(program, device);
+    let (_, (_, _, panels)) = intcode::evaluate(program, device);
 
     println!("{}", panels.len());
 

@@ -27,9 +27,9 @@ struct ProgramState {
 pub trait Device {
     type DeviceResult;
 
-    fn next_input(&mut self) -> Code;
+    fn next_input(self) -> (Code, Self);
 
-    fn output(&mut self, code: Code);
+    fn output(self, code: Code) -> Self;
 
     fn result(self) -> Self::DeviceResult;
 }
@@ -72,11 +72,11 @@ impl EmptyDevice {
 impl Device for EmptyDevice {
     type DeviceResult = ();
 
-    fn next_input(&mut self) -> Code {
+    fn next_input(self) -> (Code, Self) {
         panic!("Can't read an input from an empty device.");
     }
 
-    fn output(&mut self, _code: Code) {
+    fn output(self, _code: Code) -> Self {
         panic!("Can't write an output to an empty device.");
     }
 
@@ -102,12 +102,13 @@ impl VecDevice {
 impl Device for VecDevice {
     type DeviceResult = Vec<Code>;
 
-    fn next_input(&mut self) -> Code {
-        self.inputs.remove(0)
+    fn next_input(mut self) -> (Code, Self) {
+        (self.inputs.remove(0), self)
     }
 
-    fn output(&mut self, code: Code) {
+    fn output(mut self, code: Code) -> Self {
         self.outputs.push(code);
+        self
     }
 
     fn result(self) -> Self::DeviceResult {
@@ -129,12 +130,13 @@ impl ChannelDevice {
 impl Device for ChannelDevice {
     type DeviceResult = (mpsc::Receiver<Code>, mpsc::Sender<Code>);
 
-    fn next_input(&mut self) -> Code {
-        self.receiver.recv().unwrap()
+    fn next_input(self) -> (Code, Self) {
+        (self.receiver.recv().unwrap(), self)
     }
 
-    fn output(&mut self, code: Code) {
+    fn output(self, code: Code) -> Self {
         self.sender.send(code).unwrap();
+        self
     }
 
     fn result(self) -> Self::DeviceResult {
@@ -142,43 +144,47 @@ impl Device for ChannelDevice {
     }
 }
 
-pub struct CooperativeDevice<F>
+pub struct CooperativeDevice<State, F>
 where
-    F: FnMut(Code) -> Vec<Code>,
+    F: Copy + FnOnce(State, Code) -> (State, Vec<Code>),
 {
+    state: State,
     inputs: Vec<Code>,
     behavior: F,
 }
 
-impl<F> CooperativeDevice<F>
+impl<State, F> CooperativeDevice<State, F>
 where
-    F: FnMut(Code) -> Vec<Code>,
+    F: Copy + FnOnce(State, Code) -> (State, Vec<Code>),
 {
-    pub fn new(starting_inputs: Vec<Code>, behavior: F) -> Self {
+    pub fn new(starting_state: State, starting_inputs: Vec<Code>, behavior: F) -> Self {
         CooperativeDevice {
+            state: starting_state,
             inputs: starting_inputs,
             behavior,
         }
     }
 }
 
-impl<F> Device for CooperativeDevice<F>
+impl<State, F> Device for CooperativeDevice<State, F>
 where
-    F: FnMut(Code) -> Vec<Code>,
+    F: Copy + FnOnce(State, Code) -> (State, Vec<Code>),
 {
-    type DeviceResult = ();
+    type DeviceResult = State;
 
-    fn next_input(&mut self) -> Code {
-        self.inputs.remove(0)
+    fn next_input(mut self) -> (Code, Self) {
+        (self.inputs.remove(0), self)
     }
 
-    fn output(&mut self, code: Code) {
-        let mut new_inputs = (self.behavior)(code);
-        self.inputs.append(&mut new_inputs)
+    fn output(mut self, code: Code) -> Self {
+        let (new_state, mut new_inputs) = (self.behavior)(self.state, code);
+        self.state = new_state;
+        self.inputs.append(&mut new_inputs);
+        self
     }
 
     fn result(self) -> Self::DeviceResult {
-        ()
+        self.state
     }
 }
 
@@ -252,36 +258,45 @@ impl Instruction {
         Instruction { opcode, modes }
     }
 
-    fn evaluate<D, R>(&self, state: &mut ProgramState, device: &mut D)
+    fn evaluate<D, R>(&self, mut state: ProgramState, device: D) -> (ProgramState, D)
     where
         D: Device<DeviceResult = R>,
     {
         match self.opcode {
-            Opcode::Add => self.operate(state, |a, b| a + b),
-            Opcode::Multiply => self.operate(state, |a, b| a * b),
+            Opcode::Add => (self.operate(state, |a, b| a + b), device),
+            Opcode::Multiply => (self.operate(state, |a, b| a * b), device),
             Opcode::Save => {
-                let input = device.next_input();
+                let (input, new_device) = device.next_input();
                 state.set(state.position + 1, input, self.modes[0]);
                 state.position += self.opcode.size();
+                (state, new_device)
             }
             Opcode::Output => {
                 let value = state.at(state.position + 1, self.modes[0]);
-                device.output(value);
+                let new_device = device.output(value);
                 state.position += self.opcode.size();
+                (state, new_device)
             }
-            Opcode::JumpIfTrue => self.jump_if(state, |value| value != 0),
-            Opcode::JumpIfFalse => self.jump_if(state, |value| value == 0),
-            Opcode::LessThan => self.operate(state, |a, b| if a < b { 1 } else { 0 }),
-            Opcode::Equals => self.operate(state, |a, b| if a == b { 1 } else { 0 }),
+            Opcode::JumpIfTrue => (self.jump_if(state, |value| value != 0), device),
+            Opcode::JumpIfFalse => (self.jump_if(state, |value| value == 0), device),
+            Opcode::LessThan => (
+                self.operate(state, |a, b| if a < b { 1 } else { 0 }),
+                device,
+            ),
+            Opcode::Equals => (
+                self.operate(state, |a, b| if a == b { 1 } else { 0 }),
+                device,
+            ),
             Opcode::AdjustRelativeBase => {
                 state.relative_base += state.at(state.position + 1, self.modes[0]);
                 state.position += self.opcode.size();
+                (state, device)
             }
             Opcode::Stop => panic!("Attempted to evaluate a Stop instruction."),
         }
     }
 
-    fn operate<F>(&self, state: &mut ProgramState, operation: F)
+    fn operate<F>(&self, mut state: ProgramState, operation: F) -> ProgramState
     where
         F: Fn(Code, Code) -> Code,
     {
@@ -289,20 +304,23 @@ impl Instruction {
         let b = state.at(state.position + 2, self.modes[1]);
         state.set(state.position + 3, operation(a, b), self.modes[2]);
         state.position += self.opcode.size();
+        state
     }
 
-    fn jump_if<F>(&self, state: &mut ProgramState, predicate: F)
+    fn jump_if<F>(&self, mut state: ProgramState, predicate: F) -> ProgramState
     where
         F: Fn(Code) -> bool,
     {
         let value = state.at(state.position + 1, self.modes[0]);
         if predicate(value) {
-            state.position = state
+            let position = state
                 .at(state.position + 2, self.modes[1])
                 .try_into()
                 .unwrap();
+            ProgramState { position, ..state }
         } else {
             state.position += self.opcode.size();
+            state
         }
     }
 }
@@ -376,7 +394,9 @@ where
         if instruction.opcode == Opcode::Stop {
             break;
         } else {
-            instruction.evaluate(&mut state, &mut device);
+            let (new_state, new_device) = instruction.evaluate(state, device);
+            state = new_state;
+            device = new_device;
             // println!("{:?}", state.program);
         }
     }
