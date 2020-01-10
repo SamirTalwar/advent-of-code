@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::convert::TryInto;
 use std::io;
 use std::ops::{Index, IndexMut};
@@ -27,7 +28,7 @@ struct ProgramState {
 pub trait Device {
     type DeviceResult;
 
-    fn next_input(self) -> (Code, Self);
+    fn next_input(self) -> (Option<Code>, Self);
 
     fn output(self, code: Code) -> Self;
 
@@ -61,6 +62,15 @@ struct Instruction {
     modes: Vec<ParameterMode>,
 }
 
+#[derive(Debug)]
+enum Evaluation<D, R>
+where
+    D: Device<DeviceResult = R>,
+{
+    Continue(ProgramState, D),
+    Stop(Program, R),
+}
+
 pub struct EmptyDevice {}
 
 impl EmptyDevice {
@@ -72,8 +82,8 @@ impl EmptyDevice {
 impl Device for EmptyDevice {
     type DeviceResult = ();
 
-    fn next_input(self) -> (Code, Self) {
-        panic!("Can't read an input from an empty device.");
+    fn next_input(self) -> (Option<Code>, Self) {
+        (None, self)
     }
 
     fn output(self, _code: Code) -> Self {
@@ -86,14 +96,14 @@ impl Device for EmptyDevice {
 }
 
 pub struct VecDevice {
-    inputs: Vec<Code>,
+    inputs: VecDeque<Code>,
     outputs: Vec<Code>,
 }
 
 impl VecDevice {
     pub fn new(inputs: Vec<Code>) -> Self {
         Self {
-            inputs,
+            inputs: inputs.into_iter().collect(),
             outputs: Vec::new(),
         }
     }
@@ -102,8 +112,8 @@ impl VecDevice {
 impl Device for VecDevice {
     type DeviceResult = Vec<Code>;
 
-    fn next_input(mut self) -> (Code, Self) {
-        (self.inputs.remove(0), self)
+    fn next_input(mut self) -> (Option<Code>, Self) {
+        (self.inputs.pop_front(), self)
     }
 
     fn output(mut self, code: Code) -> Self {
@@ -130,8 +140,8 @@ impl ChannelDevice {
 impl Device for ChannelDevice {
     type DeviceResult = (mpsc::Receiver<Code>, mpsc::Sender<Code>);
 
-    fn next_input(self) -> (Code, Self) {
-        (self.receiver.recv().unwrap(), self)
+    fn next_input(self) -> (Option<Code>, Self) {
+        (self.receiver.recv().ok(), self)
     }
 
     fn output(self, code: Code) -> Self {
@@ -149,7 +159,7 @@ where
     F: Copy + FnOnce(State, Code) -> (State, Vec<Code>),
 {
     state: State,
-    inputs: Vec<Code>,
+    inputs: VecDeque<Code>,
     behavior: F,
 }
 
@@ -160,7 +170,7 @@ where
     pub fn new(starting_state: State, starting_inputs: Vec<Code>, behavior: F) -> Self {
         CooperativeDevice {
             state: starting_state,
-            inputs: starting_inputs,
+            inputs: starting_inputs.into_iter().collect(),
             behavior,
         }
     }
@@ -172,14 +182,16 @@ where
 {
     type DeviceResult = State;
 
-    fn next_input(mut self) -> (Code, Self) {
-        (self.inputs.remove(0), self)
+    fn next_input(mut self) -> (Option<Code>, Self) {
+        (self.inputs.pop_front(), self)
     }
 
     fn output(mut self, code: Code) -> Self {
-        let (new_state, mut new_inputs) = (self.behavior)(self.state, code);
+        let (new_state, new_inputs) = (self.behavior)(self.state, code);
         self.state = new_state;
-        self.inputs.append(&mut new_inputs);
+        new_inputs
+            .into_iter()
+            .for_each(|input| self.inputs.push_back(input));
         self
     }
 
@@ -258,41 +270,50 @@ impl Instruction {
         Instruction { opcode, modes }
     }
 
-    fn evaluate<D, R>(&self, mut state: ProgramState, device: D) -> (ProgramState, D)
+    fn evaluate<D, R>(&self, mut state: ProgramState, device: D) -> Evaluation<D, R>
     where
         D: Device<DeviceResult = R>,
     {
         match self.opcode {
-            Opcode::Add => (self.operate(state, |a, b| a + b), device),
-            Opcode::Multiply => (self.operate(state, |a, b| a * b), device),
+            Opcode::Add => Evaluation::Continue(self.operate(state, |a, b| a + b), device),
+            Opcode::Multiply => Evaluation::Continue(self.operate(state, |a, b| a * b), device),
             Opcode::Save => {
                 let (input, new_device) = device.next_input();
-                state.set(state.position + 1, input, self.modes[0]);
-                state.position += self.opcode.size();
-                (state, new_device)
+                match input {
+                    None => Evaluation::Stop(state.program, new_device.result()),
+                    Some(input) => {
+                        state.set(state.position + 1, input, self.modes[0]);
+                        state.position += self.opcode.size();
+                        Evaluation::Continue(state, new_device)
+                    }
+                }
             }
             Opcode::Output => {
                 let value = state.at(state.position + 1, self.modes[0]);
                 let new_device = device.output(value);
                 state.position += self.opcode.size();
-                (state, new_device)
+                Evaluation::Continue(state, new_device)
             }
-            Opcode::JumpIfTrue => (self.jump_if(state, |value| value != 0), device),
-            Opcode::JumpIfFalse => (self.jump_if(state, |value| value == 0), device),
-            Opcode::LessThan => (
+            Opcode::JumpIfTrue => {
+                Evaluation::Continue(self.jump_if(state, |value| value != 0), device)
+            }
+            Opcode::JumpIfFalse => {
+                Evaluation::Continue(self.jump_if(state, |value| value == 0), device)
+            }
+            Opcode::LessThan => Evaluation::Continue(
                 self.operate(state, |a, b| if a < b { 1 } else { 0 }),
                 device,
             ),
-            Opcode::Equals => (
+            Opcode::Equals => Evaluation::Continue(
                 self.operate(state, |a, b| if a == b { 1 } else { 0 }),
                 device,
             ),
             Opcode::AdjustRelativeBase => {
                 state.relative_base += state.at(state.position + 1, self.modes[0]);
                 state.position += self.opcode.size();
-                (state, device)
+                Evaluation::Continue(state, device)
             }
-            Opcode::Stop => panic!("Attempted to evaluate a Stop instruction."),
+            Opcode::Stop => Evaluation::Stop(state.program, device.result()),
         }
     }
 
@@ -391,16 +412,15 @@ where
         let instruction = state.next_instruction();
         // println!("{} / {:?}", state.position, instruction);
         // println!("{:?}", state.program);
-        if instruction.opcode == Opcode::Stop {
-            break;
-        } else {
-            let (new_state, new_device) = instruction.evaluate(state, device);
-            state = new_state;
-            device = new_device;
-            // println!("{:?}", state.program);
-        }
+        match instruction.evaluate(state, device) {
+            Evaluation::Continue(new_state, new_device) => {
+                state = new_state;
+                device = new_device;
+            }
+            Evaluation::Stop(program, device_result) => return (program, device_result),
+        };
+        // println!("{:?}", state.program);
     }
-    (state.program, device.result())
 }
 
 pub fn read_parse_and_evaluate(inputs: Vec<Code>) -> io::Result<()> {

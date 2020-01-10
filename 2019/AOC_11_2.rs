@@ -135,14 +135,17 @@ fn main() -> io::Result<()> {
             DeviceMode::Paint => {
                 let new_color = Color::from_code(output);
                 panels.insert(robot.location, new_color);
+
                 ((robot, DeviceMode::Move, panels), vec![])
             }
             DeviceMode::Move => {
                 robot.turn(Turning::from_code(output));
                 robot.move_forward();
+
                 let old_color = panels.get(&robot.location).unwrap_or(&Color::Black);
-                let old_color_code = old_color.to_code();
-                ((robot, DeviceMode::Paint, panels), vec![old_color_code])
+
+                let inputs = vec![old_color.to_code()];
+                ((robot, DeviceMode::Paint, panels), inputs)
             }
         },
     );
