@@ -156,7 +156,7 @@ impl Device for ChannelDevice {
 
 pub struct CooperativeDevice<State, F>
 where
-    F: Copy + FnOnce(State, Code) -> (State, Vec<Code>),
+    F: FnMut(State, Code) -> (State, Vec<Code>),
 {
     state: State,
     inputs: VecDeque<Code>,
@@ -165,7 +165,7 @@ where
 
 impl<State, F> CooperativeDevice<State, F>
 where
-    F: Copy + FnOnce(State, Code) -> (State, Vec<Code>),
+    F: FnMut(State, Code) -> (State, Vec<Code>),
 {
     pub fn new(starting_state: State, starting_inputs: Vec<Code>, behavior: F) -> Self {
         CooperativeDevice {
@@ -178,7 +178,7 @@ where
 
 impl<State, F> Device for CooperativeDevice<State, F>
 where
-    F: Copy + FnOnce(State, Code) -> (State, Vec<Code>),
+    F: FnMut(State, Code) -> (State, Vec<Code>),
 {
     type DeviceResult = State;
 
@@ -189,9 +189,9 @@ where
     fn output(mut self, code: Code) -> Self {
         let (new_state, new_inputs) = (self.behavior)(self.state, code);
         self.state = new_state;
-        new_inputs
-            .into_iter()
-            .for_each(|input| self.inputs.push_back(input));
+        for input in new_inputs {
+            self.inputs.push_back(input);
+        }
         self
     }
 
