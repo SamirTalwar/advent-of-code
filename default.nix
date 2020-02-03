@@ -29,5 +29,6 @@ stdenv.mkDerivation {
     rustfmt
     rustracer
     swiProlog
+    swiftformat
   ];
 }
