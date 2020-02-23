@@ -109,47 +109,46 @@ fn main() -> io::Result<()> {
     let program = intcode::parse(&code)?;
 
     let mut successes: HashSet<Path> = HashSet::new();
+    successes.insert(VecDeque::new());
     let mut found: Option<Path> = None;
-    Direction::all()
-        .into_iter()
-        .map(|direction| {
-            let mut path = VecDeque::new();
-            path.push_back(direction);
-            path
-        })
-        .for_each(|path| {
-            let result = run(program.clone(), path.clone());
+    while found.is_none() {
+        let last_successes: Vec<Path> = successes.drain().collect();
+        for (path, result) in step(&program, last_successes) {
             if result == RunResult::Found {
                 found = Some(path);
             } else if result.successful() {
                 successes.insert(path);
             }
-        });
-    while found == None {
-        let last_successes: Vec<Path> = successes.drain().collect();
-        last_successes.into_iter().for_each(|success| {
-            Direction::except(&success[success.len() - 1].opposite())
-                .into_iter()
-                .map(|direction| {
-                    let mut path = success.clone();
-                    path.push_back(direction);
-                    path
-                })
-                .filter(|path| !loops(path))
-                .for_each(|path| {
-                    let result = run(program.clone(), path.clone());
-                    if result == RunResult::Found {
-                        found = Some(path);
-                    } else if result.successful() {
-                        successes.insert(path);
-                    }
-                });
-        })
+        }
     }
 
     println!("{}", found.unwrap().len());
 
     Ok(())
+}
+
+fn step(program: &intcode::Program, successes: Vec<Path>) -> Vec<(Path, RunResult)> {
+    successes
+        .iter()
+        .flat_map(|success| {
+            let directions = match success.back() {
+                None => Direction::all(),
+                Some(last) => Direction::except(&last.opposite()),
+            };
+            directions
+                .into_iter()
+                .map(move |direction| {
+                    let mut path = success.clone();
+                    path.push_back(direction);
+                    path
+                })
+                .filter(|path| !loops(path))
+                .map(|path| {
+                    let result = run(program.clone(), path.clone());
+                    (path, result)
+                })
+        })
+        .collect()
 }
 
 fn loops(path: &Path) -> bool {
