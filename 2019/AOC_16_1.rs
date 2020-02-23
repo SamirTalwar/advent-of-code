@@ -23,23 +23,8 @@ fn main() -> io::Result<()> {
             })
             .collect::<io::Result<Numbers>>()
     }?;
-    let length = input.len();
 
-    let patterns: Vec<Numbers> = (1..=length)
-        .map(|i| {
-            iter::repeat(0)
-                .take(i)
-                .chain(iter::repeat(1).take(i))
-                .chain(iter::repeat(0).take(i))
-                .chain(iter::repeat(-1).take(i))
-                .cycle()
-                .skip(1)
-                .take(length)
-                .collect()
-        })
-        .collect();
-
-    let result = &iter::successors(Some(input), |input| Some(phase(&input, &patterns)))
+    let result = &iter::successors(Some(input), |input| Some(phase(&input)))
         .nth(PHASES)
         .unwrap();
     let answer = {
@@ -52,19 +37,33 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn phase(input: &Numbers, patterns: &Vec<Numbers>) -> Numbers {
-    patterns
-        .iter()
-        .map(|pattern| {
-            (pattern
+fn phase(input: &Numbers) -> Numbers {
+    (1..=input.len())
+        .map(|y_offset| {
+            (input
                 .iter()
-                .zip(input.iter())
-                .map(|(pattern_value, input_value)| pattern_value * input_value)
+                .enumerate()
+                .map(|(x_offset, input_value)| input_value * pattern_at(y_offset, x_offset))
                 .sum::<i64>()
                 % 10)
                 .abs()
         })
         .collect()
+}
+
+fn pattern_at(y_offset: usize, x_offset: usize) -> i64 {
+    let x = x_offset % (y_offset * 4);
+    if x < y_offset - 1 {
+        0
+    } else if x < y_offset * 2 - 1 {
+        1
+    } else if x < y_offset * 3 - 1 {
+        0
+    } else if x < y_offset * 4 - 1 {
+        -1
+    } else {
+        0
+    }
 }
 
 fn join_vec<T>(vector: &Vec<T>) -> String
