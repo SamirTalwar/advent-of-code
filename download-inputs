@@ -35,7 +35,7 @@ def download(year, day):
                     f.write(line)
             print(f'Downloaded {year}/{day:02}.', file=sys.stderr)
     except FileExistsError:
-        print(f'Skipped {year}/{day:02}.', file=sys.stderr)
+        pass
     except:
         os.remove(filename)
         raise
