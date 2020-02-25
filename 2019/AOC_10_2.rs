@@ -5,6 +5,7 @@ use std::io::Read;
 use std::iter;
 
 mod errors;
+mod numbers;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct Asteroid {
@@ -55,7 +56,7 @@ impl Asteroids {
     fn blocked(&self, a: &Asteroid, b: &Asteroid) -> bool {
         let x = b.x - a.x;
         let y = b.y - a.y;
-        let divisor = gcd(x.abs(), y.abs());
+        let divisor = numbers::gcd(x.abs(), y.abs());
         (1..divisor)
             .map(|n| Asteroid {
                 x: a.x + x / divisor * n,
@@ -106,19 +107,6 @@ fn main() -> io::Result<()> {
     println!("{}", chosen.x * 100 + chosen.y);
 
     Ok(())
-}
-
-fn gcd(a: i128, b: i128) -> i128 {
-    iter::successors(Some((a, b)), |(a, b)| {
-        if *b == 0 {
-            None
-        } else {
-            Some((*b, *a % *b))
-        }
-    })
-    .last()
-    .unwrap()
-    .0
 }
 
 fn modulus(n: f64, d: f64) -> f64 {
