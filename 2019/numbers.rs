@@ -18,3 +18,10 @@ where
     .unwrap()
     .0
 }
+
+pub fn lcm<N>(a: N, b: N) -> N
+where
+    N: num::Num + Copy,
+{
+    a * b / gcd(a, b)
+}
