@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import <nixpkgs> { } }:
 
 with pkgs;
 let
@@ -25,9 +25,10 @@ stdenv.mkDerivation {
     cargo
     ghc
     python3
-    rustc
+    rls
+    rustPlatform.rust.rustc
+    rustPlatform.rustcSrc
     rustfmt
-    rustracer
     swiProlog
     swiftformat
   ];
