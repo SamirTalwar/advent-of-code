@@ -63,6 +63,14 @@ if [[ -e "${year}/${name}.hs" ]]; then
     "${year}/${name}.hs"
 elif [[ -e "${year}/${name}.pl" ]]; then
   executable=(swipl -s prolog/packs.pl "${year}/${name}.pl")
+elif [[ -e "${year}/${name}.pony" ]]; then
+  temp_src_root=$(mktemp -d)
+  trap 'rm -rf $temp_src_root' EXIT
+  temp_src="${temp_src_root}/${name}"
+  mkdir $temp_src
+  executable="${output_directory}/${name}"
+  cp "${year}/${name}.pony" $temp_src
+  ponyc --output=${output_directory} $temp_src
 elif [[ -e "${year}/${name}.rs" ]]; then
   file="${year}/${name}.rs"
   executable_name="aoc_${year}_${day}_${exercise}"

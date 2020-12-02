@@ -24,6 +24,7 @@ stdenv.mkDerivation {
   buildInputs = [
     cargo
     ghc
+    ponyc
     python3
     rls
     rustPlatform.rust.rustc
