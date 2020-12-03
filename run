@@ -64,10 +64,10 @@ if [[ -e "${year}/${name}.hs" ]]; then
 elif [[ -e "${year}/${name}.pl" ]]; then
   executable=(swipl -s prolog/packs.pl "${year}/${name}.pl")
 elif [[ -e "${year}/${name}.pony" ]]; then
-  temp_src_root=$(mktemp -d)
+  temp_src_root="${TMPDIR:-/tmp}/advent-of-code/${year}"
   trap 'rm -rf $temp_src_root' EXIT
   temp_src="${temp_src_root}/${name}"
-  mkdir $temp_src
+  mkdir -p $temp_src
   executable="${output_directory}/${name}"
   cp "${year}/${name}.pony" $temp_src
   ponyc --output=${output_directory} $temp_src
