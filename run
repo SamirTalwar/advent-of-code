@@ -69,8 +69,9 @@ elif [[ -e "${year}/${name}.pony" ]]; then
   temp_src="${temp_src_root}/${name}"
   mkdir -p $temp_src
   executable="${output_directory}/${name}"
-  cp "${year}/${name}.pony" $temp_src
-  ponyc --output=${output_directory} $temp_src
+  (cd $year && cp -R "${name}.pony" corral.json lock.json _corral _repos $temp_src)
+  output_directory="${PWD}/${output_directory}"
+  (cd $temp_src && corral run -- ponyc --output=${output_directory})
 elif [[ -e "${year}/${name}.rs" ]]; then
   file="${year}/${name}.rs"
   executable_name="aoc_${year}_${day}_${exercise}"

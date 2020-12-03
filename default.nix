@@ -24,7 +24,9 @@ stdenv.mkDerivation {
   buildInputs = [
     cargo
     ghc
+    pony-corral
     ponyc
+    pcre2  # used by the Pony regex library
     python3
     rls
     rustPlatform.rust.rustc
