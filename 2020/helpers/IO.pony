@@ -15,6 +15,9 @@ interface Solver
 trait LineParser[Input]
   fun parse(line: String): Input ?
 
+trait MultipleLineParser[Input]
+  fun parse(lines: Array[String] val): Input ?
+
 trait ASolution[Input: Any val]
   be solve(input: Input)
 
@@ -75,6 +78,48 @@ actor LineCollector[T: Any val]
     end
 
   be ready() =>
+    if not _failed then
+      let items: Array[T] iso = _items = recover Array[T] end
+      _solution.solve(recover consume items end)
+    end
+
+actor MultipleLineCollector[T: Any val]
+  let _solution: ASolution[Array[T] val] tag
+  let _escape: Escape tag
+  let _parser: MultipleLineParser[T]
+  var _items: Array[T] iso
+  var _current: Array[String] iso
+  var _failed: Bool = false
+
+  new create(solution: ASolution[Array[T] val] tag, escape: Escape tag, parser: MultipleLineParser[T] iso) =>
+    _solution = solution
+    _escape = escape
+    _parser = consume parser
+    _items = recover Array[T] end
+    _current = recover Array[String] end
+
+  fun ref parse_current() =>
+    let current = _current = recover Array[String] end
+    let lines = recover val consume current end
+    try
+      let item: T val = _parser.parse(lines) ?
+      _items.push(consume item)
+    else
+      _escape.fail("Invalid item:\n" + "\n".join(lines.values()))
+      _failed = true
+    end
+
+  be gather(line: String) =>
+    if line != "" then
+      _current.push(consume line)
+    else
+      parse_current()
+    end
+
+  be ready() =>
+    if _current.size() > 0 then
+      parse_current()
+    end
     if not _failed then
       let items: Array[T] iso = _items = recover Array[T] end
       _solution.solve(recover consume items end)
