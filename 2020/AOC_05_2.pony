@@ -29,26 +29,18 @@ actor Main
 
 class Parser is LineParser[BoardingPass]
   fun parse(line: String): BoardingPass ? =>
-    let row = find(0, 128, 'F', 'B', line.substring(0, 7))?
-    let column = find(0, 8, 'L', 'R', line.substring(7, 10))?
+    let row = find('F', 'B', line.substring(0, 7))?
+    let column = find('L', 'R', line.substring(7, 10))?
     BoardingPass(row, column)
 
-  fun find(lowest: USize, highest: USize, low_char: U8, high_char: U8, input: String): USize ? =>
-    let start = (lowest, highest, (highest - lowest) / 2)
-    (let low, let high, _) = Iter[U8](input.values()).fold[(USize, USize, USize)](start, {(range, c) =>
-      match range
-      | (_, _, 0) => (0, 0, 0)
-      | (let low: USize, let high: USize, let diff: USize) =>
-        if c == low_char then
-          (low, high - diff, diff / 2)
-        elseif c == high_char then
-          (low + diff, high, diff / 2)
-        else
-          (0, 0, 0)
-        end
+  fun find(low_char: U8, high_char: U8, input: String): USize ? =>
+    Iter[U8](input.values()).fold_partial[USize](0, {(n, char) ? =>
+      match char
+      | let c: U8 if c == low_char => n << 1
+      | let c: U8 if c == high_char => (n << 1) + 1
+      else error
       end
-    })
-    if (low + 1) == high then low else error end
+    })?
 
 actor Solution is ASolution[Array[BoardingPass] val]
   let _answer: Answer tag
