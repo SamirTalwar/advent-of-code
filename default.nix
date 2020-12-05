@@ -23,6 +23,7 @@ stdenv.mkDerivation {
 
   buildInputs = [
     cargo
+    ctags
     ghc
     pony-corral
     ponyc
