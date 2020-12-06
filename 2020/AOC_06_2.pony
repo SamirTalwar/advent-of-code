@@ -10,17 +10,11 @@ class val CustomsDeclarationForm
     people = people'
 
   fun count(): USize =>
-    var intersection: (Set[AnsweredYes] | None) = None
-    for person in people.values() do
-      intersection = match intersection
-      | None => person
-      | let i: Set[AnsweredYes] => i and person
-      end
-    end
-    match intersection
-    | None => 0
-    | let i: Set[AnsweredYes] => i.size()
-    end
+    Fold[Set[AnsweredYes]](people.values())
+      .through1(Set[AnsweredYes], { (intersection, person) =>
+        intersection and person
+      })
+      .size()
 
 actor Main
   new create(env: Env) =>
@@ -38,9 +32,7 @@ class Parser is MultipleLineParser[CustomsDeclarationForm]
     let people = recover
       Iter[String](lines.values())
         .map[Set[AnsweredYes]]({ (line) =>
-          Iter[AnsweredYes](line.values()).fold[Set[AnsweredYes]](Set[AnsweredYes], { (answers, answer) =>
-            answers.add(answer)
-          })
+          ToSet[AnsweredYes].from_iterator(line.values())
         })
         .collect(Array[Set[AnsweredYes]])
     end
