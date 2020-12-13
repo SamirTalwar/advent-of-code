@@ -5,6 +5,8 @@ use "itertools"
 interface Answer
   be answer(value: Stringable val)
 
+  be debug(value: Stringable val)
+
 interface Escape
   be fail(message: String)
 
@@ -36,6 +38,9 @@ actor Orchestrator is (Answer & Escape)
 
   be answer(output: Stringable val) =>
     _env.out.print(output.string())
+
+  be debug(output: Stringable val) =>
+    _env.err.print(output.string())
 
   be fail(message: String) =>
     _env.err.print(message)
