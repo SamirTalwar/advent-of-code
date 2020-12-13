@@ -59,6 +59,29 @@ class Notify is InputNotify
   fun ref dispose() =>
     _solver.ready()
 
+actor OneShotCollector[T: Any val] is Solver
+  let _solution: ASolution[T val] tag
+  let _escape: Escape tag
+  let _parser: MultipleLineParser[T]
+  var _lines: Array[String val] iso
+
+  new create(solution: ASolution[T val] tag, escape: Escape tag, parser: MultipleLineParser[T] iso) =>
+    _solution = solution
+    _escape = escape
+    _parser = consume parser
+    _lines = recover Array[String val] end
+
+  be gather(line: String) =>
+    _lines.push(consume line)
+
+  be ready() =>
+    let lines: Array[String val] val = _lines = recover Array[String val] end
+    try
+      _solution.solve(_parser.parse(lines)?)
+    else
+      _escape.fail("Invalid input.")
+    end
+
 actor LineCollector[T: Any val] is Solver
   let _solution: ASolution[Array[T] val] tag
   let _escape: Escape tag
@@ -125,8 +148,8 @@ actor MultipleLineCollector[T: Any val] is Solver
       parse_current()
     end
     if not _failed then
-      let items: Array[T] iso = _items = recover Array[T] end
-      _solution.solve(recover consume items end)
+      let items: Array[T] val = _items = recover Array[T] end
+      _solution.solve(items)
     end
 
 actor GridCollector[T: Any val]
