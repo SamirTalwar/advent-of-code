@@ -4,11 +4,12 @@ primitive Open
 primitive Tree
 type Square is (Open | Tree)
 type Row is Array[Square] val
+type Grid is Array[Row] val
 
 class Map
-  let grid: Array[Row] val
+  let grid: Grid
 
-  new create(grid': Array[Row] val) =>
+  new create(grid': Grid) =>
     grid = consume grid'
 
   fun rows(): USize =>
@@ -22,34 +23,28 @@ actor Main
   new create(env: Env) =>
     let orchestrator = Orchestrator(env)
     orchestrator.start(
-      LineCollector[Row](
+      GridCollector[Square](
         Solution(orchestrator),
         orchestrator,
         Parser
       )
     )
 
-class Parser is LineParser[Row]
-  fun parse(line: String): Row =>
-    recover
-      Iter[U8](line.values())
-        .map[Square]({ (char): Square ? =>
-          match char
-            | '.' => Open
-            | '#' => Tree
-            else error
-          end
-        })
-        .collect(Row)
+class Parser is CellParser[Square]
+  fun parse(character: U8): Square ? =>
+    match character
+      | '.' => Open
+      | '#' => Tree
+      else error
     end
 
-actor Solution is ASolution[Array[Row] iso]
+actor Solution is ASolution[Grid]
   let _answer: (Answer tag & Escape tag)
 
   new create(answer: (Answer tag & Escape tag)) =>
     _answer = answer
 
-  be solve(rows: Array[Row] val) =>
+  be solve(rows: Grid) =>
     let row_count = rows.size()
     let map = Map(rows)
     var y :USize = 0
