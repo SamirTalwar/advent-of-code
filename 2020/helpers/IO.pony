@@ -10,10 +10,10 @@ interface Answer
 interface Escape
   be fail(message: String)
 
-interface Solver
+interface tag Collector[Input: Any val]
   be gather(line: String)
 
-  be ready()
+  be ready(solve: Solve[Input])
 
 trait LineParser[Input]
   fun parse(line: String): Input ?
@@ -24,8 +24,8 @@ trait MultipleLineParser[Input]
 trait CellParser[Input]
   fun parse(character: U8): Input ?
 
-trait ASolution[Input: Any val]
-  be solve(input: Input)
+interface tag Solve[Input: Any val]
+  be apply(input: Input)
 
 actor Orchestrator is (Answer & Escape)
   let _env: Env
@@ -33,8 +33,8 @@ actor Orchestrator is (Answer & Escape)
   new create(env: Env) =>
     _env = env
 
-  be start(solver: Solver tag) =>
-    _env.input(recover Notify(solver) end, 1024)
+  be start[Input: Any val](collector: Collector[Input], solve: Solve[Input]) =>
+    _env.input(recover Notify[Input](collector, solve) end, 1024)
 
   be answer(output: Stringable val) =>
     _env.out.print(output.string())
@@ -46,32 +46,32 @@ actor Orchestrator is (Answer & Escape)
     _env.err.print(message)
     _env.exitcode(1)
 
-class Notify is InputNotify
-  let _solver: Solver tag
+class Notify[Input: Any val] is InputNotify
+  let _collector: Collector[Input]
+  let _solve: Solve[Input]
   let _reader: Reader = recover ref Reader end
 
-  new create(solver: Solver tag) =>
-    _solver = solver
+  new create(collector: Collector[Input], solve: Solve[Input]) =>
+    _collector = collector
+    _solve = solve
 
   fun ref apply(data: Array[U8] iso) =>
     _reader.append(consume data)
     try
       while true do
-        _solver.gather(_reader.line()?)
+        _collector.gather(_reader.line()?)
       end
     end
 
   fun ref dispose() =>
-    _solver.ready()
+    _collector.ready(_solve)
 
-actor OneShotCollector[T: Any val] is Solver
-  let _solution: ASolution[T val] tag
+actor OneShotCollector[T: Any val] is Collector[T]
   let _escape: Escape tag
   let _parser: MultipleLineParser[T]
   var _lines: Array[String val] iso
 
-  new create(solution: ASolution[T val] tag, escape: Escape tag, parser: MultipleLineParser[T] iso) =>
-    _solution = solution
+  new create(escape: Escape tag, parser: MultipleLineParser[T] iso) =>
     _escape = escape
     _parser = consume parser
     _lines = recover Array[String val] end
@@ -79,23 +79,21 @@ actor OneShotCollector[T: Any val] is Solver
   be gather(line: String) =>
     _lines.push(consume line)
 
-  be ready() =>
+  be ready(solve: Solve[T]) =>
     let lines: Array[String val] val = _lines = recover Array[String val] end
     try
-      _solution.solve(_parser.parse(lines)?)
+      solve(_parser.parse(lines)?)
     else
       _escape.fail("Invalid input.")
     end
 
-actor LineCollector[T: Any val] is Solver
-  let _solution: ASolution[Array[T] val] tag
+actor LineCollector[T: Any val] is Collector[Array[T] val]
   let _escape: Escape tag
   let _parser: LineParser[T]
   var _items: Array[T] iso
   var _failed: Bool = false
 
-  new create(solution: ASolution[Array[T] val] tag, escape: Escape tag, parser: LineParser[T] iso) =>
-    _solution = solution
+  new create(escape: Escape tag, parser: LineParser[T] iso) =>
     _escape = escape
     _parser = consume parser
     _items = recover Array[T] end
@@ -109,22 +107,20 @@ actor LineCollector[T: Any val] is Solver
       _failed = true
     end
 
-  be ready() =>
+  be ready(solve: Solve[Array[T] val]) =>
     if not _failed then
-      let items: Array[T] iso = _items = recover Array[T] end
-      _solution.solve(recover consume items end)
+      let items: Array[T] val = _items = recover Array[T] end
+      solve(items)
     end
 
-actor MultipleLineCollector[T: Any val] is Solver
-  let _solution: ASolution[Array[T] val] tag
+actor MultipleLineCollector[T: Any val] is Collector[Array[T] val]
   let _escape: Escape tag
   let _parser: MultipleLineParser[T]
   var _items: Array[T] iso
   var _current: Array[String] iso
   var _failed: Bool = false
 
-  new create(solution: ASolution[Array[T] val] tag, escape: Escape tag, parser: MultipleLineParser[T] iso) =>
-    _solution = solution
+  new create(escape: Escape tag, parser: MultipleLineParser[T] iso) =>
     _escape = escape
     _parser = consume parser
     _items = recover Array[T] end
@@ -148,24 +144,22 @@ actor MultipleLineCollector[T: Any val] is Solver
       parse_current()
     end
 
-  be ready() =>
+  be ready(solve: Solve[Array[T] val]) =>
     if _current.size() > 0 then
       parse_current()
     end
     if not _failed then
       let items: Array[T] val = _items = recover Array[T] end
-      _solution.solve(items)
+      solve(items)
     end
 
-actor GridCollector[T: Any val]
-  let _solution: ASolution[Array[Array[T] val] val] tag
+actor GridCollector[T: Any val] is Collector[Array[Array[T] val] val]
   let _escape: Escape tag
   let _parser: CellParser[T]
   var _grid: Array[Array[T] val] iso
   var _failed: Bool = false
 
-  new create(solution: ASolution[Array[Array[T] val] val] tag, escape: Escape tag, parser: CellParser[T] iso) =>
-    _solution = solution
+  new create(escape: Escape tag, parser: CellParser[T] iso) =>
     _escape = escape
     _parser = consume parser
     _grid = recover Array[Array[T] val] end
@@ -183,8 +177,8 @@ actor GridCollector[T: Any val]
     end
     _grid.push(recover consume row end)
 
-  be ready() =>
+  be ready(solve: Solve[Array[Array[T] val] val]) =>
     if not _failed then
       let grid: Array[Array[T] val] iso = _grid = recover Array[Array[T] val] end
-      _solution.solve(recover consume grid end)
+      solve(recover consume grid end)
     end

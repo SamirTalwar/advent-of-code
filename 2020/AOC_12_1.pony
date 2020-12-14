@@ -50,9 +50,9 @@ class val Ship
 actor Main
   new create(env: Env) =>
     let orchestrator = Orchestrator(env)
-    let parser = Parser.create()
-    let collector = LineCollector[Instruction](Solution(orchestrator), orchestrator, consume parser)
-    orchestrator.start(collector)
+    let collector = LineCollector[Instruction](orchestrator, Parser)
+    let solution = Solution(orchestrator)
+    orchestrator.start[Array[Instruction] val](collector, solution)
 
 class Parser is LineParser[Instruction]
   fun parse(line: String): Instruction ? =>
@@ -69,13 +69,13 @@ class Parser is LineParser[Instruction]
     let distance = line.substring(1).isize()?
     Instruction(action, distance)
 
-actor Solution is ASolution[Array[Instruction] val]
+actor Solution is Solve[Array[Instruction] val]
   let _answer: (Answer tag & Escape tag)
 
   new create(answer: (Answer tag & Escape tag)) =>
     _answer = answer
 
-  be solve(instructions: Array[Instruction] val) =>
+  be apply(instructions: Array[Instruction] val) =>
     solve_next(instructions, 0, Ship(Position(0, 0), East))
 
   be solve_next(instructions: Array[Instruction] val, index: USize, ship: Ship) =>

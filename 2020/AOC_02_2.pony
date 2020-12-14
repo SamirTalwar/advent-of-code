@@ -30,13 +30,9 @@ class val Password
 actor Main
   new create(env: Env) =>
     let orchestrator = Orchestrator(env)
-    orchestrator.start(
-      LineCollector[Password](
-        Solution(orchestrator),
-        orchestrator,
-        Parser
-      )
-    )
+    let collector = LineCollector[Password](orchestrator, Parser)
+    let solution = Solution(orchestrator)
+    orchestrator.start[Array[Password] val](collector, solution)
 
 class Parser is LineParser[Password val]
   fun parse(line: String): Password ? =>
@@ -52,12 +48,12 @@ class Parser is LineParser[Password val]
       password' = parsed(4)?
     )
 
-actor Solution is ASolution[Array[Password] val]
+actor Solution is Solve[Array[Password] val]
   let _answer: Answer tag
 
   new create(answer: Answer tag) =>
     _answer = answer
 
-  be solve(items: Array[Password] val) =>
+  be apply(items: Array[Password] val) =>
     let result = Iter[Password](items.values()).filter({ (password) => password.is_valid() }).count()
     _answer.answer(result)

@@ -58,9 +58,9 @@ class val InstructionPointer is (Equatable[InstructionPointer] & mutable.Hashabl
 actor Main
   new create(env: Env) =>
     let orchestrator = Orchestrator(env)
-    let parser = Parser.create()
-    let collector = LineCollector[Instruction](Solution(orchestrator), orchestrator, consume parser)
-    orchestrator.start(collector)
+    let collector = LineCollector[Instruction](orchestrator, Parser)
+    let solution = Solution(orchestrator)
+    orchestrator.start[Array[Instruction] val](collector, solution)
 
 class Parser is LineParser[Instruction]
   fun parse(line: String): Instruction ? =>
@@ -83,13 +83,13 @@ class Parser is LineParser[Instruction]
     else error
     end
 
-actor Solution is ASolution[Instructions]
+actor Solution is Solve[Instructions]
   let _answer: (Answer tag & Escape tag)
 
   new create(answer: (Answer tag & Escape tag)) =>
     _answer = answer
 
-  be solve(instructions: Instructions) =>
+  be apply(instructions: Instructions) =>
     var accumulator: Accumulator = 0
     var instruction_pointer = InstructionPointer
     var seen: Set[InstructionPointer] = Set[InstructionPointer]

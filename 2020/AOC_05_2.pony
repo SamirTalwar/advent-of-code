@@ -19,13 +19,9 @@ class val BoardingPass
 actor Main
   new create(env: Env) =>
     let orchestrator = Orchestrator(env)
-    orchestrator.start(
-      LineCollector[BoardingPass](
-        Solution(orchestrator),
-        orchestrator,
-        Parser
-      )
-    )
+    let collector = LineCollector[BoardingPass](orchestrator, Parser)
+    let solution = Solution(orchestrator)
+    orchestrator.start[Array[BoardingPass] val](collector, solution)
 
 class Parser is LineParser[BoardingPass]
   fun parse(line: String): BoardingPass ? =>
@@ -42,13 +38,13 @@ class Parser is LineParser[BoardingPass]
       end
     })?
 
-actor Solution is ASolution[Array[BoardingPass] val]
+actor Solution is Solve[Array[BoardingPass] val]
   let _answer: Answer tag
 
   new create(answer: Answer tag) =>
     _answer = answer
 
-  be solve(items: Array[BoardingPass] val) =>
+  be apply(items: Array[BoardingPass] val) =>
     var seat_ids: Set[SeatId] ref = Set[SeatId]
     for id in Iter[BoardingPass](items.values()).map[SeatId]({ (pass) => pass.seat_id() }) do
       seat_ids = seat_ids.add(id)

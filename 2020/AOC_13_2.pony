@@ -22,9 +22,9 @@ type Problem is Array[Entry] val
 actor Main
   new create(env: Env) =>
     let orchestrator = Orchestrator(env)
-    let parser = Parser.create()
-    let collector = OneShotCollector[Problem](Solution(orchestrator), orchestrator, consume parser)
-    orchestrator.start(collector)
+    let collector = OneShotCollector[Problem](orchestrator, Parser)
+    let solution = Solution(orchestrator)
+    orchestrator.start[Problem](collector, solution)
 
 class Parser is MultipleLineParser[Problem]
   fun parse(lines: Array[String] val): Problem ? =>
@@ -43,13 +43,13 @@ class Parser is MultipleLineParser[Problem]
         .collect[Array[Entry]](Array[Entry])
     end
 
-actor Solution is ASolution[Problem]
+actor Solution is Solve[Problem]
   let _answer: (Answer tag & Escape tag)
 
   new create(answer: (Answer tag & Escape tag)) =>
     _answer = answer
 
-  be solve(problem: Problem) =>
+  be apply(problem: Problem) =>
     let sorted = recover val
       let cloned = problem.clone()
       let sorted = collections.Sort[Array[Entry], Entry](cloned)

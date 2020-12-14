@@ -71,13 +71,9 @@ class val Passport is Stringable
 actor Main
   new create(env: Env) =>
     let orchestrator = Orchestrator(env)
-    orchestrator.start(
-      MultipleLineCollector[Passport](
-        Solution(orchestrator),
-        orchestrator,
-        Parser
-      )
-    )
+    let collector = MultipleLineCollector[Passport](orchestrator, Parser)
+    let solution = Solution(orchestrator)
+    orchestrator.start[Array[Passport] val](collector, solution)
 
 class Parser is MultipleLineParser[Passport]
   fun parse(lines: Array[String] val): Passport ? =>
@@ -92,13 +88,13 @@ class Parser is MultipleLineParser[Passport]
     end
     Passport(consume fields)?
 
-actor Solution is ASolution[Array[Passport] val]
+actor Solution is Solve[Array[Passport] val]
   let _answer: Answer tag
 
   new create(answer: Answer tag) =>
     _answer = answer
 
-  be solve(passports: Array[Passport] val) =>
+  be apply(passports: Array[Passport] val) =>
     let result = Iter[Passport](passports.values())
       .filter({ (passport) => passport.is_valid() })
       .count()

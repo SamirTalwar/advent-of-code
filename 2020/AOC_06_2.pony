@@ -19,13 +19,9 @@ class val CustomsDeclarationForm
 actor Main
   new create(env: Env) =>
     let orchestrator = Orchestrator(env)
-    orchestrator.start(
-      MultipleLineCollector[CustomsDeclarationForm](
-        Solution(orchestrator),
-        orchestrator,
-        Parser
-      )
-    )
+    let collector = MultipleLineCollector[CustomsDeclarationForm](orchestrator, Parser)
+    let solution = Solution(orchestrator)
+    orchestrator.start[Array[CustomsDeclarationForm] val](collector, solution)
 
 class Parser is MultipleLineParser[CustomsDeclarationForm]
   fun parse(lines: Array[String] val): CustomsDeclarationForm =>
@@ -38,13 +34,13 @@ class Parser is MultipleLineParser[CustomsDeclarationForm]
     end
     CustomsDeclarationForm(consume people)
 
-actor Solution is ASolution[Array[CustomsDeclarationForm] val]
+actor Solution is Solve[Array[CustomsDeclarationForm] val]
   let _answer: Answer tag
 
   new create(answer: Answer tag) =>
     _answer = answer
 
-  be solve(forms: Array[CustomsDeclarationForm] val) =>
+  be apply(forms: Array[CustomsDeclarationForm] val) =>
     let result = Iter[CustomsDeclarationForm](forms.values())
       .map[USize]({ (form) => form.count() })
       .fold[USize](0, { (sum, count) => sum + count })

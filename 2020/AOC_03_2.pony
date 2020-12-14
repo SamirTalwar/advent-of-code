@@ -41,13 +41,9 @@ class Map
 actor Main
   new create(env: Env) =>
     let orchestrator = Orchestrator(env)
-    orchestrator.start(
-      GridCollector[Square](
-        Solution(orchestrator),
-        orchestrator,
-        Parser
-      )
-    )
+    let collector = GridCollector[Square](orchestrator, Parser)
+    let solution = Solution(orchestrator)
+    orchestrator.start[Grid](collector, solution)
 
 class Parser is CellParser[Square]
   fun parse(character: U8): Square ? =>
@@ -57,7 +53,7 @@ class Parser is CellParser[Square]
     else error
   end
 
-actor Solution is ASolution[Grid]
+actor Solution is Solve[Grid]
   let _slopes: Array[Slope] = [
     Slope(1, 1)
     Slope(3, 1)
@@ -70,7 +66,7 @@ actor Solution is ASolution[Grid]
   new create(answer: (Answer tag & Escape tag)) =>
     _answer = answer
 
-  be solve(rows: Grid) =>
+  be apply(rows: Grid) =>
     let row_count = rows.size()
     let map = Map(rows)
     var trees: USize = 1

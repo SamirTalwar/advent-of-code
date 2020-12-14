@@ -12,9 +12,9 @@ type Grid is Array[Row] val
 actor Main
   new create(env: Env) =>
     let orchestrator = Orchestrator(env)
-    let parser = Parser.create()
-    let collector = GridCollector[Cell](Solution(orchestrator), orchestrator, consume parser)
-    orchestrator.start(collector)
+    let collector = GridCollector[Cell](orchestrator, Parser)
+    let solution = Solution(orchestrator)
+    orchestrator.start[Array[Array[Cell] val] val](collector, solution)
 
 class Parser is CellParser[Cell]
   fun parse(character: U8): Cell ? =>
@@ -25,19 +25,19 @@ class Parser is CellParser[Cell]
     else error
     end
 
-actor Solution is ASolution[Array[Array[Cell] val] val]
+actor Solution is Solve[Array[Array[Cell] val] val]
   let _answer: (Answer tag & Escape tag)
 
   new create(answer: (Answer tag & Escape tag)) =>
     _answer = answer
 
-  be solve(grid: Grid) =>
+  be apply(grid: Grid) =>
     try
       let new_grid = step(grid)?
       if grids_equal(grid, new_grid) then
         _answer.answer(count_occupied(grid)?)
       else
-        solve(new_grid)
+        apply(new_grid)
       end
     else
       _answer.fail("Failed.")

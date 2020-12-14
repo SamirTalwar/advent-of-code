@@ -32,8 +32,9 @@ actor Main
     let orchestrator = Orchestrator(env)
     try
       let parser = Parser.create()?
-      let collector = LineCollector[LuggageRule](Solution(orchestrator), orchestrator, consume parser)
-      orchestrator.start(collector)
+      let collector = LineCollector[LuggageRule](orchestrator, consume parser)
+      let solution = Solution(orchestrator)
+      orchestrator.start[Array[LuggageRule] val](collector, solution)
     else
       orchestrator.fail("Could not construct the parser.")
     end
@@ -66,13 +67,13 @@ class Parser is LineParser[LuggageRule]
     end
     LuggageRule(consume container, consume contained)
 
-actor Solution is ASolution[Array[LuggageRule] val]
+actor Solution is Solve[Array[LuggageRule] val]
   let _answer: (Answer tag & Escape tag)
 
   new create(answer: (Answer tag & Escape tag)) =>
     _answer = answer
 
-  be solve(rules: Array[LuggageRule] val) =>
+  be apply(rules: Array[LuggageRule] val) =>
     // _log_rules(rules)
 
     let graph = _compute_graph(rules)

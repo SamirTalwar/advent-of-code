@@ -4,21 +4,21 @@ use "itertools"
 actor Main
   new create(env: Env) =>
     let orchestrator = Orchestrator(env)
-    let parser = Parser.create()
-    let collector = LineCollector[USize](Solution(orchestrator), orchestrator, consume parser)
-    orchestrator.start(collector)
+    let collector = LineCollector[USize](orchestrator, Parser)
+    let solution = Solution(orchestrator)
+    orchestrator.start[Array[USize] val](collector, solution)
 
 class Parser is LineParser[USize]
   fun parse(line: String): USize ? =>
     line.usize()?
 
-actor Solution is ASolution[Array[USize] val]
+actor Solution is Solve[Array[USize] val]
   let _answer: (Answer tag & Escape tag)
 
   new create(answer: (Answer tag & Escape tag)) =>
     _answer = answer
 
-  be solve(numbers: Array[USize] val) =>
+  be apply(numbers: Array[USize] val) =>
     let numbers_ref = Array[USize](numbers.size() + 1)
     numbers_ref.push(0)
     numbers.copy_to(numbers_ref, 0, 1, numbers.size())
