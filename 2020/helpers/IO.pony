@@ -87,6 +87,45 @@ actor OneShotCollector[T: Any val] is Collector[T]
       _escape.fail("Invalid input.")
     end
 
+actor CommaSeparatedCollector[T: Any val] is Collector[Array[T] val]
+  let _escape: Escape tag
+  let _parser: SingleItemParser[T]
+  var _items: (Array[T] iso | None)
+  var _failed: Bool = false
+
+  new create(escape: Escape tag, parser: SingleItemParser[T] iso) =>
+    _escape = escape
+    _parser = consume parser
+    _items = None
+
+  be gather(line: String) =>
+    if _items is None then
+      let items = recover iso Array[T] end
+      for item in (consume line).split_by(",").values() do
+        try
+          items.push(_parser.parse(item)?)
+        else
+          _failed = true
+          _escape.fail("Invalid item: " + item)
+        end
+      end
+      _items = consume items
+    else
+      _failed = true
+      _escape.fail("Tried to parse more than one line.")
+    end
+
+  be ready(solve: Solve[Array[T] val]) =>
+    if not _failed then
+      let items = _items = None
+      match (consume items)
+      | None =>
+        _escape.fail("No items found.")
+      | let i: Array[T] iso =>
+        solve(consume i)
+      end
+    end
+
 actor LineCollector[T: Any val] is Collector[Array[T] val]
   let _escape: Escape tag
   let _parser: SingleItemParser[T]
@@ -103,8 +142,8 @@ actor LineCollector[T: Any val] is Collector[Array[T] val]
       let item: T val = _parser.parse(line) ?
       _items.push(consume item)
     else
-      _escape.fail("Invalid item: " + line)
       _failed = true
+      _escape.fail("Invalid item: " + line)
     end
 
   be ready(solve: Solve[Array[T] val]) =>
