@@ -33,10 +33,12 @@ class ref Game is Iterator[GameNumber]
   let _starting_numbers: Array[GameNumber] val
   var _turn: Turn = 0
   var _most_recent: GameNumber = 0
-  var _previous: collections.Map[GameNumber, (Turn | (Turn, Turn))] = collections.Map[GameNumber, (Turn | (Turn, Turn))]
+  var _previous: Array[(None | Turn | (Turn, Turn))]
 
   new create(starting_numbers: Array[GameNumber] val) =>
     _starting_numbers = starting_numbers
+    let max = Fold[GameNumber](starting_numbers.values()).through1(0, { (max, value) => max.max(value) })
+    _previous = Array[(None | Turn | (Turn, Turn))].init(None where len = max + 1)
 
   fun ref has_next(): Bool =>
     true
@@ -44,21 +46,29 @@ class ref Game is Iterator[GameNumber]
   fun ref next(): GameNumber ? =>
     let value = if _turn < _starting_numbers.size() then
       let value = _starting_numbers(_turn)?
-      _previous(value) = _turn
+      _previous(value)? = _turn
       value
     else
       let value = match _previous(_most_recent)?
+      | None =>
+        error
       | let _: USize =>
         0
       | (let a: USize, let b: USize) =>
         b - a
       end
-      _previous.upsert(value, _turn, { (current, provided) =>
-        match current
-        | let a: USize => (a, _turn)
-        | (let a: USize, let b: USize) => (b, _turn)
+
+      if _previous.size() <= value then
+        _previous.reserve(value + 1)
+        while _previous.size() <= value do
+          _previous.push(None)
         end
-      })
+      end
+      _previous(value)? = match _previous(value)?
+      | None => _turn
+      | let a: USize => (a, _turn)
+      | (let a: USize, let b: USize) => (b, _turn)
+      end
       value
     end
     _turn = _turn + 1
