@@ -16,7 +16,7 @@ actor Main
     let solution = Solution(orchestrator)
     orchestrator.start[Array[Array[Cell] val] val](collector, solution)
 
-class Parser is CellParser[Cell]
+class Parser is CharacterParser[Cell]
   fun parse(character: U8): Cell ? =>
     match character
     | '.' => Floor

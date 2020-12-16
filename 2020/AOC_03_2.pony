@@ -45,7 +45,7 @@ actor Main
     let solution = Solution(orchestrator)
     orchestrator.start[Grid](collector, solution)
 
-class Parser is CellParser[Square]
+class Parser is CharacterParser[Square]
   fun parse(character: U8): Square ? =>
     match character
     | '.' => Open

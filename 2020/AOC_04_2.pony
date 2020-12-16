@@ -75,7 +75,7 @@ actor Main
     let solution = Solution(orchestrator)
     orchestrator.start[Array[Passport] val](collector, solution)
 
-class Parser is MultipleLineParser[Passport]
+class Parser is MultipleItemParser[Passport]
   fun parse(lines: Array[String] val): Passport ? =>
     let fields = recover
       Iter[String](lines.values())

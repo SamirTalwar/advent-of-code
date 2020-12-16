@@ -17,7 +17,7 @@ actor Main
     let solution = Solution(orchestrator)
     orchestrator.start[Problem](collector, solution)
 
-class Parser is MultipleLineParser[Problem]
+class Parser is MultipleItemParser[Problem]
   fun parse(lines: Array[String] val): Problem ? =>
     let earliest_timestamp = lines(0)?.usize()?
     let bus_ids = recover

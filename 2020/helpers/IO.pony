@@ -15,13 +15,13 @@ interface tag Collector[Input: Any val]
 
   be ready(solve: Solve[Input])
 
-trait LineParser[Input]
-  fun parse(line: String): Input ?
+trait SingleItemParser[Input]
+  fun parse(item: String): Input ?
 
-trait MultipleLineParser[Input]
-  fun parse(lines: Array[String] val): Input ?
+trait MultipleItemParser[Input]
+  fun parse(items: Array[String] val): Input ?
 
-trait CellParser[Input]
+trait CharacterParser[Input]
   fun parse(character: U8): Input ?
 
 interface tag Solve[Input: Any val]
@@ -68,10 +68,10 @@ class Notify[Input: Any val] is InputNotify
 
 actor OneShotCollector[T: Any val] is Collector[T]
   let _escape: Escape tag
-  let _parser: MultipleLineParser[T]
+  let _parser: MultipleItemParser[T]
   var _lines: Array[String val] iso
 
-  new create(escape: Escape tag, parser: MultipleLineParser[T] iso) =>
+  new create(escape: Escape tag, parser: MultipleItemParser[T] iso) =>
     _escape = escape
     _parser = consume parser
     _lines = recover Array[String val] end
@@ -89,11 +89,11 @@ actor OneShotCollector[T: Any val] is Collector[T]
 
 actor LineCollector[T: Any val] is Collector[Array[T] val]
   let _escape: Escape tag
-  let _parser: LineParser[T]
+  let _parser: SingleItemParser[T]
   var _items: Array[T] iso
   var _failed: Bool = false
 
-  new create(escape: Escape tag, parser: LineParser[T] iso) =>
+  new create(escape: Escape tag, parser: SingleItemParser[T] iso) =>
     _escape = escape
     _parser = consume parser
     _items = recover Array[T] end
@@ -115,12 +115,12 @@ actor LineCollector[T: Any val] is Collector[Array[T] val]
 
 actor MultipleLineCollector[T: Any val] is Collector[Array[T] val]
   let _escape: Escape tag
-  let _parser: MultipleLineParser[T]
+  let _parser: MultipleItemParser[T]
   var _items: Array[T] iso
   var _current: Array[String] iso
   var _failed: Bool = false
 
-  new create(escape: Escape tag, parser: MultipleLineParser[T] iso) =>
+  new create(escape: Escape tag, parser: MultipleItemParser[T] iso) =>
     _escape = escape
     _parser = consume parser
     _items = recover Array[T] end
@@ -155,11 +155,11 @@ actor MultipleLineCollector[T: Any val] is Collector[Array[T] val]
 
 actor GridCollector[T: Any val] is Collector[Array[Array[T] val] val]
   let _escape: Escape tag
-  let _parser: CellParser[T]
+  let _parser: CharacterParser[T]
   var _grid: Array[Array[T] val] iso
   var _failed: Bool = false
 
-  new create(escape: Escape tag, parser: CellParser[T] iso) =>
+  new create(escape: Escape tag, parser: CharacterParser[T] iso) =>
     _escape = escape
     _parser = consume parser
     _grid = recover Array[Array[T] val] end

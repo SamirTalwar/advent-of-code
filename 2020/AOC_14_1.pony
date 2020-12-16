@@ -31,7 +31,7 @@ actor Main
       orchestrator.fail("Could not construct the parser.")
     end
 
-class Parser is LineParser[(Mask | Write)]
+class Parser is SingleItemParser[(Mask | Write)]
   let _mask_parser: Regex val = recover val Regex("^mask = ([01X]+)$")? end
   let _mem_parser: Regex val = recover val Regex("^mem\\[(\\d+)\\] = (\\d+)$")? end
 

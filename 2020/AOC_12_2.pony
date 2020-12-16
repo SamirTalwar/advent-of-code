@@ -49,7 +49,7 @@ actor Main
     let solution = Solution(orchestrator)
     orchestrator.start[Array[Instruction] val](collector, solution)
 
-class Parser is LineParser[Instruction]
+class Parser is SingleItemParser[Instruction]
   fun parse(line: String): Instruction ? =>
     let action = match line(0)?
     | 'N' => North

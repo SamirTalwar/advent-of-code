@@ -5,7 +5,7 @@ actor Main
     let solution = Solution(orchestrator)
     orchestrator.start[Array[USize] val](collector, solution)
 
-class Parser is LineParser[USize]
+class Parser is SingleItemParser[USize]
   fun parse(line: String): USize ? =>
     line.usize()?
 

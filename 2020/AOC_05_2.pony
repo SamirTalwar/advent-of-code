@@ -23,7 +23,7 @@ actor Main
     let solution = Solution(orchestrator)
     orchestrator.start[Array[BoardingPass] val](collector, solution)
 
-class Parser is LineParser[BoardingPass]
+class Parser is SingleItemParser[BoardingPass]
   fun parse(line: String): BoardingPass ? =>
     let row = find('F', 'B', line.substring(0, 7))?
     let column = find('L', 'R', line.substring(7, 10))?

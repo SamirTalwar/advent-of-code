@@ -33,7 +33,7 @@ actor Main
     let solution = Solution(orchestrator)
     orchestrator.start[Array[Password] val](collector, solution)
 
-class Parser is LineParser[Password val]
+class Parser is SingleItemParser[Password val]
   fun parse(line: String): Password ? =>
     let parser: Regex val = recover Regex("^(\\d+)-(\\d+) ([a-z]): ([a-z]+)$")? end
     let parsed = parser(line)?

@@ -62,7 +62,7 @@ actor Main
     let solution = Solution(orchestrator)
     orchestrator.start[Array[Instruction] val](collector, solution)
 
-class Parser is LineParser[Instruction]
+class Parser is SingleItemParser[Instruction]
   fun parse(line: String): Instruction ? =>
     let split = line.split_by(" ")
     if split.size() == 2 then

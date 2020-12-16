@@ -37,7 +37,7 @@ actor Main
       orchestrator.fail("Could not construct the parser.")
     end
 
-class Parser is LineParser[LuggageRule]
+class Parser is SingleItemParser[LuggageRule]
   let _root_parser: Regex val = recover val Regex("^(.+) contain (.+)\\.")? end
   let _container_parser: Regex val = recover val Regex("^([a-z ]+) bags$")? end
   let _contained_none_parser: Regex val = recover val Regex("^no other bags$")? end

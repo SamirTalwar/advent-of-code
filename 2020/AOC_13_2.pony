@@ -26,7 +26,7 @@ actor Main
     let solution = Solution(orchestrator)
     orchestrator.start[Problem](collector, solution)
 
-class Parser is MultipleLineParser[Problem]
+class Parser is MultipleItemParser[Problem]
   fun parse(lines: Array[String] val): Problem ? =>
     recover
       Iter[String](lines(1)?.split_by(",").values())

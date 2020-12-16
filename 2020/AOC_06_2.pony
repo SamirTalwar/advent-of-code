@@ -23,7 +23,7 @@ actor Main
     let solution = Solution(orchestrator)
     orchestrator.start[Array[CustomsDeclarationForm] val](collector, solution)
 
-class Parser is MultipleLineParser[CustomsDeclarationForm]
+class Parser is MultipleItemParser[CustomsDeclarationForm]
   fun parse(lines: Array[String] val): CustomsDeclarationForm =>
     let people = recover
       Iter[String](lines.values())
