@@ -77,6 +77,7 @@ elif [[ -e "${year}/${name}.pony" ]]; then
     cd $temp_src
     new_hash=$(find . -type f | sort | xargs sha256sum | sha256sum)
     if [[ $current_hash != $new_hash ]]; then
+      rm -f $hash_file
       corral run -- ponyc --output=${output_directory} >&2
       echo $new_hash > $hash_file
     fi
