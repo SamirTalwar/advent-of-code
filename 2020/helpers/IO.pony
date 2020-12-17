@@ -1,6 +1,5 @@
 use "buffered"
-use collections = "collections"
-use "itertools"
+use collections = "collections/persistent"
 
 interface Answer
   be answer(value: Stringable val)
@@ -69,18 +68,18 @@ class Notify[Input: Any val] is InputNotify
 actor OneShotCollector[T: Any val] is Collector[T]
   let _escape: Escape tag
   let _parser: MultipleItemParser[T]
-  var _lines: Array[String val] iso
+  var _lines: Array[String] iso
 
   new create(escape: Escape tag, parser: MultipleItemParser[T] iso) =>
     _escape = escape
     _parser = consume parser
-    _lines = recover Array[String val] end
+    _lines = recover Array[String] end
 
   be gather(line: String) =>
     _lines.push(consume line)
 
   be ready(solve: Solve[T]) =>
-    let lines: Array[String val] val = _lines = recover Array[String val] end
+    let lines: Array[String] val = _lines = recover Array[String val] end
     try
       solve(_parser.parse(lines)?)
     else
@@ -192,32 +191,31 @@ actor MultipleLineCollector[T: Any val] is Collector[Array[T] val]
       solve(items)
     end
 
-actor GridCollector[T: Any val] is Collector[Array[Array[T] val] val]
+actor GridCollector[T: Any val] is Collector[collections.Vec[collections.Vec[T]]]
   let _escape: Escape tag
   let _parser: CharacterParser[T]
-  var _grid: Array[Array[T] val] iso
+  var _grid: collections.Vec[collections.Vec[T]]
   var _failed: Bool = false
 
   new create(escape: Escape tag, parser: CharacterParser[T] iso) =>
     _escape = escape
     _parser = consume parser
-    _grid = recover Array[Array[T] val] end
+    _grid = collections.Vec[collections.Vec[T]]
 
   be gather(line: String) =>
-    let row = recover iso Array[T] end
+    var row = collections.Vec[T]
     for character in line.values() do
       try
-        let item: T val = _parser.parse(character) ?
-        row.push(consume item)
+        let item: T = _parser.parse(character) ?
+        row = row.push(item)
       else
         _escape.fail("Invalid character: " + String.from_array([character]))
         _failed = true
       end
     end
-    _grid.push(recover consume row end)
+    _grid = _grid.push(row)
 
-  be ready(solve: Solve[Array[Array[T] val] val]) =>
+  be ready(solve: Solve[collections.Vec[collections.Vec[T]]]) =>
     if not _failed then
-      let grid: Array[Array[T] val] iso = _grid = recover Array[Array[T] val] end
-      solve(recover consume grid end)
+      solve(_grid)
     end

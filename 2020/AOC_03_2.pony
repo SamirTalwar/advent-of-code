@@ -1,10 +1,11 @@
+use "collections/persistent"
 use "itertools"
 
 primitive Open
 primitive Tree
 type Square is (Open | Tree)
-type Row is Array[Square] val
-type Grid is Array[Row] val
+type Row is Vec[Square]
+type Grid is Vec[Row]
 
 class val Position
   let x: USize
@@ -25,7 +26,7 @@ class val Slope
   fun increment(position: Position): Position =>
     Position(position.x + x, position.y + y)
 
-class Map
+class AreaMap
   let grid: Grid
 
   new create(grid': Grid) =>
@@ -68,7 +69,7 @@ actor Solution is Solve[Grid]
 
   be apply(rows: Grid) =>
     let row_count = rows.size()
-    let map = Map(rows)
+    let map = AreaMap(rows)
     var trees: USize = 1
     try
       for slope in _slopes.values() do

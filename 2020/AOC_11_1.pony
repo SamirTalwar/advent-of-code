@@ -1,4 +1,5 @@
 use collections = "collections"
+use "collections/persistent"
 use "itertools"
 
 primitive Floor
@@ -6,15 +7,15 @@ primitive Empty
 primitive Occupied
 type Cell is (Floor | Empty | Occupied)
 
-type Row is Array[Cell] val
-type Grid is Array[Row] val
+type Row is Vec[Cell]
+type Grid is Vec[Row]
 
 actor Main
   new create(env: Env) =>
     let orchestrator = Orchestrator(env)
     let collector = GridCollector[Cell](orchestrator, Parser)
     let solution = Solution(orchestrator)
-    orchestrator.start[Array[Array[Cell] val] val](collector, solution)
+    orchestrator.start[Grid](collector, solution)
 
 class Parser is CharacterParser[Cell]
   fun parse(character: U8): Cell ? =>
@@ -25,7 +26,7 @@ class Parser is CharacterParser[Cell]
     else error
     end
 
-actor Solution is Solve[Array[Array[Cell] val] val]
+actor Solution is Solve[Grid]
   let _answer: (Answer tag & Escape tag)
 
   new create(answer: (Answer tag & Escape tag)) =>
@@ -44,15 +45,15 @@ actor Solution is Solve[Array[Array[Cell] val] val]
     end
 
   fun step(grid: Grid): Grid ? =>
-    let new_grid = recover iso Array[Array[Cell] val] end
+    var new_grid = Grid
     for y in collections.Range(0, grid.size()) do
       let row = grid(y)?
-      let new_row = recover iso Array[Cell] end
+      var new_row = Row
       for x in collections.Range(0, row.size()) do
         let cell = row(x)?
         match cell
         | Floor =>
-          new_row.push(cell)
+          new_row = new_row.push(cell)
         else
           let neighbor_count = count_neighbors(x, y, grid)?
           let new_cell = match neighbor_count
@@ -60,12 +61,12 @@ actor Solution is Solve[Array[Array[Cell] val] val]
           | let count: USize if count >= 4 => Empty
           else cell
           end
-          new_row.push(consume new_cell)
+          new_row = new_row.push(new_cell)
         end
       end
-      new_grid.push(consume new_row)
+      new_grid = new_grid.push(new_row)
     end
-    recover consume new_grid end
+    new_grid
 
   fun count_neighbors(x: USize, y: USize, grid: Grid): USize ? =>
     var count: USize = 0
