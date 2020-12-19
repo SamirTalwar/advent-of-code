@@ -64,21 +64,26 @@ if [[ -e "${year}/${name}.hs" ]]; then
 elif [[ -e "${year}/${name}.pl" ]]; then
   executable=(swipl -s prolog/packs.pl "${year}/${name}.pl")
 elif [[ -e "${year}/${name}.pony" ]]; then
+  executable="${output_directory}/${name}"
+  if $optimize; then
+    compilation_args=()
+  else
+    compilation_args=(--debug)
+  fi
   temp_src_root="${TMPDIR:-/tmp}/advent-of-code/${year}"
   trap 'rm -rf $temp_src_root' EXIT
   temp_src="${temp_src_root}/${name}"
   mkdir -p $temp_src
-  executable="${output_directory}/${name}"
   (cd $year && cp -R "${name}.pony" helpers/*.pony corral.json lock.json _corral _repos $temp_src)
   output_directory="${PWD}/${output_directory}"
   hash_file="${output_directory}/${name}.input-hash"
   current_hash=$([[ -e $hash_file ]] && cat $hash_file || :)
   (
     cd $temp_src
-    new_hash=$(find . -type f | sort | xargs sha256sum | sha256sum)
+    new_hash=$((echo $compilation_args; find . -type f | sort | xargs sha256sum) | sha256sum)
     if [[ $current_hash != $new_hash ]]; then
       rm -f $hash_file
-      corral run -- ponyc --output=${output_directory} >&2
+      corral run -- ponyc $compilation_args --output=${output_directory} >&2
       echo $new_hash > $hash_file
     fi
     rm -rf $temp_src_root
