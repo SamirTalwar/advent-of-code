@@ -7,6 +7,12 @@ type FieldValue is USize
 type Ticket is Vec[FieldValue]
 type Tickets is Vec[Ticket]
 
+primitive TicketParser
+  fun parse(line: String): Ticket =>
+    ToVec[USize].from_iter(
+    Iter[String](line.split_by(",").values())
+    .map[USize]({ (field_string) ? => field_string.usize()? }))
+
 class val FieldRange
   let start_inclusive: USize
   let end_inclusive: USize
@@ -37,92 +43,75 @@ class val Puzzle
 actor Main
   new create(env: Env) =>
     let orchestrator = Orchestrator(env)
-    let collector = PuzzleCollector(orchestrator)
+    let collector = SplitCollector3[FieldRules, Ticket, Tickets, Puzzle](
+      orchestrator,
+      FieldRulesCollector(orchestrator),
+      MyTicketCollector(orchestrator),
+      NearbyTicketsCollector(orchestrator),
+      { (field_rules, my_ticket, nearby_tickets) => Puzzle(field_rules, my_ticket, nearby_tickets) }
+    )
     let solution = Solution(orchestrator)
     orchestrator.start[Puzzle](collector, solution)
 
-primitive FieldRulesMode
-primitive MyTicketMode
-primitive NearbyTicketsMode
-primitive DoneMode
-type CollectorMode is (FieldRulesMode | MyTicketMode | NearbyTicketsMode | DoneMode)
-
-actor PuzzleCollector is Collector[Puzzle]
+actor FieldRulesCollector is Collector[FieldRules]
   let _escape: Escape tag
-  var _mode: CollectorMode = FieldRulesMode
-  var _expecting_header: Bool = false
   var _field_rules: FieldRules = recover FieldRules end
-  var _my_ticket: (Ticket | None) = None
-  var _nearby_tickets: Tickets = recover Tickets end
   var _failed: Bool = false
 
   new create(escape: Escape tag) =>
     _escape = escape
 
   be gather(line: String) =>
+    try
+      let split_by_colon = line.split_by(": ")
+      let field_name = split_by_colon(0)?
+      let field_ranges = recover
+        ToVec[FieldRange].from_iter(
+          Iter[String](split_by_colon(1)?.split_by(" or ").values())
+            .map[FieldRange]({ (string) ? =>
+              let split = string.split_by("-")
+              FieldRange(split(0)?.usize()?, split(1)?.usize()?)
+            }))
+      end
+      _field_rules = (_field_rules(field_name) = field_ranges)
+    else
+      _failed = true
+      _escape.fail("Failure while parsing field rules:\n" + line)
+    end
+
+  be ready(solve: Solve[FieldRules]) =>
     if not _failed then
-      match _mode
-      | FieldRulesMode =>
-        if line == "" then
-          _mode = MyTicketMode
-          _expecting_header = true
-        else
-          try
-            let split_by_colon = line.split_by(": ")
-            let field_name = split_by_colon(0)?
-            let field_ranges = recover
-              ToVec[FieldRange].from_iter(
-                Iter[String](split_by_colon(1)?.split_by(" or ").values())
-                  .map[FieldRange]({ (string) ? =>
-                    let split = string.split_by("-")
-                    FieldRange(split(0)?.usize()?, split(1)?.usize()?)
-                  }))
-            end
-            _field_rules = (_field_rules(field_name) = field_ranges)
-          else
-            _failed = true
-            _escape.fail("Failure while parsing field rules:\n" + line)
-          end
-        end
-      | MyTicketMode =>
-        if line == "" then
-          _mode = NearbyTicketsMode
-          _expecting_header = true
-        elseif _expecting_header then
-          _check_for_header(line)
-        else
-          if _my_ticket is None then
-            _my_ticket = _parse_ticket(line)
-          else
-            _failed = true
-            _escape.fail("Expected the next section, but got:\n" + line)
-          end
-        end
-      | NearbyTicketsMode =>
-        if line == "" then
-          _mode = DoneMode
-        elseif _expecting_header then
-          _check_for_header(line)
-        else
-          _nearby_tickets = _nearby_tickets.push(_parse_ticket(line))
-        end
-      | DoneMode =>
+      solve(_field_rules)
+    end
+
+actor MyTicketCollector is Collector[Ticket]
+  let _escape: Escape tag
+  var _expecting_header: Bool = true
+  var _my_ticket: (Ticket | None) = None
+  var _failed: Bool = false
+
+  new create(escape: Escape tag) =>
+    _escape = escape
+
+  be gather(line: String) =>
+    if _expecting_header then
+      _check_for_header(line)
+    else
+      if _my_ticket is None then
+        _my_ticket = TicketParser.parse(line)
+      else
         _failed = true
-        _escape.fail("Thought I was done, but encountered:\n" + line)
+        _escape.fail("Expected the next section, but got:\n" + line)
       end
     end
 
-  be ready(solve: Solve[Puzzle]) =>
+  be ready(solve: Solve[Ticket]) =>
     if not _failed then
       match _my_ticket
       | None =>
         _escape.fail("My ticket was not found.")
       | let my_ticket: Ticket =>
-        solve(Puzzle(
-          _field_rules,
-          my_ticket,
-          _nearby_tickets
-        ))
+        solve(my_ticket)
       end
     end
 
@@ -133,10 +122,33 @@ actor PuzzleCollector is Collector[Puzzle]
     end
     _expecting_header = false
 
-  fun ref _parse_ticket(line: String): Ticket =>
-    ToVec[USize].from_iter(
-      Iter[String](line.split_by(",").values())
-        .map[USize]({ (field_string) ? => field_string.usize()? }))
+actor NearbyTicketsCollector is Collector[Tickets]
+  let _escape: Escape tag
+  var _expecting_header: Bool = true
+  var _nearby_tickets: Tickets = recover Tickets end
+  var _failed: Bool = false
+
+  new create(escape: Escape tag) =>
+    _escape = escape
+
+  be gather(line: String) =>
+    if _expecting_header then
+      _check_for_header(line)
+    else
+      _nearby_tickets = _nearby_tickets.push(TicketParser.parse(line))
+    end
+
+  be ready(solve: Solve[Tickets]) =>
+    if not _failed then
+      solve(_nearby_tickets)
+    end
+
+  fun ref _check_for_header(line: String) =>
+    if try line(line.size() - 1)? != ':' else true end then
+      _failed = true
+      _escape.fail("Expected a header, but got:\n" + line)
+    end
+    _expecting_header = false
 
 actor Solution is Solve[Puzzle]
   let _answer: (Answer tag & Escape tag)

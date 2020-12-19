@@ -219,3 +219,104 @@ actor GridCollector[T: Any val] is Collector[collections.Vec[collections.Vec[T]]
     if not _failed then
       solve(_grid)
     end
+
+actor SplitCollector2[A: Any val, B: Any val, C: Any val] is Collector[C]
+  let _escape: Escape tag
+  let _collector_a: Collector[A]
+  let _collector_b: Collector[B]
+  let _build: { (A, B): C } val
+  var _mode: USize = 0
+  var _failed: Bool = false
+
+  new create(
+    escape: Escape tag,
+    collector_a: Collector[A],
+    collector_b: Collector[B],
+    build: { (A, B): C } val
+  ) =>
+    _escape = escape
+    _collector_a = collector_a
+    _collector_b = collector_b
+    _build = build
+
+  be gather(line: String) =>
+    if line == "" then
+      _mode = _mode + 1
+    else
+      match _mode
+      | 0 => _collector_a.gather(line)
+      | 1 => _collector_b.gather(line)
+      else
+        _failed = true
+        _escape.fail("Extra line found: " + line)
+      end
+    end
+
+  be ready(solve: Solve[C]) =>
+    if not _failed then
+      _collector_a.ready(object is Solve[A]
+        be apply(a: A) =>
+          let build' = _build
+          let solve' = solve
+          _collector_b.ready(object is Solve[B]
+            be apply(b: B) =>
+              solve'(build'(a, b))
+          end)
+      end)
+    end
+
+actor SplitCollector3[A: Any val, B: Any val, C: Any val, D: Any val] is Collector[D]
+  let _escape: Escape tag
+  let _collector_a: Collector[A]
+  let _collector_b: Collector[B]
+  let _collector_c: Collector[C]
+  let _build: { (A, B, C): D } val
+  var _mode: USize = 0
+  var _failed: Bool = false
+
+  new create(
+    escape: Escape tag,
+    collector_a: Collector[A],
+    collector_b: Collector[B],
+    collector_c: Collector[C],
+    build: { (A, B, C): D } val
+  ) =>
+    _escape = escape
+    _collector_a = collector_a
+    _collector_b = collector_b
+    _collector_c = collector_c
+    _build = build
+
+  be gather(line: String) =>
+    if line == "" then
+      _mode = _mode + 1
+    else
+      match _mode
+      | 0 => _collector_a.gather(line)
+      | 1 => _collector_b.gather(line)
+      | 2 => _collector_c.gather(line)
+      else
+        _failed = true
+        _escape.fail("Extra line found: " + line)
+      end
+    end
+
+  be ready(solve: Solve[D]) =>
+    if not _failed then
+      _collector_a.ready(object is Solve[A]
+        be apply(a: A) =>
+          let build' = _build
+          let solve' = solve
+          let collector_c' = _collector_c
+          _collector_b.ready(object is Solve[B]
+            be apply(b: B) =>
+              let build'' = build'
+              let solve'' = solve'
+              let a' = a
+              collector_c'.ready(object is Solve[C]
+                be apply(c: C) =>
+                  solve''(build''(a', b, c))
+              end)
+          end)
+      end)
+    end
