@@ -37,33 +37,58 @@ actor Main
 
 class Parser is SingleItemParser[Expression]
   fun parse(line: String): Expression ? =>
-    // We reverse the line so we can cheat and use a left-biased parser.
-    (let expression, let remainder) = _parse_sub_expression(line.reverse())?
+    (let expression, let remainder) = _parse_sub_expression(line)?
     if remainder.size() > 0 then
       error
     end
     expression
 
   fun _parse_sub_expression(string: String): (Expression, String) ? =>
-    // The string is backwards, so it's right before left.
-    (let right: Expression, let remainder: String) =
-      // And ')' before '('.
-      if string(0)? == ')' then
-        _parse_sub_expression(string.substring(1))?
+    let tokens = Array[(Num | Operator | Operation)]
+    var remainder = string
+    while true do
+      if (remainder.size() == 0) then
+        break
       else
-        _parse_number(string)?
+        match remainder(0)?
+        | ' ' =>
+          remainder = remainder.substring(1)
+        | '(' =>
+          (let expr, remainder) = _parse_sub_expression(remainder.substring(1))?
+          tokens.push(expr)
+        | ')' =>
+          remainder = remainder.substring(1)
+          break
+        | let c: U8 if (c >= '0') and (c <= '9') =>
+          (let number, remainder) = _parse_number(remainder)?
+          tokens.push(number)
+        else
+          (let operator, remainder) = _parse_operator(remainder)?
+          tokens.push(operator)
+        end
       end
-    if (remainder.size() == 0) then
-      (right, remainder)
-    elseif (remainder(0)? == '(') then
-      let remainder' = remainder.substring(1)
-      remainder'.strip()
-      (right, remainder')
-    else
-      (let operator, let remainder') = _parse_operator(remainder)?
-      (let left, let remainder'') = _parse_sub_expression(remainder')?
-      (Operation(left, operator, right), remainder'')
     end
+
+    if tokens.size() == 0 then
+      error
+    end
+
+    var expression = match tokens.shift()?
+    | let expr: Expression => expr
+    else error
+    end
+    for i in collections.Range(0, tokens.size() where inc = 2) do
+      let operator = match tokens(i)?
+      | let operator: Operator => operator
+      else error
+      end
+      let right = match tokens(i + 1)?
+      | let expr: Expression => expr
+      else error
+      end
+      expression = Operation(expression, operator, right)
+    end
+    (expression, remainder)
 
   fun _parse_number(string: String): (Num, String) ? =>
     let offset = try
@@ -77,8 +102,7 @@ class Parser is SingleItemParser[Expression]
     if offset == 0 then
       error
     end
-    // We reverse because the string is backwards.
-    let number = string.substring(0, offset.isize()).reverse().isize()?
+    let number = string.substring(0, offset.isize()).isize()?
     let remainder = string.substring(offset.isize())
     remainder.strip()
     (number, remainder)
