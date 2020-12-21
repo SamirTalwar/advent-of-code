@@ -1,8 +1,6 @@
 { pkgs ? import <nixpkgs> { } }:
-
-with pkgs;
 let
-  ghc = haskellPackages.ghcWithPackages (
+  ghc = pkgs.haskellPackages.ghcWithPackages (
     ps: with ps; [
       aeson
       array
@@ -17,7 +15,9 @@ let
       text
     ]
   );
+  swiProlog = import ./nix/swi-prolog { inherit pkgs; };
 in
+with pkgs;
 stdenv.mkDerivation {
   name = "advent-of-code";
 
@@ -27,7 +27,7 @@ stdenv.mkDerivation {
     ghc
     pony-corral
     ponyc
-    pcre2  # used by the Pony regex library
+    pcre2 # used by the Pony regex library
     python3
     rls
     rustPlatform.rust.rustc

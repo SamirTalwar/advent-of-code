@@ -62,7 +62,7 @@ if [[ -e "${year}/${name}.hs" ]]; then
     -hidir $output_directory \
     "${year}/${name}.hs"
 elif [[ -e "${year}/${name}.pl" ]]; then
-  executable=(swipl -s prolog/packs.pl "${year}/${name}.pl")
+  executable=(swipl "${year}/${name}.pl")
 elif [[ -e "${year}/${name}.pony" ]]; then
   executable="${output_directory}/${name}"
   if $optimize; then
