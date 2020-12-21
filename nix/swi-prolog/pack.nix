@@ -10,7 +10,8 @@ pkgs.stdenv.mkDerivation {
   buildInputs = [pkgs.swiProlog];
 
   buildPhase = ''
-    echo ":- pack_install('file://$src', [package_directory('$out'), silent(true), interactive(false)]), halt." | tee install_pack.pl
+    echo ":- pack_install('file://$src', [package_directory('$out'), silent(true), interactive(false)]), halt." > install_pack.pl
+    echo ":- halt(1)." >> install_pack.pl
   '';
 
   installPhase = ''
