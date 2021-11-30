@@ -1,0 +1,71 @@
+#!/usr/bin/env nix-shell
+#!nix-shell -i python3 -p python3Packages.pyquery
+
+import os
+import sys
+from collections import namedtuple
+from datetime import datetime, timedelta, timezone
+from urllib.request import Request, urlopen
+
+from pyquery import PyQuery
+
+Day = namedtuple('Day', ['year', 'day'])
+
+EST = timezone(offset=timedelta(hours=-5), name='EST')
+now = datetime.now(tz=EST)
+
+last_day = 25
+earliest = Day(year=2015, day=1)
+latest = Day(year=now.year, day=min(last_day, now.day)) if now.month == 12 \
+    else Day(year=now.year - 1, day=last_day)
+
+if 'SESSION_KEY' not in os.environ:
+    print('You must set the SESSION_KEY environment variable.', file=sys.stderr)
+    sys.exit(1)
+
+def download(year, day):
+    if day == last_day:
+        filenames = [f'{year}/AOC_{day:02}.answer']
+    else:
+        filenames = [f'{year}/AOC_{day:02}_1.answer', f'{year}/AOC_{day:02}_2.answer']
+    if all(os.path.exists(filename) for filename in filenames):
+        return
+
+    print(f'Downloading {year}/{day:02}...', file=sys.stderr)
+    doc = PyQuery(
+        url=Request(
+            f'https://adventofcode.com/{year}/day/{day}',
+            headers={
+            'Cookie': f'session={os.environ["SESSION_KEY"]}',
+            },
+        )
+    )
+    answer_ps = doc(".day-desc + p")
+    for filename, answer_p in zip(filenames, answer_ps.items()):
+        answer = answer_p.find('code').eq(0).text()
+        if answer:
+            try:
+                with open(filename, 'x') as f:
+                    print(answer, file=f)
+                print(f'Downloaded {filename}.', file=sys.stderr)
+            except FileExistsError:
+                pass
+            except:
+                os.remove(filename)
+                raise
+        else:
+            print(f'No answer available yet for {filename}.')
+
+arg_count = len(sys.argv)
+if arg_count == 3:
+    days = [(int(sys.argv[1]), int(sys.argv[2]))]
+elif arg_count == 1:
+    days = [(year, day) for year in range(earliest.year, latest.year)
+                        for day in range(earliest.day, last_day + 1)] \
+         + [(latest.year, day) for day in range(earliest.day, latest.day + 1)]
+else:
+    print("Expected 0 or 2 arguments.", file=sys.stderr)
+    sys.exit(2)
+
+for year, day in days:
+    download(year, day)

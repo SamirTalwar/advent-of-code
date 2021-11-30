@@ -2,6 +2,7 @@
 .envrc.local
 build
 *.input
+*.answer
 
 # Prolog
 prolog/packs
