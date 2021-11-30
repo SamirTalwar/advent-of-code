@@ -77,7 +77,17 @@ elif [[ -e "${year}/${name}.pony" ]]; then
   trap 'rm -rf $temp_src_root' EXIT
   temp_src="${temp_src_root}/${name}"
   mkdir -p $temp_src
-  (cd $year && cp -R "${name}.pony" helpers/*.pony corral.json lock.json _corral _repos $temp_src)
+  (
+    cd $year
+    files=(helpers/*.pony corral.json lock.json)
+    if [[ -e _corral ]]; then
+      files+=(_corral)
+    fi
+    if [[ -e _repos ]]; then
+      files+=(_repos)
+    fi
+    cp -R "${name}.pony" $files $temp_src
+  )
   output_directory="${PWD}/${output_directory}"
   hash_file="${output_directory}/${name}.input-hash"
   current_hash=$([[ -e $hash_file ]] && cat $hash_file || :)

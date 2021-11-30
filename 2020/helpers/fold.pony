@@ -4,7 +4,7 @@ class Fold[A :A]
   new create(iterator: Iterator[A]) =>
     _iterator = iterator
 
-  fun ref through1(default: A, accumulate: { (A!, A!): A^ }): A =>
+  fun ref through1(default: A, accumulate: { (A!, A!): A^ }): A! =>
     try
       var accumulator = _iterator.next()?
       for value in _iterator do

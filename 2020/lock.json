@@ -1,7 +1,8 @@
 {
   "locks": [
     {
-      "locator": "github.com/ponylang/regex.git"
+      "locator": "github.com/ponylang/regex.git",
+      "revision": "main"
     }
   ]
 }
