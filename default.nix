@@ -25,6 +25,7 @@ stdenv.mkDerivation {
     cargo
     ctags
     ghc
+    haskell-language-server
     pony-corral
     ponyc
     pcre2 # used by the Pony regex library
