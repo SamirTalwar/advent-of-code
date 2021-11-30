@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import           Control.Monad (mapM_)
+import Control.Monad (mapM_)
 import qualified Data.Char as Char
-import           Data.Text (Text)
+import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as IO
 
@@ -19,16 +19,15 @@ main = do
 decode :: Text -> [[Movement]]
 decode = map (map decode' . Text.unpack) . Text.splitOn "\n" . Text.strip
   where
-  decode' 'U' = MoveUp
-  decode' 'R' = MoveRight
-  decode' 'D' = MoveDown
-  decode' 'L' = MoveLeft
+    decode' 'U' = MoveUp
+    decode' 'R' = MoveRight
+    decode' 'D' = MoveDown
+    decode' 'L' = MoveLeft
 
 solve :: Key -> [Movement] -> Key
 solve = foldl $ flip move
 
 move :: Movement -> Key -> Key
-
 move MoveUp '1' = '1'
 move MoveUp '2' = '2'
 move MoveUp '3' = '1'
@@ -42,7 +41,6 @@ move MoveUp 'A' = '6'
 move MoveUp 'B' = '7'
 move MoveUp 'C' = '8'
 move MoveUp 'D' = 'B'
-
 move MoveRight '1' = '1'
 move MoveRight '2' = '3'
 move MoveRight '3' = '4'
@@ -56,7 +54,6 @@ move MoveRight 'A' = 'B'
 move MoveRight 'B' = 'C'
 move MoveRight 'C' = 'C'
 move MoveRight 'D' = 'D'
-
 move MoveDown '1' = '3'
 move MoveDown '2' = '6'
 move MoveDown '3' = '7'
@@ -70,7 +67,6 @@ move MoveDown 'A' = 'A'
 move MoveDown 'B' = 'D'
 move MoveDown 'C' = 'C'
 move MoveDown 'D' = 'D'
-
 move MoveLeft '1' = '1'
 move MoveLeft '2' = '2'
 move MoveLeft '3' = '2'

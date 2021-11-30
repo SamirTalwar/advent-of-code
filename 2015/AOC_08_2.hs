@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import qualified Data.Char as Char
-import           Data.Text (Text)
+import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as IO
 import qualified Numeric
@@ -18,6 +18,6 @@ main = do
 encode :: Text -> Text
 encode string = Text.concat ["\"", Text.concatMap encodeChar string, "\""]
   where
-  encodeChar '\\' = "\\\\"
-  encodeChar '"' = "\\\""
-  encodeChar char = Text.singleton char
+    encodeChar '\\' = "\\\\"
+    encodeChar '"' = "\\\""
+    encodeChar char = Text.singleton char

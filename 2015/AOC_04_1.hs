@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import qualified Crypto.Hash
-import           Data.ByteString (ByteString)
-import           Data.Text (Text)
+import Data.ByteString (ByteString)
+import Data.Text (Text)
 import qualified Data.Text as Text
-import           Data.Text.Encoding (decodeUtf8, encodeUtf8)
+import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import qualified Data.Text.IO as IO
 
 main = do
@@ -13,10 +13,10 @@ main = do
 
 mineAdventCoins :: Text -> (Int, Text)
 mineAdventCoins input =
-  head
-    $ filter (\(i, digest) -> Text.take 5 digest == "00000")
-    $ map (\i -> (i, hashText $ Text.append input $ Text.pack $ show i))
-    $ [1..]
+  head $
+    filter (\(i, digest) -> Text.take 5 digest == "00000") $
+      map (\i -> (i, hashText $ Text.append input $ Text.pack $ show i)) $
+        [1 ..]
 
 hashText :: Text -> Text
 hashText text = Text.pack $ show $ md5 $ encodeUtf8 text

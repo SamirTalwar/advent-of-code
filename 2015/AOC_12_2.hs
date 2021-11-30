@@ -16,7 +16,7 @@ filterNumbers (Bool _) = []
 filterNumbers (String _) = []
 filterNumbers (Number scientific) =
   let (Right integer) = Scientific.floatingOrInteger scientific
-  in [integer]
+   in [integer]
 filterNumbers (Array vector) = concatMap filterNumbers $ toList vector
 filterNumbers (Object hashMap)
   | (String "red") `elem` Map.elems hashMap = []

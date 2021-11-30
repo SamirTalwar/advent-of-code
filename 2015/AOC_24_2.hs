@@ -13,9 +13,9 @@ main = do
   print quantumEntanglement
 
 distribute :: [Int] -> [[Int]]
-distribute weights = concatMap (\i -> combinations i weights) [0..(length weights `div` compartments)]
+distribute weights = concatMap (\i -> combinations i weights) [0 .. (length weights `div` compartments)]
   where
-  sortedWeights = List.sortBy (flip compare) weights
+    sortedWeights = List.sortBy (flip compare) weights
 
 combinations :: Int -> [a] -> [[a]]
 combinations 0 _ = [[]]

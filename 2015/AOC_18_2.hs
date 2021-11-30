@@ -1,11 +1,13 @@
-import           Control.Monad (forM_)
-import           Data.Array
+import Control.Monad (forM_)
+import Data.Array
 import qualified Data.Char as Char
 import qualified Data.List as List
 
 data Light = On | Off
   deriving (Eq, Show)
+
 type Lights = Array Coordinates Light
+
 type Coordinates = (Int, Int)
 
 main = do
@@ -25,23 +27,24 @@ parseInput '#' = On
 step :: Lights -> Lights
 step lights = (array gridBounds $ map stepLight $ assocs lights) // cornersOn gridBounds
   where
-  stepLight this@(coordinates, state) = case switchedOnNeighbors coordinates of
-    2 -> (coordinates, state)
-    3 -> (coordinates, On)
-    _ -> (coordinates, Off)
-  switchedOnNeighbors coordinates = countSwitchedOn $ map (lights !) $ neighbours coordinates
-  neighbours (x, y) =
-    filter (inRange gridBounds) [
-      (x - 1, y - 1),
-      (x    , y - 1),
-      (x + 1, y - 1),
-      (x - 1, y    ),
-      (x + 1, y    ),
-      (x - 1, y + 1),
-      (x    , y + 1),
-      (x + 1, y + 1)
-    ]
-  gridBounds = bounds lights
+    stepLight this@(coordinates, state) = case switchedOnNeighbors coordinates of
+      2 -> (coordinates, state)
+      3 -> (coordinates, On)
+      _ -> (coordinates, Off)
+    switchedOnNeighbors coordinates = countSwitchedOn $ map (lights !) $ neighbours coordinates
+    neighbours (x, y) =
+      filter
+        (inRange gridBounds)
+        [ (x - 1, y - 1),
+          (x, y - 1),
+          (x + 1, y - 1),
+          (x - 1, y),
+          (x + 1, y),
+          (x - 1, y + 1),
+          (x, y + 1),
+          (x + 1, y + 1)
+        ]
+    gridBounds = bounds lights
 
 cornersOn :: (Coordinates, Coordinates) -> [(Coordinates, Light)]
 cornersOn ((startX, startY), (endX, endY)) =
@@ -62,4 +65,4 @@ printLights lights =
         On -> putStr "#"
     putStrLn ""
   where
-  gridBounds = bounds lights
+    gridBounds = bounds lights

@@ -6,12 +6,12 @@ main = do
 isNice :: String -> Bool
 isNice string = hasThreeVowels && containsDoubleLetter && doesNotContainNaughtyTuplets
   where
-  hasThreeVowels = length (filter (`elem` vowels) string) >= 3
-  containsDoubleLetter = any (uncurry (==)) $ stringInPairs
-  doesNotContainNaughtyTuplets = not $ any (`elem` naughtyTuplets) $ stringInPairs
-  stringInPairs = pairs string
-  vowels = "aeiou"
-  naughtyTuplets = [('a', 'b'), ('c', 'd'), ('p', 'q'), ('x', 'y')]
+    hasThreeVowels = length (filter (`elem` vowels) string) >= 3
+    containsDoubleLetter = any (uncurry (==)) $ stringInPairs
+    doesNotContainNaughtyTuplets = not $ any (`elem` naughtyTuplets) $ stringInPairs
+    stringInPairs = pairs string
+    vowels = "aeiou"
+    naughtyTuplets = [('a', 'b'), ('c', 'd'), ('p', 'q'), ('x', 'y')]
 
 pairs :: [a] -> [(a, a)]
 pairs [] = []

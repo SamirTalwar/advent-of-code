@@ -17,10 +17,10 @@ trim = takeWhile (not . Char.isSpace) . dropWhile Char.isSpace
 parseInput :: String -> [Direction]
 parseInput = map parseChar
   where
-  parseChar '^' = North
-  parseChar '>' = East
-  parseChar 'v' = South
-  parseChar '<' = West
+    parseChar '^' = North
+    parseChar '>' = East
+    parseChar 'v' = South
+    parseChar '<' = West
 
 apply :: Direction -> Coordinates -> Coordinates
 apply North (x, y) = (x, y + 1)

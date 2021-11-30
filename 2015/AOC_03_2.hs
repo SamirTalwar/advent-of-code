@@ -19,20 +19,20 @@ trim = takeWhile (not . Char.isSpace) . dropWhile Char.isSpace
 parseInput :: String -> [Direction]
 parseInput = map parseChar
   where
-  parseChar '^' = North
-  parseChar '>' = East
-  parseChar 'v' = South
-  parseChar '<' = West
+    parseChar '^' = North
+    parseChar '>' = East
+    parseChar 'v' = South
+    parseChar '<' = West
 
 alternate :: [a] -> ([a], [a])
 alternate [] = ([], [])
 alternate (x : xs) =
   let (as, bs) = alternate' xs
-  in (x : as, bs)
+   in (x : as, bs)
   where
-  alternate' (x : xs) =
-    let (as, bs) = alternate xs
-    in (as, x : bs)
+    alternate' (x : xs) =
+      let (as, bs) = alternate xs
+       in (as, x : bs)
 
 apply :: Direction -> Coordinates -> Coordinates
 apply North (x, y) = (x, y + 1)

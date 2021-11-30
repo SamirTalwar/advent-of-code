@@ -48,6 +48,7 @@ fi
 mkdir -p $output_directory
 
 if [[ -e "${year}/${name}.hs" ]]; then
+  file="${year}/${name}.hs"
   output_directory="${output_directory}/${name}"
   executable="${output_directory}/run"
   mkdir -p $output_directory
@@ -56,12 +57,13 @@ if [[ -e "${year}/${name}.hs" ]]; then
   else
     compilation_args=()
   fi
+  ormolu -i $file
   ghc \
     $compilation_args \
     -o $executable \
     -odir $output_directory \
     -hidir $output_directory \
-    "${year}/${name}.hs"
+    $file
 elif [[ -e "${year}/${name}.pl" ]]; then
   executable=(swipl "${year}/${name}.pl")
 elif [[ -e "${year}/${name}.pony" ]]; then

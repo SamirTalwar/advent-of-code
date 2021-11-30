@@ -1,7 +1,7 @@
-import           Crypto.Hash
+import Crypto.Hash
 import qualified Data.ByteString.Char8 as Char8
 import qualified Data.Char as Char
-import           Data.Ix (inRange)
+import Data.Ix (inRange)
 import qualified Data.List as List
 import qualified Data.Ord as Ord
 
@@ -36,12 +36,12 @@ solve passcode movements position
     direction <- validDirections
     solve passcode (movements ++ [direction]) (move position direction)
   where
-  validDirections = map fst $ filter snd $ zip directions openDoors
-  validDoors = map (inRange bounds . move position) directions
-  openDoors = zipWith (&&) validDoors (map openDoor $ take 4 $ show $ md5 (passcode ++ concatMap show movements))
-  openDoor c = c `elem` openDoorChars
-  openDoorChars :: [Char]
-  openDoorChars = "bcdef"
+    validDirections = map fst $ filter snd $ zip directions openDoors
+    validDoors = map (inRange bounds . move position) directions
+    openDoors = zipWith (&&) validDoors (map openDoor $ take 4 $ show $ md5 (passcode ++ concatMap show movements))
+    openDoor c = c `elem` openDoorChars
+    openDoorChars :: [Char]
+    openDoorChars = "bcdef"
 
 move :: Position -> Direction -> Position
 move (x, y) U = (x, y - 1)

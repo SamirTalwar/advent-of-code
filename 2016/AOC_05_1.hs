@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import           Control.Monad (mapM_)
+import Control.Monad (mapM_)
 import qualified Crypto.Hash
-import           Data.ByteString (ByteString)
+import Data.ByteString (ByteString)
 import qualified Data.Text as Text
-import           Data.Text.Encoding (decodeUtf8, encodeUtf8)
+import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import qualified Data.Text.IO as IO
 
 main = do
@@ -12,7 +12,7 @@ main = do
   IO.putStrLn $ crackPassword doorId
 
 crackPassword doorId =
-  [0..]
+  [0 ..]
     |> map (\i -> hashText (doorId `Text.append` (Text.pack $ show i)))
     |> filter (\digest -> Text.take 5 digest == "00000")
     |> map (\digest -> Text.index digest 5)

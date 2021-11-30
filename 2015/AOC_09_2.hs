@@ -1,17 +1,19 @@
-import           Data.Foldable (toList)
+import Data.Foldable (toList)
 import qualified Data.List as List
-import           Data.Map.Strict (Map)
+import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
-import           Data.Text (Text)
+import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as IO
-import           Text.Parsec
-import           Text.Parsec.Text
+import Text.Parsec
+import Text.Parsec.Text
 
 type Distance = ((Location, Location), Int)
+
 type Distances = Map (Location, Location) Int
+
 newtype Location = Location String
   deriving (Eq, Ord, Show)
 
@@ -25,15 +27,15 @@ main = do
 parseInput :: Text -> Distance
 parseInput text = either (error . show) id $ parse parser "" text
   where
-  parser = do
-    from <- location
-    string " to "
-    to <- location
-    string " = "
-    distance <- number
-    return $ (sortTuple (from, to), distance)
-  location = Location <$> many1 letter
-  number = read <$> many1 digit
+    parser = do
+      from <- location
+      string " to "
+      to <- location
+      string " = "
+      distance <- number
+      return $ (sortTuple (from, to), distance)
+    location = Location <$> many1 letter
+    number = read <$> many1 digit
 
 solve :: Distances -> [[(Location, Location)]] -> [[Int]]
 solve distances =

@@ -1,12 +1,11 @@
-import           Data.Text (Text)
+import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as IO
-import           Text.Parsec
-import           Text.Parsec.Text
+import Text.Parsec
+import Text.Parsec.Text
 
-data Ingredient =
-  Ingredient {
-    name :: String,
+data Ingredient = Ingredient
+  { name :: String,
     capacity :: Int,
     durability :: Int,
     flavor :: Int,
@@ -29,42 +28,42 @@ main = do
 parseInput :: Text -> Ingredient
 parseInput text = either (error . show) id $ parse parser "" text
   where
-  parser = do
-    name <- many1 letter
-    string ": capacity "
-    capacity <- number
-    string ", durability "
-    durability <- number
-    string ", flavor "
-    flavor <- number
-    string ", texture "
-    texture <- number
-    string ", calories "
-    calories <- number
-    return $ Ingredient name capacity durability flavor texture calories
-  number = read <$> (many1 digit <|> ((:) <$> char '-' <*> many1 digit))
+    parser = do
+      name <- many1 letter
+      string ": capacity "
+      capacity <- number
+      string ", durability "
+      durability <- number
+      string ", flavor "
+      flavor <- number
+      string ", texture "
+      texture <- number
+      string ", calories "
+      calories <- number
+      return $ Ingredient name capacity durability flavor texture calories
+    number = read <$> (many1 digit <|> ((:) <$> char '-' <*> many1 digit))
 
 distribute :: Int -> Int -> [[Int]]
 distribute n 0 = [[]]
-distribute n length = concatMap (\i -> map (i :) $ distribute (n - i) (length - 1)) [0..n]
+distribute n length = concatMap (\i -> map (i :) $ distribute (n - i) (length - 1)) [0 .. n]
 
 score :: [(Int, Ingredient)] -> (Int, Int)
 score ingredients = multiply $ capAtZero $ foldr accumulateScore zeroIngredient ingredients
   where
-  multiply (Ingredient _ capacity durability flavor texture calories) =
-    (capacity * durability * flavor * texture, calories)
-  capAtZero ingredient =
-    ingredient {
-      capacity = max 0 (capacity ingredient),
-      durability = max 0 (durability ingredient),
-      flavor = max 0 (flavor ingredient),
-      texture = max 0 (texture ingredient)
-    }
-  accumulateScore (amount, ingredient) accumulator =
-    accumulator {
-      capacity = capacity accumulator + amount * capacity ingredient,
-      durability = durability accumulator + amount * durability ingredient,
-      flavor = flavor accumulator + amount * flavor ingredient,
-      texture = texture accumulator + amount * texture ingredient,
-      calories = calories accumulator + amount * calories ingredient
-    }
+    multiply (Ingredient _ capacity durability flavor texture calories) =
+      (capacity * durability * flavor * texture, calories)
+    capAtZero ingredient =
+      ingredient
+        { capacity = max 0 (capacity ingredient),
+          durability = max 0 (durability ingredient),
+          flavor = max 0 (flavor ingredient),
+          texture = max 0 (texture ingredient)
+        }
+    accumulateScore (amount, ingredient) accumulator =
+      accumulator
+        { capacity = capacity accumulator + amount * capacity ingredient,
+          durability = durability accumulator + amount * durability ingredient,
+          flavor = flavor accumulator + amount * flavor ingredient,
+          texture = texture accumulator + amount * texture ingredient,
+          calories = calories accumulator + amount * calories ingredient
+        }

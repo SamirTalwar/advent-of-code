@@ -17,6 +17,7 @@ decode "" = []
 decode ('L' : rest) = RotateLeft : decodeForward rest 0
 decode ('R' : rest) = RotateRight : decodeForward rest 0
 decode (' ' : rest) = decode rest
+
 decodeForward "" n = replicate n Forward
 decodeForward (char : rest) n
   | Char.isDigit char = decodeForward rest (n * 10 + Char.digitToInt char)

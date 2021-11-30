@@ -1,9 +1,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-import           Control.Monad (mapM_)
+import Control.Monad (mapM_)
 import qualified Data.List as List
 import qualified Data.Maybe as Maybe
-import           Text.Parsec
+import Text.Parsec
 
 data IP = IPv7 [String] [String]
   deriving (Eq)
@@ -19,15 +19,18 @@ parseIP :: String -> IP
 parseIP text = case parse parser "" text of
   Right ip -> ip
   where
-  parser = do
-    first <- many1 letter
-    (inners, outers) <- unzip <$> (many1 $ do
-      char '['
-      inner <- many1 letter
-      char ']'
-      outer <- many1 letter
-      return (inner, outer))
-    return $ IPv7 (first : outers) inners
+    parser = do
+      first <- many1 letter
+      (inners, outers) <-
+        unzip
+          <$> ( many1 $ do
+                  char '['
+                  inner <- many1 letter
+                  char ']'
+                  outer <- many1 letter
+                  return (inner, outer)
+              )
+      return $ IPv7 (first : outers) inners
 
 supportsTLS :: IP -> Bool
 supportsTLS (IPv7 outers inners) =
@@ -52,8 +55,8 @@ hasABA = any isABA . windows 3
 hasBAB :: String -> String -> Bool
 hasBAB aba = any (== bab) . windows 3
   where
-  [a, b, _] = aba
-  bab = [b, a, b]
+    [a, b, _] = aba
+    bab = [b, a, b]
 
 isABA :: String -> Bool
 isABA [a, b, c] = a /= b && a == c

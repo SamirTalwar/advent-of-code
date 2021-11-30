@@ -1,14 +1,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-import           Control.Monad (mapM_)
-import           Data.Text (Text)
+import Control.Monad (mapM_)
+import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as IO
-import           Text.Parsec
-import           Text.Parsec.Text
+import Text.Parsec
+import Text.Parsec.Text
 
-data CompressedText =
-    Uncompressed Int
+data CompressedText
+  = Uncompressed Int
   | Compressed Text Int
   deriving (Eq)
 
@@ -23,13 +23,13 @@ measureLength compressed@(Compressed text repetitions) = repetitions * sum (map 
 parseCompressed :: Text -> [CompressedText]
 parseCompressed text = either (error . show) id $ parse parser "" text
   where
-  parser = many $ try uncompressed <|> compressed
-  uncompressed = Uncompressed <$> length <$> many1 alphaNum
-  compressed = do
-    char '('
-    segmentLength :: Int <- read <$> many1 digit
-    char 'x'
-    repetitions :: Int <- read <$> many1 digit
-    char ')'
-    compressedText <- Text.pack <$> count segmentLength anyChar
-    return $ Compressed compressedText repetitions
+    parser = many $ try uncompressed <|> compressed
+    uncompressed = Uncompressed <$> length <$> many1 alphaNum
+    compressed = do
+      char '('
+      segmentLength :: Int <- read <$> many1 digit
+      char 'x'
+      repetitions :: Int <- read <$> many1 digit
+      char ')'
+      compressedText <- Text.pack <$> count segmentLength anyChar
+      return $ Compressed compressedText repetitions

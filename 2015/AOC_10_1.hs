@@ -12,4 +12,4 @@ lookAndSay :: String -> String
 lookAndSay "" = ""
 lookAndSay string@(n : _) = show (length match) ++ (n : lookAndSay rest)
   where
-  (match, rest) = span (== n) string
+    (match, rest) = span (== n) string
