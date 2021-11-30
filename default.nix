@@ -32,6 +32,7 @@ stdenv.mkDerivation {
     # Haskell
     ghc
     haskell-language-server
+    hlint
     ormolu
 
     # Pony

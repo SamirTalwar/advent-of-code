@@ -58,12 +58,14 @@ if [[ -e "${year}/${name}.hs" ]]; then
     compilation_args=()
   fi
   ormolu -i $file
+  hlint $file || :
   ghc \
     $compilation_args \
     -o $executable \
     -odir $output_directory \
     -hidir $output_directory \
     $file
+  echo >&2
 elif [[ -e "${year}/${name}.pl" ]]; then
   executable=(swipl "${year}/${name}.pl")
 elif [[ -e "${year}/${name}.pony" ]]; then
