@@ -1,4 +1,4 @@
-struct ElfCode {
+enum ElfCode {
     typealias Input = Int
 
     typealias Output = Registers.Address

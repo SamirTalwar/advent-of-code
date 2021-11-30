@@ -12,7 +12,7 @@ struct AStar<T> where T: Hashable {
     let costEstimate: (T, T) -> Cost
 
     init(neighbors: @escaping (T) -> [T], costEstimate: @escaping (T, T) -> Cost) {
-        self.neighbors = { node in neighbors(node).map({ neighbor in (neighbor, 1) }) }
+        self.neighbors = { node in neighbors(node).map { neighbor in (neighbor, 1) } }
         self.costEstimate = costEstimate
     }
 
@@ -28,7 +28,7 @@ struct AStar<T> where T: Hashable {
         var costFromStart: [T: Cost] = [start: 0]
         var estimatedCostToEnd: [T: Cost] = [start: costEstimate(start, end)]
 
-        while let current = openSet.min(by: comparing({ node in estimatedCostToEnd[node] ?? Cost.max })) {
+        while let current = openSet.min(by: comparing { node in estimatedCostToEnd[node] ?? Cost.max }) {
             if current == end {
                 let route = AStar.reconstructRoute(to: current, cameFrom: cameFrom)
                 let cost = costFromStart[current]!
