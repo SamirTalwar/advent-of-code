@@ -7,6 +7,10 @@ from collections import namedtuple
 from datetime import datetime, timedelta, timezone
 from urllib.request import Request, urlopen
 
+if 'SESSION_KEY' not in os.environ:
+   print('You must set the SESSION_KEY environment variable.', file=sys.stderr)
+   sys.exit(1)
+
 Day = namedtuple('Day', ['year', 'day'])
 
 EST = timezone(offset=timedelta(hours=-5), name='EST')
@@ -17,9 +21,10 @@ earliest = Day(year=2015, day=1)
 latest = Day(year=now.year, day=min(last_day, now.day)) if now.month == 12 \
     else Day(year=now.year - 1, day=last_day)
 
-if 'SESSION_KEY' not in os.environ:
-    print('You must set the SESSION_KEY environment variable.', file=sys.stderr)
-    sys.exit(1)
+def all_days():
+return [(year, day) for year in range(earliest.year, latest.year)
+        for day in range(earliest.day, last_day + 1)] \
+          + [(latest.year, day) for day in range(earliest.day, latest.day + 1)]
 
 def download(year, day):
     filename = f'{year}/AOC_{day:02}.input'
@@ -44,10 +49,11 @@ def download(year, day):
 arg_count = len(sys.argv)
 if arg_count == 3:
     days = [(int(sys.argv[1]), int(sys.argv[2]))]
-elif arg_count == 1:
-    days = [(year, day) for year in range(earliest.year, latest.year)
-                        for day in range(earliest.day, last_day + 1)] \
-         + [(latest.year, day) for day in range(earliest.day, latest.day + 1)]
+   elif arg_count == 2:
+        year = int(sys.argv[1])
+        days = ((y, d) for (y, d) in all_days() if y == year)
+   elif arg_count == 1:
+        days = all_days()
 else:
     print("Expected 0 or 2 arguments.", file=sys.stderr)
     sys.exit(2)
