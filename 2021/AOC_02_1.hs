@@ -1,17 +1,17 @@
+{-# OPTIONS -Wall #-}
 {-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as IO
 import Text.Parsec
-import Text.Parsec.Text
 
 data Command = Forward Int | Down Int | Up Int
   deriving (Show)
 
 data Position = Position {horizontal :: Int, depth :: Int}
 
+main :: IO ()
 main = do
   commands <- map parseInput . Text.lines <$> IO.getContents
   let Position {horizontal, depth} = foldl move initialPosition commands
@@ -34,6 +34,6 @@ parseInput = either (error . show) id . parse parser ""
         try (string "forward" >> pure Forward)
           <|> try (string "down" >> pure Down)
           <|> try (string "up" >> pure Up)
-      many1 space
+      _ <- many1 space
       amount <- read <$> many1 digit
       return $ constructor amount
