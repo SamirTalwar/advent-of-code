@@ -12,6 +12,7 @@ let
       lens
       parsec
       scientific
+      split
       text
     ]
   );
