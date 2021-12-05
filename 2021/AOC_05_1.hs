@@ -1,9 +1,6 @@
 {-# OPTIONS -Wall #-}
 
 import qualified Data.Map as Map
-import Data.Text (Text)
-import qualified Data.Text as Text
-import qualified Data.Text.IO as IO
 import Helpers.Applicative
 import Helpers.Map
 import Helpers.Parse
@@ -17,7 +14,7 @@ data Line = Line Coordinate Coordinate
 
 main :: IO ()
 main = do
-  input <- map parseInput . Text.lines <$> IO.getContents
+  input <- parseInput
   let validLines = filter (isHorizontal <||> isVertical) input
   let allCoordinates = concatMap allCoordinatesInLine validLines
   let counts = countValues allCoordinates
@@ -35,8 +32,8 @@ isHorizontal (Line (Coordinate x1 _) (Coordinate x2 _)) = x1 == x2
 isVertical :: Line -> Bool
 isVertical (Line (Coordinate _ y1) (Coordinate _ y2)) = y1 == y2
 
-parseInput :: Text -> Line
-parseInput = parseText line
+parseInput :: IO [Line]
+parseInput = parseLinesIO line
   where
     line = Line <$> coordinate <*> (string " -> " *> coordinate)
     coordinate = Coordinate <$> int <*> (string "," *> int)

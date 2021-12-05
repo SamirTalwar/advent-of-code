@@ -1,9 +1,6 @@
 {-# OPTIONS -Wall #-}
 
 import qualified Data.Map as Map
-import Data.Text (Text)
-import qualified Data.Text as Text
-import qualified Data.Text.IO as IO
 import Helpers.Map
 import Helpers.Parse
 import Text.Parsec hiding (Line)
@@ -16,7 +13,7 @@ data Line = Line Coordinate Coordinate
 
 main :: IO ()
 main = do
-  input <- map parseInput . Text.lines <$> IO.getContents
+  input <- parseInput
   let allCoordinates = concatMap allCoordinatesInLine input
   let counts = countValues allCoordinates
   print $ Map.size $ Map.filter (> 1) counts
@@ -30,8 +27,8 @@ allCoordinatesInLine (Line (Coordinate x1 y1) (Coordinate x2 y2))
         ys = if y1 <= y2 then [y1 .. y2] else reverse [y2 .. y1]
      in zipWith Coordinate xs ys
 
-parseInput :: Text -> Line
-parseInput = parseText line
+parseInput :: IO [Line]
+parseInput = parseLinesIO line
   where
     line = Line <$> coordinate <*> (string " -> " *> coordinate)
     coordinate = Coordinate <$> int <*> (string "," *> int)

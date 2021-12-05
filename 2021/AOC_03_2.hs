@@ -1,9 +1,6 @@
 {-# OPTIONS -Wall #-}
 
 import qualified Data.List as List
-import Data.Text (Text)
-import qualified Data.Text as Text
-import qualified Data.Text.IO as IO
 import Helpers.Parse
 import Text.Parsec
 
@@ -12,7 +9,7 @@ data Bit = Off | On
 
 main :: IO ()
 main = do
-  report <- map parseInput . filter (not . Text.null) . Text.lines <$> IO.getContents
+  report <- parseInput
   let oxygenGeneratorRating = locateValue mostCommon report
   let co2ScrubberRating = locateValue leastCommon report
   let answer = binaryToInt oxygenGeneratorRating * binaryToInt co2ScrubberRating
@@ -51,5 +48,5 @@ flipBit :: Bit -> Bit
 flipBit Off = On
 flipBit On = Off
 
-parseInput :: Text -> [Bit]
-parseInput = parseText $ many1 $ try (char '0' >> pure Off) <|> try (char '1' >> pure On)
+parseInput :: IO [[Bit]]
+parseInput = parseLinesIO $ many1 $ try (char '0' >> pure Off) <|> try (char '1' >> pure On)

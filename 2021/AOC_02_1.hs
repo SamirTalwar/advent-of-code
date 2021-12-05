@@ -1,9 +1,6 @@
 {-# OPTIONS -Wall #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
-import Data.Text (Text)
-import qualified Data.Text as Text
-import qualified Data.Text.IO as IO
 import Helpers.Parse
 import Text.Parsec
 
@@ -14,7 +11,7 @@ data Position = Position {horizontal :: Int, depth :: Int}
 
 main :: IO ()
 main = do
-  commands <- map parseInput . Text.lines <$> IO.getContents
+  commands <- parseInput
   let Position {horizontal, depth} = foldl move initialPosition commands
   let answer = horizontal * depth
   print answer
@@ -27,8 +24,8 @@ move position (Forward n) = position {horizontal = horizontal position + n}
 move position (Up n) = position {depth = depth position - n}
 move position (Down n) = position {depth = depth position + n}
 
-parseInput :: Text -> Command
-parseInput = parseText $ do
+parseInput :: IO [Command]
+parseInput = parseLinesIO $ do
   constructor <-
     try (string "forward" >> pure Forward)
       <|> try (string "down" >> pure Down)
