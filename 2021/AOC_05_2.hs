@@ -1,10 +1,10 @@
 {-# OPTIONS -Wall #-}
 
-import qualified Data.List as List
 import qualified Data.Map as Map
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as IO
+import Helpers.Map
 import Helpers.Parse
 import Text.Parsec hiding (Line)
 
@@ -18,9 +18,8 @@ main :: IO ()
 main = do
   input <- map parseInput . Text.lines <$> IO.getContents
   let allCoordinates = concatMap allCoordinatesInLine input
-  let counts = List.foldl' (\cs coordinate -> Map.insertWith (+) coordinate (1 :: Int) cs) Map.empty allCoordinates
+  let counts = countValues allCoordinates
   print $ Map.size $ Map.filter (> 1) counts
-  return ()
 
 allCoordinatesInLine :: Line -> [Coordinate]
 allCoordinatesInLine (Line (Coordinate x1 y1) (Coordinate x2 y2))
