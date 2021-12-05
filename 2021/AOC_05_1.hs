@@ -1,11 +1,12 @@
 {-# OPTIONS -Wall #-}
 
-import Control.Applicative (liftA2)
 import qualified Data.List as List
 import qualified Data.Map as Map
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as IO
+import Helpers.Applicative
+import Helpers.Parse
 import Text.Parsec hiding (Line)
 
 data Coordinate = Coordinate Int Int
@@ -36,11 +37,7 @@ isVertical :: Line -> Bool
 isVertical (Line (Coordinate _ y1) (Coordinate _ y2)) = y1 == y2
 
 parseInput :: Text -> Line
-parseInput = either (error . show) id . parse parser ""
+parseInput = parseText line
   where
-    parser = Line <$> coordinate <*> (string " -> " *> coordinate)
+    line = Line <$> coordinate <*> (string " -> " *> coordinate)
     coordinate = Coordinate <$> int <*> (string "," *> int)
-    int = read <$> many1 digit
-
-(<||>) :: Applicative f => f Bool -> f Bool -> f Bool
-(<||>) = liftA2 (||)

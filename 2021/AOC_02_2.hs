@@ -4,6 +4,7 @@
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as IO
+import Helpers.Parse
 import Text.Parsec
 
 data Command = Forward Int | Down Int | Up Int
@@ -32,13 +33,11 @@ move position (Up n) = position {aim = aim position - n}
 move position (Down n) = position {aim = aim position + n}
 
 parseInput :: Text -> Command
-parseInput = either (error . show) id . parse parser ""
-  where
-    parser = do
-      constructor <-
-        try (string "forward" >> pure Forward)
-          <|> try (string "down" >> pure Down)
-          <|> try (string "up" >> pure Up)
-      _ <- many1 space
-      amount <- read <$> many1 digit
-      return $ constructor amount
+parseInput = parseText $ do
+  constructor <-
+    try (string "forward" >> pure Forward)
+      <|> try (string "down" >> pure Down)
+      <|> try (string "up" >> pure Up)
+  _ <- many1 space
+  amount <- read <$> many1 digit
+  return $ constructor amount

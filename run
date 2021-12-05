@@ -48,7 +48,10 @@ fi
 mkdir -p $output_directory
 
 if [[ -e "${year}/${name}.hs" ]]; then
-  file="${year}/${name}.hs"
+  files=("${year}/${name}.hs")
+  if [[ -d "${year}/Helpers" ]]; then
+    files+=(${year}/Helpers/*.hs)
+  fi
   output_directory="${output_directory}/${name}"
   executable="${output_directory}/run"
   mkdir -p $output_directory
@@ -56,14 +59,14 @@ if [[ -e "${year}/${name}.hs" ]]; then
   if $optimize; then
     compilation_args+=('-O2')
   fi
-  ormolu -i $file
-  hlint $file || :
+  ormolu -i $files
+  hlint $files || :
   ghc \
     $compilation_args \
     -o $executable \
     -odir $output_directory \
     -hidir $output_directory \
-    $file
+    $files
   echo >&2
 elif [[ -e "${year}/${name}.pl" ]]; then
   executable=(swipl "${year}/${name}.pl")

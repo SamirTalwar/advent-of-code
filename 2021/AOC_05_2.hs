@@ -5,6 +5,7 @@ import qualified Data.Map as Map
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as IO
+import Helpers.Parse
 import Text.Parsec hiding (Line)
 
 data Coordinate = Coordinate Int Int
@@ -31,8 +32,7 @@ allCoordinatesInLine (Line (Coordinate x1 y1) (Coordinate x2 y2))
      in zipWith Coordinate xs ys
 
 parseInput :: Text -> Line
-parseInput = either (error . show) id . parse parser ""
+parseInput = parseText line
   where
-    parser = Line <$> coordinate <*> (string " -> " *> coordinate)
+    line = Line <$> coordinate <*> (string " -> " *> coordinate)
     coordinate = Coordinate <$> int <*> (string "," *> int)
-    int = read <$> many1 digit

@@ -4,6 +4,7 @@ import qualified Data.List as List
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as IO
+import Helpers.Parse
 import Text.Parsec
 
 data Bit = Off | On
@@ -51,7 +52,4 @@ flipBit Off = On
 flipBit On = Off
 
 parseInput :: Text -> [Bit]
-parseInput = either (error . show) id . parse parser ""
-  where
-    parser = many1 value
-    value = try (char '0' >> pure Off) <|> try (char '1' >> pure On)
+parseInput = parseText $ many1 $ try (char '0' >> pure Off) <|> try (char '1' >> pure On)
