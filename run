@@ -52,10 +52,9 @@ if [[ -e "${year}/${name}.hs" ]]; then
   output_directory="${output_directory}/${name}"
   executable="${output_directory}/run"
   mkdir -p $output_directory
+  compilation_args=('-Wall')
   if $optimize; then
-    compilation_args=('-O2')
-  else
-    compilation_args=()
+    compilation_args+=('-O2')
   fi
   ormolu -i $file
   hlint $file || :
