@@ -10,7 +10,7 @@ parseTextIO :: Parsec Text () a -> IO a
 parseTextIO parser = parseText parser <$> Text.IO.getContents
 
 parseText :: Parsec Text () a -> Text -> a
-parseText parser = either (error . show) id . parse (parser <* eof) ""
+parseText parser = either (error . show) id . parse (parser <* optional (string "\n") <* eof) ""
 
 parseLinesIO :: Parsec Text () a -> IO [a]
 parseLinesIO parser = parseLines parser <$> Text.IO.getContents
