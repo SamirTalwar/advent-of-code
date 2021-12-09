@@ -1,7 +1,5 @@
 {-# OPTIONS -Wall #-}
-{-# LANGUAGE OverloadedStrings #-}
 
-import Control.Monad (join)
 import qualified Data.List as List
 import qualified Data.List.Split as Split
 import qualified Data.Maybe as Maybe
@@ -20,7 +18,7 @@ main = do
   let draws = parseDraws $ head input
   let cards = map parseCards . filter (not . null) . Split.splitWhen Text.null $ tail input
   let (finalDraw, winningCard) = run draws cards
-  let unmarked = sum $ map (Maybe.fromMaybe 0) (join winningCard)
+  let unmarked = sum $ map (Maybe.fromMaybe 0) (concat winningCard)
   print $ finalDraw * unmarked
 
 run :: [Int] -> [Card] -> (Int, Card)
