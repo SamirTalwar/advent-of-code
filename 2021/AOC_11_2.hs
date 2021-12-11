@@ -22,7 +22,7 @@ step startingLevels = step' (succ <$> startingLevels) Set.empty
   where
     step' :: Grid Int -> Set (Int, Int) -> (Grid Int, Int)
     step' levels flashed =
-      let updatedFlashed = Set.fromList (Grid.coordinatesWhere (> 9) levels)
+      let updatedFlashed = Set.fromList (Grid.pointsWhere (> 9) levels)
           newFlashed = updatedFlashed Set.\\ flashed
        in if Set.size newFlashed == 0
             then
@@ -31,7 +31,7 @@ step startingLevels = step' (succ <$> startingLevels) Set.empty
             else
               let updates =
                     Set.toList newFlashed
-                      |> concatMap (`Grid.neighboringCoordinatesWithDiagonals` levels)
+                      |> concatMap (`Grid.neighboringPointsWithDiagonals` levels)
                       |> map (,1)
                       |> Map.fromListWith (+)
                       |> Map.toList

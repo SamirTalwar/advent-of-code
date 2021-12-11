@@ -12,11 +12,11 @@ module Helpers.Grid
     all,
     (//),
     updateWith,
-    allCoordinates,
-    coordinatesWhere,
+    allPoints,
+    pointsWhere,
     inBounds,
-    neighboringCoordinates,
-    neighboringCoordinatesWithDiagonals,
+    neighboringPoints,
+    neighboringPointsWithDiagonals,
     neighboringValues,
   )
 where
@@ -56,13 +56,13 @@ height :: Grid a -> Int
 height = succ . fst . snd . bounds . unGrid
 
 lookup :: [(Int, Int)] -> Grid a -> [a]
-lookup coordinates (Grid grid) = map ((grid Array.!) . Tuple.swap) coordinates
+lookup point (Grid grid) = map ((grid Array.!) . Tuple.swap) point
 
 (!) :: Grid a -> (Int, Int) -> a
-(!) grid coordinates = head $ lookup [coordinates] grid
+(!) grid point = head $ lookup [point] grid
 
 allValues :: Grid a -> [a]
-allValues grid = lookup (allCoordinates grid) grid
+allValues grid = lookup (allPoints grid) grid
 
 all :: (a -> Bool) -> Grid a -> Bool
 all predicate = List.all predicate . allValues
@@ -73,23 +73,23 @@ all predicate = List.all predicate . allValues
 updateWith :: (a -> a -> a) -> [((Int, Int), a)] -> Grid a -> Grid a
 updateWith f updates grid = grid // map (\(c, x) -> (c, f (grid ! c) x)) updates
 
-allCoordinates :: Grid a -> [(Int, Int)]
-allCoordinates = range . bounds . unGrid
+allPoints :: Grid a -> [(Int, Int)]
+allPoints = range . bounds . unGrid
 
-coordinatesWhere :: (a -> Bool) -> Grid a -> [(Int, Int)]
-coordinatesWhere predicate grid = filter (predicate . (grid !)) (allCoordinates grid)
+pointsWhere :: (a -> Bool) -> Grid a -> [(Int, Int)]
+pointsWhere predicate grid = filter (predicate . (grid !)) (allPoints grid)
 
 inBounds :: (Int, Int) -> Grid a -> Bool
-inBounds coordinates (Grid grid) = inRange (bounds grid) coordinates
+inBounds point (Grid grid) = inRange (bounds grid) point
 
-neighboringCoordinates :: (Int, Int) -> Grid a -> [(Int, Int)]
-neighboringCoordinates (x, y) grid =
+neighboringPoints :: (Int, Int) -> Grid a -> [(Int, Int)]
+neighboringPoints (x, y) grid =
   filter (`inBounds` grid) [(x, y - 1), (x - 1, y), (x, y + 1), (x + 1, y)]
 
-neighboringCoordinatesWithDiagonals :: (Int, Int) -> Grid a -> [(Int, Int)]
-neighboringCoordinatesWithDiagonals (x, y) grid =
+neighboringPointsWithDiagonals :: (Int, Int) -> Grid a -> [(Int, Int)]
+neighboringPointsWithDiagonals (x, y) grid =
   filter (`inBounds` grid) [(x - 1, y - 1), (x, y - 1), (x + 1, y - 1), (x - 1, y), (x + 1, y), (x - 1, y + 1), (x, y + 1), (x + 1, y + 1)]
 
 neighboringValues :: (Int, Int) -> Grid a -> [a]
-neighboringValues coordinates grid =
-  map (grid !) (neighboringCoordinates coordinates grid)
+neighboringValues point grid =
+  map (grid !) (neighboringPoints point grid)

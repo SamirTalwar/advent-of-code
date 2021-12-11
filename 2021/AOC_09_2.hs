@@ -18,21 +18,21 @@ main = do
 findLowestPoints :: Grid Int -> Set (Int, Int)
 findLowestPoints heightMap =
   Set.fromList
-    [ coordinates
-      | coordinates <- Grid.allCoordinates heightMap,
-        let value = heightMap ! coordinates
-         in all (value <) (Grid.neighboringValues coordinates heightMap)
+    [ points
+      | points <- Grid.allPoints heightMap,
+        let value = heightMap ! points
+         in all (value <) (Grid.neighboringValues points heightMap)
     ]
 
 findBasins :: Grid Int -> Set (Int, Int) -> [[(Int, Int)]]
 findBasins heightMap lowestPoints =
-  map snd $ Map.toList $ Map.delete Nothing $ Map.fromListWith (++) (map (\c -> (runToLowestPoint heightMap lowestPoints c, pure c)) (Grid.allCoordinates heightMap))
+  map snd $ Map.toList $ Map.delete Nothing $ Map.fromListWith (++) (map (\c -> (runToLowestPoint heightMap lowestPoints c, pure c)) (Grid.allPoints heightMap))
 
 runToLowestPoint :: Grid Int -> Set (Int, Int) -> (Int, Int) -> Maybe (Int, Int)
-runToLowestPoint heightMap lowestPoints coordinates
-  | heightMap ! coordinates == 9 = Nothing
-  | coordinates `Set.member` lowestPoints = Just coordinates
+runToLowestPoint heightMap lowestPoints points
+  | heightMap ! points == 9 = Nothing
+  | points `Set.member` lowestPoints = Just points
   | otherwise =
-    let value = heightMap ! coordinates
-     in List.find (\neighbor -> value > heightMap ! neighbor) (Grid.neighboringCoordinates coordinates heightMap)
+    let value = heightMap ! points
+     in List.find (\neighbor -> value > heightMap ! neighbor) (Grid.neighboringPoints points heightMap)
           >>= runToLowestPoint heightMap lowestPoints
