@@ -9,7 +9,7 @@ import qualified Helpers.Matrix as Matrix
 
 main :: IO ()
 main = do
-  heightMap <- Matrix.fromList . map (map (read . (: []))) . lines <$> getContents
+  heightMap <- Matrix.fromDigits <$> getContents
   let lowestPoints = findLowestPoints heightMap
   let basins = findBasins heightMap lowestPoints
   let basinSizes = reverse . List.sort $ map length basins

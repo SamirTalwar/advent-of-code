@@ -5,7 +5,7 @@ import qualified Helpers.Matrix as Matrix
 
 main :: IO ()
 main = do
-  heightMap <- Matrix.fromList . map (map (read . (: []))) . lines <$> getContents
+  heightMap <- Matrix.fromDigits <$> getContents
   let lowestPoints = findLowestPoints heightMap
   print $ sum $ map succ lowestPoints
 
