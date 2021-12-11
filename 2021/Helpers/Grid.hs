@@ -22,7 +22,7 @@ module Helpers.Grid
   )
 where
 
-import Data.Array hiding ((!), (//))
+import Data.Array (Array)
 import qualified Data.Array as Array
 import qualified Data.List as List
 import Helpers.Point (Point (..))
@@ -45,16 +45,16 @@ fromList [] = error "Empty grid."
 fromList rows =
   let w = length (head rows)
       h = length rows
-   in Grid (listArray (Point 0 0, Point (h - 1) (w - 1)) (concat rows))
+   in Grid (Array.listArray (Point 0 0, Point (h - 1) (w - 1)) (concat rows))
 
 fromDigits :: String -> Grid Int
 fromDigits = fromList . map (map (read . pure)) . lines
 
 width :: Grid a -> Int
-width = succ . pY . snd . bounds . unGrid
+width = succ . pY . snd . Array.bounds . unGrid
 
 height :: Grid a -> Int
-height = succ . pX . snd . bounds . unGrid
+height = succ . pX . snd . Array.bounds . unGrid
 
 lookup :: [Point] -> Grid a -> [a]
 lookup point (Grid grid) = map (grid Array.!) point
@@ -75,13 +75,13 @@ updateWith :: (a -> a -> a) -> [(Point, a)] -> Grid a -> Grid a
 updateWith f updates grid = grid // map (\(c, x) -> (c, f (grid ! c) x)) updates
 
 allPoints :: Grid a -> [Point]
-allPoints = range . bounds . unGrid
+allPoints = Array.range . Array.bounds . unGrid
 
 pointsWhere :: (a -> Bool) -> Grid a -> [Point]
 pointsWhere predicate grid = filter (predicate . (grid !)) (allPoints grid)
 
 inBounds :: Point -> Grid a -> Bool
-inBounds point (Grid grid) = inRange (bounds grid) point
+inBounds point (Grid grid) = Array.inRange (Array.bounds grid) point
 
 neighboringPoints :: Point -> Grid a -> [Point]
 neighboringPoints point grid =
