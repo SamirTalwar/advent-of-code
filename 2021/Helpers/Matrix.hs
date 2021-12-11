@@ -9,6 +9,7 @@ module Helpers.Matrix
     height,
     lookup,
     (!),
+    all,
     (//),
     updateWith,
     allCoordinates,
@@ -25,7 +26,7 @@ import qualified Data.Array as Array
 import qualified Data.Bifunctor as Bifunctor
 import qualified Data.List as List
 import qualified Data.Tuple as Tuple
-import Prelude hiding (lookup)
+import Prelude hiding (all, lookup)
 
 newtype Matrix a = Matrix {unMatrix :: Array (Int, Int) a}
 
@@ -59,6 +60,12 @@ lookup coordinates (Matrix matrix) = map ((matrix Array.!) . Tuple.swap) coordin
 
 (!) :: Matrix a -> (Int, Int) -> a
 (!) matrix coordinates = head $ lookup [coordinates] matrix
+
+allValues :: Matrix a -> [a]
+allValues matrix = lookup (allCoordinates matrix) matrix
+
+all :: (a -> Bool) -> Matrix a -> Bool
+all predicate = List.all predicate . allValues
 
 (//) :: Matrix a -> [((Int, Int), a)] -> Matrix a
 (//) (Matrix matrix) replacements = Matrix (matrix Array.// map (Bifunctor.first Tuple.swap) replacements)
