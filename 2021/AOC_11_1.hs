@@ -5,7 +5,7 @@ import qualified Data.Map.Lazy as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Helpers.Function
-import Helpers.Grid (Grid)
+import Helpers.Grid (Grid, Point)
 import qualified Helpers.Grid as Grid
 
 stepCount :: Int
@@ -21,7 +21,7 @@ main = do
 step :: Grid Int -> (Grid Int, Int)
 step startingLevels = step' (succ <$> startingLevels) Set.empty
   where
-    step' :: Grid Int -> Set (Int, Int) -> (Grid Int, Int)
+    step' :: Grid Int -> Set Point -> (Grid Int, Int)
     step' levels flashed =
       let updatedFlashed = Set.fromList (Grid.pointsWhere (> 9) levels)
           newFlashed = updatedFlashed Set.\\ flashed
