@@ -8,6 +8,8 @@ module Helpers.Point
 where
 
 import Data.Ix
+import Data.Set (Set)
+import qualified Data.Set as Set
 
 data Point = Point {pY :: Int, pX :: Int}
   deriving (Eq, Ord, Bounded, Ix)
@@ -18,27 +20,29 @@ instance Semigroup Point where
 instance Monoid Point where
   mempty = Point 0 0
 
-neighboringPoints :: Point -> [Point]
-neighboringPoints point = map (point <>) cardinalPoints
+neighboringPoints :: Point -> Set Point
+neighboringPoints point = Set.map (point <>) cardinalPoints
 
-neighboringPointsWithDiagonals :: Point -> [Point]
-neighboringPointsWithDiagonals point = map (point <>) pointsInAllDirections
+neighboringPointsWithDiagonals :: Point -> Set Point
+neighboringPointsWithDiagonals point = Set.map (point <>) pointsInAllDirections
 
-cardinalPoints :: [Point]
+cardinalPoints :: Set Point
 cardinalPoints =
-  [ Point (-1) 0,
-    Point 0 (-1),
-    Point 0 1,
-    Point 1 0
-  ]
+  Set.fromList
+    [ Point (-1) 0,
+      Point 0 (-1),
+      Point 0 1,
+      Point 1 0
+    ]
 
-diagonalPoints :: [Point]
+diagonalPoints :: Set Point
 diagonalPoints =
-  [ Point (-1) (-1),
-    Point (-1) 1,
-    Point 1 (-1),
-    Point 1 1
-  ]
+  Set.fromList
+    [ Point (-1) (-1),
+      Point (-1) 1,
+      Point 1 (-1),
+      Point 1 1
+    ]
 
-pointsInAllDirections :: [Point]
-pointsInAllDirections = cardinalPoints ++ diagonalPoints
+pointsInAllDirections :: Set Point
+pointsInAllDirections = cardinalPoints <> diagonalPoints

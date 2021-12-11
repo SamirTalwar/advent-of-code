@@ -1,9 +1,12 @@
 {-# OPTIONS -Wall #-}
+{-# LANGUAGE TupleSections #-}
 
 import qualified Data.List as List
 import qualified Data.Map.Lazy as Map
+import qualified Data.Maybe as Maybe
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Helpers.Function
 import Helpers.Grid (Grid, Point, (!))
 import qualified Helpers.Grid as Grid
 
@@ -19,14 +22,18 @@ findLowestPoints :: Grid Int -> Set Point
 findLowestPoints heightMap =
   Set.fromList
     [ points
-      | points <- Grid.allPoints heightMap,
+      | points <- Grid.allPointsList heightMap,
         let value = heightMap ! points
          in all (value <) (Grid.neighboringValues points heightMap)
     ]
 
 findBasins :: Grid Int -> Set Point -> [[Point]]
 findBasins heightMap lowestPoints =
-  map snd $ Map.toList $ Map.delete Nothing $ Map.fromListWith (++) (map (\c -> (runToLowestPoint heightMap lowestPoints c, pure c)) (Grid.allPoints heightMap))
+  Grid.allPointsList heightMap
+    |> concatMap (\c -> Maybe.maybeToList ((,pure c) <$> runToLowestPoint heightMap lowestPoints c))
+    |> Map.fromListWith (++)
+    |> Map.toList
+    |> map snd
 
 runToLowestPoint :: Grid Int -> Set Point -> Point -> Maybe Point
 runToLowestPoint heightMap lowestPoints points

@@ -12,7 +12,7 @@ main = do
 findLowestPoints :: Grid Int -> [Int]
 findLowestPoints heightMap =
   [ heightMap ! points
-    | points <- Grid.allPoints heightMap,
+    | points <- Grid.allPointsList heightMap,
       let value = heightMap ! points
        in all (value <) (Grid.neighboringValues points heightMap)
   ]
