@@ -1,18 +1,18 @@
 {-# OPTIONS -Wall #-}
 
-import Helpers.Matrix (Matrix, (!))
-import qualified Helpers.Matrix as Matrix
+import Helpers.Grid (Grid, (!))
+import qualified Helpers.Grid as Grid
 
 main :: IO ()
 main = do
-  heightMap <- Matrix.fromDigits <$> getContents
+  heightMap <- Grid.fromDigits <$> getContents
   let lowestPoints = findLowestPoints heightMap
   print $ sum $ map succ lowestPoints
 
-findLowestPoints :: Matrix Int -> [Int]
+findLowestPoints :: Grid Int -> [Int]
 findLowestPoints heightMap =
   [ heightMap ! coordinates
-    | coordinates <- Matrix.allCoordinates heightMap,
+    | coordinates <- Grid.allCoordinates heightMap,
       let value = heightMap ! coordinates
-       in all (value <) (Matrix.neighboringValues coordinates heightMap)
+       in all (value <) (Grid.neighboringValues coordinates heightMap)
   ]
