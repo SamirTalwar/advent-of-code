@@ -17,27 +17,27 @@ main :: IO ()
 main = do
   connectionList <- parseLinesIO parser
   let connections = Graph.undirectedGraph connectionList
-  let paths = findPaths connections
-  print $ length paths
+  let answer = countPaths connections
+  print answer
 
-findPaths :: Graph Cave -> [[Cave]]
-findPaths connections = findPaths' Start Set.empty False
+countPaths :: Graph Cave -> Int
+countPaths connections = countPaths' Set.empty False Start
   where
-    findPaths' :: Cave -> Set Cave -> Bool -> [[Cave]]
-    findPaths' End _ _ = [[End]]
-    findPaths' current forbidden visitedASmallCaveTwice = do
+    countPaths' :: Set Cave -> Bool -> Cave -> Int
+    countPaths' _ _ End = 1
+    countPaths' forbidden visitedASmallCaveTwice current =
       let potentialConnections = connections ! current
-      let allowedConnections = Set.toList (Set.difference potentialConnections forbidden)
-      let forbiddenConnections = filter isSmall (Set.toList (Set.intersection potentialConnections forbidden))
-      let newForbidden = case current of
+          allowedConnections = Set.toList (Set.difference potentialConnections forbidden)
+          forbiddenConnections = filter isSmall (Set.toList (Set.intersection potentialConnections forbidden))
+          newForbidden = case current of
             Big _ -> forbidden
             cave -> Set.insert cave forbidden
-      (nextCave, newVisitedASmallCaveTwice) <-
-        if visitedASmallCaveTwice
-          then map (,True) allowedConnections
-          else map (,False) allowedConnections ++ map (,True) forbiddenConnections
-      path <- findPaths' nextCave newForbidden newVisitedASmallCaveTwice
-      return (current : path)
+          next =
+            if visitedASmallCaveTwice
+              then map (,True) allowedConnections
+              else map (,False) allowedConnections ++ map (,True) forbiddenConnections
+          counts = map (\(nextCave, newVisitedASmallCaveTwice) -> countPaths' newForbidden newVisitedASmallCaveTwice nextCave) next
+       in sum counts
 
 parser :: Parsec Text () (Cave, Cave)
 parser = do

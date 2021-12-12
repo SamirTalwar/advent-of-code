@@ -16,20 +16,21 @@ main :: IO ()
 main = do
   connectionList <- parseLinesIO parser
   let connections = Graph.undirectedGraph connectionList
-  let paths = findPaths connections
-  print $ length paths
+  let answer = countPaths connections
+  print answer
 
-findPaths :: Graph Cave -> [[Cave]]
-findPaths connections = findPaths' Start Set.empty
+countPaths :: Graph Cave -> Int
+countPaths connections = countPaths' Set.empty Start
   where
-    findPaths' :: Cave -> Set Cave -> [[Cave]]
-    findPaths' End _ = [[End]]
-    findPaths' current forbidden =
-      let next = Set.toList (Set.difference (connections ! current) forbidden)
-          newForbidden = case current of
+    countPaths' :: Set Cave -> Cave -> Int
+    countPaths' _ End = 1
+    countPaths' forbidden current =
+      let newForbidden = case current of
             Big _ -> forbidden
             cave -> Set.insert cave forbidden
-       in map (current :) (concatMap (`findPaths'` newForbidden) next)
+          next = Set.toList (Set.difference (connections ! current) forbidden)
+          counts = map (countPaths' newForbidden) next
+       in sum counts
 
 parser :: Parsec Text () (Cave, Cave)
 parser = do
