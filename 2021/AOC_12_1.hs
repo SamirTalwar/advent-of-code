@@ -1,13 +1,11 @@
 {-# OPTIONS -Wall #-}
 
-import qualified Data.Bifunctor as Bifunctor
 import Data.Functor (($>))
-import Data.Map.Strict (Map, (!))
-import qualified Data.Map.Strict as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Text (Text)
-import qualified Data.Tuple as Tuple
+import Helpers.Graph (Graph, (!))
+import qualified Helpers.Graph as Graph
 import Helpers.Parse
 import Text.Parsec
 
@@ -17,14 +15,11 @@ data Cave = Start | End | Big String | Small String
 main :: IO ()
 main = do
   connectionList <- parseLinesIO parser
-  let connections = createConnectionMap connectionList
+  let connections = Graph.undirectedGraph connectionList
   let paths = findPaths connections
   print $ length paths
 
-createConnectionMap :: [(Cave, Cave)] -> Map Cave (Set Cave)
-createConnectionMap connections = Map.fromListWith (<>) (map (Bifunctor.second Set.singleton) (connections ++ map Tuple.swap connections))
-
-findPaths :: Map Cave (Set Cave) -> [[Cave]]
+findPaths :: Graph Cave -> [[Cave]]
 findPaths connections = findPaths' Start Set.empty
   where
     findPaths' :: Cave -> Set Cave -> [[Cave]]
