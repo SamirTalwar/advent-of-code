@@ -35,8 +35,7 @@ main = do
 
 foldPaper :: Grid Mark -> FoldInstruction -> Grid Mark
 foldPaper grid (FoldAlongX x) =
-  let maxY = Grid.height grid - 1
-      maxX = Grid.width grid - 1
+  let Point maxY maxX = snd $ Grid.bounds grid
       left =
         grid
           |> Grid.subGrid (Point 0 0) (Point maxY (pred x))
@@ -48,8 +47,7 @@ foldPaper grid (FoldAlongX x) =
           |> Grid.pointsWhere (== X)
    in Grid.fromPoints O (Map.fromSet (const X) (left `Set.union` right))
 foldPaper grid (FoldAlongY y) =
-  let maxY = Grid.height grid - 1
-      maxX = Grid.width grid - 1
+  let Point maxY maxX = snd $ Grid.bounds grid
       top =
         grid
           |> Grid.subGrid (Point 0 0) (Point (pred y) maxX)
@@ -81,11 +79,12 @@ parser = do
 
 parseGridText :: Grid Mark -> String
 parseGridText grid =
-  if Grid.width grid == 0
+  if null grid
     then []
     else
       let firstLetter = Grid.subGrid (Point 0 0) (Point 5 3) grid
-          rest = Grid.mapPoints (\(Point y x) -> Point y (x - 5)) $ Grid.subGrid (Point 0 5) (Point 5 (Grid.maxX grid)) grid
+          Point _ maxX = snd $ Grid.bounds grid
+          rest = Grid.mapPoints (\(Point y x) -> Point y (x - 5)) $ Grid.subGrid (Point 0 5) (Point 5 maxX) grid
        in parseGridLetter firstLetter : parseGridText rest
   where
     parseGridLetter :: Grid Mark -> Char

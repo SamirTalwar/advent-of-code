@@ -28,8 +28,7 @@ main = do
 
 foldPaper :: Grid Mark -> FoldInstruction -> Grid Mark
 foldPaper grid (FoldAlongX x) =
-  let maxY = Grid.height grid - 1
-      maxX = Grid.width grid - 1
+  let Point maxY maxX = snd $ Grid.bounds grid
       left =
         grid
           |> Grid.subGrid (Point 0 0) (Point maxY (pred x))
@@ -41,8 +40,7 @@ foldPaper grid (FoldAlongX x) =
           |> Grid.pointsWhere (== X)
    in Grid.fromPoints O (Map.fromSet (const X) (left `Set.union` right))
 foldPaper grid (FoldAlongY y) =
-  let maxY = Grid.height grid - 1
-      maxX = Grid.width grid - 1
+  let Point maxY maxX = snd $ Grid.bounds grid
       top =
         grid
           |> Grid.subGrid (Point 0 0) (Point (pred y) maxX)

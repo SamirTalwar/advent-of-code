@@ -6,12 +6,7 @@ module Helpers.Grid
     fromList,
     fromPoints,
     fromDigits,
-    width,
-    height,
-    minX,
-    maxX,
-    minY,
-    maxY,
+    bounds,
     lookup,
     (!),
     all,
@@ -50,7 +45,8 @@ data Grid a = DenseGrid (Array Point a) | SparseGrid Int Int a (Map Point a)
 
 instance Show a => Show (Grid a) where
   show grid =
-    List.intercalate "\n" $ map (\y -> unwords $ map (\x -> show (grid ! Point y x)) [0 .. (width grid - 1)]) [0 .. (height grid - 1)]
+    let (Point startY startX, Point endY endX) = bounds grid
+     in List.intercalate "\n" $ map (\y -> unwords $ map (\x -> show (grid ! Point y x)) [startX .. endX]) [startY .. endY]
 
 instance Eq a => Eq (Grid a) where
   DenseGrid valuesA == DenseGrid valuesB = valuesA == valuesB
@@ -62,16 +58,20 @@ instance Ord a => Ord (Grid a) where
   compare = compare `on` allValues
 
 instance Functor Grid where
-  fmap f (DenseGrid grid) = DenseGrid $ fmap f grid
+  fmap f (DenseGrid values) = DenseGrid $ fmap f values
   fmap f (SparseGrid h w defaultValue entries) = SparseGrid h w (f defaultValue) $ fmap f entries
+
+instance Foldable Grid where
+  foldMap f (DenseGrid values) = foldMap f values
+  foldMap f (SparseGrid _ _ _ entries) = foldMap f entries
 
 fromList :: [[a]] -> Grid a
 fromList [] = error "Empty grid."
 fromList rows =
   let w = length (head rows)
       h = length rows
-      bounds = (Point 0 0, Point (pred h) (pred w))
-   in DenseGrid (Array.listArray bounds (concat rows))
+      gridBounds = (Point 0 0, Point (pred h) (pred w))
+   in DenseGrid (Array.listArray gridBounds (concat rows))
 
 fromPoints :: a -> Map Point a -> Grid a
 fromPoints defaultValue entries =
@@ -86,33 +86,17 @@ fromPoints defaultValue entries =
 fromDigits :: String -> Grid Int
 fromDigits = fromList . map (map (read . pure)) . lines
 
-width :: Grid a -> Int
-width grid@(DenseGrid _) = maxX grid - minX grid + 1
-width (SparseGrid _ w _ _) = w
-
-height :: Grid a -> Int
-height grid@(DenseGrid _) = maxX grid - minX grid + 1
-height (SparseGrid h _ _ _) = h
-
-minX :: Grid a -> Int
-minX (DenseGrid grid) = pX $ fst $ Array.bounds grid
-minX (SparseGrid _ _ _ entries) = minimum $ map pX $ Map.keys entries
-
-maxX :: Grid a -> Int
-maxX (DenseGrid grid) = pX $ snd $ Array.bounds grid
-maxX (SparseGrid _ _ _ entries) = maximum $ map pX $ Map.keys entries
-
-minY :: Grid a -> Int
-minY (DenseGrid grid) = pY $ fst $ Array.bounds grid
-minY (SparseGrid _ _ _ entries) = minimum $ map pY $ Map.keys entries
-
-maxY :: Grid a -> Int
-maxY (DenseGrid grid) = pY $ snd $ Array.bounds grid
-maxY (SparseGrid _ _ _ entries) = maximum $ map pY $ Map.keys entries
+bounds :: Grid a -> (Point, Point)
+bounds (DenseGrid values) = Array.bounds values
+bounds (SparseGrid _ _ _ entries) =
+  let points = Map.keysSet entries
+      xs = Set.map pX points
+      ys = Set.map pY points
+   in (Point (Set.findMin ys) (Set.findMin xs), Point (Set.findMax ys) (Set.findMax xs))
 
 lookup :: Set Point -> Grid a -> [a]
-lookup points (DenseGrid grid) =
-  map (grid Array.!) (toList points)
+lookup points (DenseGrid values) =
+  map (values Array.!) (toList points)
 lookup points (SparseGrid _ _ defaultValue entries) =
   map (Maybe.fromMaybe defaultValue . (`Map.lookup` entries)) (toList points)
 
@@ -129,8 +113,8 @@ count :: (a -> Bool) -> Grid a -> Int
 count predicate = length . filter predicate . allValues
 
 (//) :: Grid a -> [(Point, a)] -> Grid a
-(//) (DenseGrid grid) replacements = DenseGrid (grid Array.// replacements)
-(//) (SparseGrid h w defaultValue grid) replacements = SparseGrid h w defaultValue (Map.fromList replacements `Map.union` grid)
+(//) (DenseGrid values) replacements = DenseGrid (values Array.// replacements)
+(//) (SparseGrid h w defaultValue entries) replacements = SparseGrid h w defaultValue (Map.fromList replacements `Map.union` entries)
 
 updateWith :: (a -> a -> a) -> Map Point a -> Grid a -> Grid a
 updateWith f updates grid = grid // map (\(c, x) -> (c, f (grid ! c) x)) (Map.toList updates)
@@ -138,7 +122,7 @@ updateWith f updates grid = grid // map (\(c, x) -> (c, f (grid ! c) x)) (Map.to
 subGrid :: Point -> Point -> Grid a -> Grid a
 subGrid start@(Point startY startX) end@(Point endY endX) grid@(DenseGrid values) =
   toList values
-    |> Split.chunksOf (width grid)
+    |> Split.chunksOf (let (Point _ minX, Point _ maxX) = bounds grid in maxX - minX + 1)
     |> drop startY
     |> take (endY - startY + 1)
     |> map (take (endX - startX + 1) . drop startX)
@@ -157,14 +141,14 @@ allPoints :: Grid a -> Set Point
 allPoints = Set.fromList . allPointsList
 
 allPointsList :: Grid a -> [Point]
-allPointsList (DenseGrid grid) = Array.range $ Array.bounds grid
+allPointsList (DenseGrid values) = Array.range $ Array.bounds values
 allPointsList (SparseGrid h w _ _) = Point.allPointsWithinBounds h w
 
 pointsWhere :: (a -> Bool) -> Grid a -> Set Point
 pointsWhere predicate grid = Set.filter (predicate . (grid !)) (allPoints grid)
 
 inBounds :: Point -> Grid a -> Bool
-inBounds point (DenseGrid grid) = Array.inRange (Array.bounds grid) point
+inBounds point (DenseGrid values) = Array.inRange (Array.bounds values) point
 inBounds (Point x y) (SparseGrid h w _ _) =
   x >= 0 && x < w && y >= 0 && y < h
 
