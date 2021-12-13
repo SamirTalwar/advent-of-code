@@ -14,6 +14,9 @@ import qualified Data.Set as Set
 data Point = Point {pY :: Int, pX :: Int}
   deriving (Eq, Ord, Bounded, Ix)
 
+instance Show Point where
+  show (Point y x) = "(" <> show x <> ", " <> show y <> ")"
+
 instance Semigroup Point where
   Point y1 x1 <> Point y2 x2 = Point (y1 + y2) (x1 + x2)
 

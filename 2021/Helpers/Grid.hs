@@ -34,7 +34,7 @@ import Helpers.Point (Point (..))
 import qualified Helpers.Point as Point
 import Prelude hiding (all, lookup)
 
-newtype Grid a = Grid {unGrid :: Array Point a}
+newtype Grid a = DenseGrid (Array Point a)
 
 instance Show a => Show (Grid a) where
   show grid =
@@ -43,26 +43,27 @@ instance Show a => Show (Grid a) where
 deriving instance Eq a => Eq (Grid a)
 
 instance Functor Grid where
-  fmap f = Grid . fmap f . unGrid
+  fmap f (DenseGrid grid) = DenseGrid $ fmap f grid
 
 fromList :: [[a]] -> Grid a
 fromList [] = error "Empty grid."
 fromList rows =
   let w = length (head rows)
       h = length rows
-   in Grid (Array.listArray (Point 0 0, Point (h - 1) (w - 1)) (concat rows))
+      bounds = (Point 0 0, Point (pred h) (pred w))
+   in DenseGrid (Array.listArray bounds (concat rows))
 
 fromDigits :: String -> Grid Int
 fromDigits = fromList . map (map (read . pure)) . lines
 
 width :: Grid a -> Int
-width = succ . pY . snd . Array.bounds . unGrid
+width (DenseGrid grid) = succ $ pY $ snd $ Array.bounds grid
 
 height :: Grid a -> Int
-height = succ . pX . snd . Array.bounds . unGrid
+height (DenseGrid grid) = succ $ pX $ snd $ Array.bounds grid
 
 lookup :: Set Point -> Grid a -> [a]
-lookup point (Grid grid) = map (grid Array.!) (Set.toList point)
+lookup point (DenseGrid grid) = map (grid Array.!) (Set.toList point)
 
 (!) :: Grid a -> Point -> a
 (!) grid point = head $ lookup (Set.singleton point) grid
@@ -74,7 +75,7 @@ all :: (a -> Bool) -> Grid a -> Bool
 all predicate = List.all predicate . allValues
 
 (//) :: Grid a -> [(Point, a)] -> Grid a
-(//) (Grid grid) replacements = Grid (grid Array.// replacements)
+(//) (DenseGrid grid) replacements = DenseGrid (grid Array.// replacements)
 
 updateWith :: (a -> a -> a) -> Map Point a -> Grid a -> Grid a
 updateWith f updates grid = grid // map (\(c, x) -> (c, f (grid ! c) x)) (Map.toList updates)
@@ -83,13 +84,13 @@ allPoints :: Grid a -> Set Point
 allPoints = Set.fromList . allPointsList
 
 allPointsList :: Grid a -> [Point]
-allPointsList = Array.range . Array.bounds . unGrid
+allPointsList (DenseGrid grid) = Array.range $ Array.bounds grid
 
 pointsWhere :: (a -> Bool) -> Grid a -> Set Point
 pointsWhere predicate grid = Set.filter (predicate . (grid !)) (allPoints grid)
 
 inBounds :: Point -> Grid a -> Bool
-inBounds point (Grid grid) = Array.inRange (Array.bounds grid) point
+inBounds point (DenseGrid grid) = Array.inRange (Array.bounds grid) point
 
 neighboringPoints :: Point -> Grid a -> Set Point
 neighboringPoints point grid =
