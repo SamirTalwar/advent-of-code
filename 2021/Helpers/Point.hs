@@ -2,6 +2,7 @@
 
 module Helpers.Point
   ( Point (..),
+    allPointsWithinBounds,
     neighboringPoints,
     neighboringPointsWithDiagonals,
   )
@@ -22,6 +23,9 @@ instance Semigroup Point where
 
 instance Monoid Point where
   mempty = Point 0 0
+
+allPointsWithinBounds :: Int -> Int -> [Point]
+allPointsWithinBounds h w = [Point y x | x <- [0 .. w - 1], y <- [0 .. h - 1]]
 
 neighboringPoints :: Point -> Set Point
 neighboringPoints point = Set.map (point <>) cardinalPoints
