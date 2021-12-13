@@ -1,5 +1,4 @@
 {-# OPTIONS -Wall #-}
-{-# LANGUAGE StandaloneDeriving #-}
 
 module Helpers.Grid
   ( Grid,
@@ -9,6 +8,10 @@ module Helpers.Grid
     fromDigits,
     width,
     height,
+    minX,
+    maxX,
+    minY,
+    maxY,
     lookup,
     (!),
     all,
@@ -30,6 +33,7 @@ where
 import Data.Array (Array)
 import qualified Data.Array as Array
 import Data.Foldable (toList)
+import Data.Function
 import qualified Data.List as List
 import qualified Data.List.Split as Split
 import Data.Map.Strict (Map)
@@ -48,7 +52,14 @@ instance Show a => Show (Grid a) where
   show grid =
     List.intercalate "\n" $ map (\y -> unwords $ map (\x -> show (grid ! Point y x)) [0 .. (width grid - 1)]) [0 .. (height grid - 1)]
 
-deriving instance Eq a => Eq (Grid a)
+instance Eq a => Eq (Grid a) where
+  DenseGrid valuesA == DenseGrid valuesB = valuesA == valuesB
+  SparseGrid _ _ _ entriesA == SparseGrid _ _ _ entriesB =
+    entriesA == entriesB
+  a == b = toSparse a == toSparse b
+
+instance Ord a => Ord (Grid a) where
+  compare = compare `on` allValues
 
 instance Functor Grid where
   fmap f (DenseGrid grid) = DenseGrid $ fmap f grid
@@ -64,21 +75,40 @@ fromList rows =
 
 fromPoints :: a -> Map Point a -> Grid a
 fromPoints defaultValue entries =
-  let pairs = Map.keys entries
-      h = succ $ maximum $ map pY pairs
-      w = succ $ maximum $ map pX pairs
-   in SparseGrid h w defaultValue entries
+  if Map.null entries
+    then SparseGrid 0 0 defaultValue entries
+    else
+      let pairs = Map.keys entries
+          h = succ $ maximum $ map pY pairs
+          w = succ $ maximum $ map pX pairs
+       in SparseGrid h w defaultValue entries
 
 fromDigits :: String -> Grid Int
 fromDigits = fromList . map (map (read . pure)) . lines
 
 width :: Grid a -> Int
-width (DenseGrid grid) = succ $ pY $ snd $ Array.bounds grid
+width grid@(DenseGrid _) = maxX grid - minX grid + 1
 width (SparseGrid _ w _ _) = w
 
 height :: Grid a -> Int
-height (DenseGrid grid) = succ $ pX $ snd $ Array.bounds grid
+height grid@(DenseGrid _) = maxX grid - minX grid + 1
 height (SparseGrid h _ _ _) = h
+
+minX :: Grid a -> Int
+minX (DenseGrid grid) = pX $ fst $ Array.bounds grid
+minX (SparseGrid _ _ _ entries) = minimum $ map pX $ Map.keys entries
+
+maxX :: Grid a -> Int
+maxX (DenseGrid grid) = pX $ snd $ Array.bounds grid
+maxX (SparseGrid _ _ _ entries) = maximum $ map pX $ Map.keys entries
+
+minY :: Grid a -> Int
+minY (DenseGrid grid) = pY $ fst $ Array.bounds grid
+minY (SparseGrid _ _ _ entries) = minimum $ map pY $ Map.keys entries
+
+maxY :: Grid a -> Int
+maxY (DenseGrid grid) = pY $ snd $ Array.bounds grid
+maxY (SparseGrid _ _ _ entries) = maximum $ map pY $ Map.keys entries
 
 lookup :: Set Point -> Grid a -> [a]
 lookup points (DenseGrid grid) =
@@ -106,17 +136,17 @@ updateWith :: (a -> a -> a) -> Map Point a -> Grid a -> Grid a
 updateWith f updates grid = grid // map (\(c, x) -> (c, f (grid ! c) x)) (Map.toList updates)
 
 subGrid :: Point -> Point -> Grid a -> Grid a
-subGrid minP@(Point minY minX) maxP@(Point maxY maxX) grid@(DenseGrid values) =
+subGrid start@(Point startY startX) end@(Point endY endX) grid@(DenseGrid values) =
   toList values
     |> Split.chunksOf (width grid)
-    |> drop minY
-    |> take (maxY - minY + 1)
-    |> map (take (maxX - minX + 1) . drop minX)
-    |> (DenseGrid . Array.listArray (minP, maxP) . concat)
-subGrid (Point minY minX) (Point maxY maxX) (SparseGrid _ _ defaultValue entries) =
-  let newH = maxY - minY + 1
-      newW = maxX - minX + 1
-      newEntries = Map.filterWithKey (\(Point y x) _ -> x >= minX && x <= maxX && y >= minY && y <= maxY) entries
+    |> drop startY
+    |> take (endY - startY + 1)
+    |> map (take (endX - startX + 1) . drop startX)
+    |> (DenseGrid . Array.listArray (start, end) . concat)
+subGrid (Point startY startX) (Point endY endX) (SparseGrid _ _ defaultValue entries) =
+  let newH = endY - startY + 1
+      newW = endX - startX + 1
+      newEntries = Map.filterWithKey (\(Point y x) _ -> x >= startX && x <= endX && y >= startY && y <= endY) entries
    in SparseGrid newH newW defaultValue newEntries
 
 mapPoints :: (Point -> Point) -> Grid a -> Grid a
@@ -149,3 +179,7 @@ neighboringPointsWithDiagonals point grid =
 neighboringValues :: Point -> Grid a -> [a]
 neighboringValues point grid =
   map (grid !) (toList (neighboringPoints point grid))
+
+toSparse :: Grid a -> Grid a
+toSparse grid@(DenseGrid values) = fromPoints undefined $ Map.fromList $ zip (allPointsList grid) (toList values)
+toSparse grid@SparseGrid {} = grid
