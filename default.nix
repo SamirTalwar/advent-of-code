@@ -8,6 +8,7 @@ let
       bytestring
       containers
       cryptonite
+      heap
       lens
       parsec
       scientific

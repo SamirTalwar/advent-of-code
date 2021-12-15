@@ -1,18 +1,25 @@
 {-# OPTIONS -Wall #-}
-{-# LANGUAGE TupleSections #-}
 
-import Data.Map.Strict (Map, (!))
-import qualified Data.Map.Strict as Map
+import qualified Data.Heap as Heap
+import Data.Set (Set)
 import qualified Data.Set as Set
 import Helpers.Grid (Grid, (//))
 import qualified Helpers.Grid as Grid
 import Helpers.Point (Point (..))
 
+type Queue = Heap.MinHeap QueueEntry
+
+data QueueEntry = QueueEntry Int Point
+  deriving (Eq)
+
+instance Ord QueueEntry where
+  compare (QueueEntry a _) (QueueEntry b _) = compare a b
+
 main :: IO ()
 main = do
   riskLevels <- (// [(Point 0 0, 0)]) . grow . Grid.fromDigits <$> getContents
-  let cumulativeRiskLevels = cumulative riskLevels Map.empty [(snd (Grid.bounds riskLevels), 0)]
-  print $ cumulativeRiskLevels ! Point 0 0
+  let distance = distanceFromStart riskLevels Set.empty $ Heap.fromDescList [QueueEntry 0 (snd (Grid.bounds riskLevels))]
+  print distance
 
 grow :: Grid Int -> Grid Int
 grow grid = foldr (flip (//)) Grid.empty [Grid.toList (shiftGrid y x) | y <- [0 .. 4], x <- [0 .. 4]]
@@ -23,23 +30,19 @@ grow grid = foldr (flip (//)) Grid.empty [Grid.toList (shiftGrid y x) | y <- [0 
     wrap :: Int -> Int
     wrap n = (n - 1) `mod` 9 + 1
 
-cumulative :: Grid Int -> Map Point Int -> [(Point, Int)] -> Map Point Int
-cumulative _ cumulativeValues [] = cumulativeValues
-cumulative grid cumulativeValues ((point@(Point 0 0), cumulativeValue) : _) =
-  Map.insert point (cumulativeValue + (grid Grid.! point)) cumulativeValues
-cumulative grid cumulativeValues ((point, cumulativeValue) : rest)
-  | point `Map.member` cumulativeValues =
-    cumulative grid cumulativeValues rest
-  | otherwise =
-    let newValue = cumulativeValue + (grid Grid.! point)
-        newCumulativeValues = Map.insert point newValue cumulativeValues
-        neighbors = map (,newValue) $ Set.toList $ Grid.neighboringPoints point grid
-        next = mergeSortedOn snd neighbors rest
-     in cumulative grid newCumulativeValues next
-
-mergeSortedOn :: Ord b => (a -> b) -> [a] -> [a] -> [a]
-mergeSortedOn _ xs [] = xs
-mergeSortedOn _ [] ys = ys
-mergeSortedOn f (x : xs) (y : ys)
-  | f x <= f y = x : mergeSortedOn f xs (y : ys)
-  | otherwise = y : mergeSortedOn f (x : xs) ys
+distanceFromStart :: Grid Int -> Set Point -> Queue -> Int
+distanceFromStart grid done queue =
+  case Heap.view queue of
+    Nothing ->
+      error "Failed."
+    Just (QueueEntry cumulativeValue point@(Point 0 0), _) ->
+      cumulativeValue + (grid Grid.! point)
+    Just (QueueEntry _ point, rest)
+      | point `Set.member` done ->
+        distanceFromStart grid done rest
+    Just (QueueEntry cumulativeValue point, rest) ->
+      let newValue = cumulativeValue + (grid Grid.! point)
+          newDone = Set.insert point done
+          neighbors = Heap.fromDescList $ map (QueueEntry newValue) $ Set.toList $ Grid.neighboringPoints point grid
+          next = Heap.union neighbors rest
+       in distanceFromStart grid newDone next
