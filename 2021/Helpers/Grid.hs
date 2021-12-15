@@ -14,6 +14,7 @@ module Helpers.Grid
     all,
     count,
     (//),
+    update,
     updateWith,
     subGrid,
     allPoints,
@@ -118,8 +119,12 @@ count :: (a -> Bool) -> Grid a -> Int
 count predicate = length . filter predicate . allValues
 
 (//) :: Grid a -> [(Point, a)] -> Grid a
-DenseGrid values // replacements = DenseGrid (values Array.// replacements)
-SparseGrid defaultValue entries // replacements = fromPoints defaultValue (Map.fromList replacements `Map.union` entries)
+DenseGrid values // updates = DenseGrid (values Array.// updates)
+grid@SparseGrid {} // updates = update (Map.fromList updates) grid
+
+update :: Map Point a -> Grid a -> Grid a
+update updates grid@DenseGrid {} = grid // Map.toList updates
+update updates (SparseGrid defaultValue entries) = SparseGrid defaultValue (updates `Map.union` entries)
 
 updateWith :: (a -> a -> a) -> Map Point a -> Grid a -> Grid a
 updateWith f updates grid = grid // map (\(c, x) -> (c, f (grid ! c) x)) (Map.toList updates)

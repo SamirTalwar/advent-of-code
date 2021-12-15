@@ -1,9 +1,10 @@
 {-# OPTIONS -Wall #-}
 
 import qualified Data.Heap as Heap
+import qualified Data.Map.Strict as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Helpers.Grid (Grid, (//))
+import Helpers.Grid (Grid)
 import qualified Helpers.Grid as Grid
 import Helpers.Point (Point (..))
 
@@ -17,18 +18,25 @@ instance Ord QueueEntry where
 
 main :: IO ()
 main = do
-  riskLevels <- (// [(Point 0 0, 0)]) . grow . Grid.fromDigits <$> getContents
+  riskLevels <- Grid.update (Map.singleton (Point 0 0) 0) . grow . Grid.fromDigits <$> getContents
   let distance = distanceFromStart riskLevels Set.empty $ Heap.fromDescList [QueueEntry 0 (snd (Grid.bounds riskLevels))]
   print distance
 
 grow :: Grid Int -> Grid Int
-grow grid = foldr (flip (//)) Grid.empty [Grid.toList (shiftGrid y x) | y <- [0 .. 4], x <- [0 .. 4]]
+grow grid = Grid.fromPoints undefined $ Map.fromList repeatedPoints
   where
-    (height, width) = let (_, Point maxY maxX) = Grid.bounds grid in (maxY + 1, maxX + 1)
-    shiftGrid :: Int -> Int -> Grid Int
-    shiftGrid yOffset xOffset = wrap . (\n -> n + yOffset + xOffset) <$> Grid.mapPoints (\(Point y x) -> Point (height * yOffset + y) (width * xOffset + x)) grid
-    wrap :: Int -> Int
+    points = Grid.toList grid
+    repeatedPoints = do
+      y <- [0 .. 4]
+      x <- [0 .. 4]
+      shiftPoint y x <$> points
+    shiftPoint :: Int -> Int -> (Point, Int) -> (Point, Int)
+    shiftPoint yOffset xOffset (Point y x, n) =
+      (Point (height * yOffset + y) (width * xOffset + x), wrap (n + yOffset + xOffset))
     wrap n = (n - 1) `mod` 9 + 1
+    height = maxY + 1
+    width = maxX + 1
+    (_, Point maxY maxX) = Grid.bounds grid
 
 distanceFromStart :: Grid Int -> Set Point -> Queue -> Int
 distanceFromStart grid done queue =
