@@ -8,12 +8,12 @@ let
       bytestring
       containers
       cryptonite
-      hashmap
       lens
       parsec
       scientific
       split
       text
+      unordered-containers
     ]
   );
   swiProlog = import ./nix/swi-prolog { inherit pkgs; };

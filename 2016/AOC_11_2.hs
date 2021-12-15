@@ -1,12 +1,14 @@
+{-# LANGUAGE DeriveGeneric #-}
 -- The first floor contains a polonium generator, a thulium generator, a thulium-compatible microchip, a promethium generator, a ruthenium generator, a ruthenium-compatible microchip, a cobalt generator, and a cobalt-compatible microchip.
 -- The second floor contains a polonium-compatible microchip and a promethium-compatible microchip.
 -- The third floor contains nothing relevant.
 -- The fourth floor contains nothing relevant.
-{-# LANGUAGE DeriveGeneric #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
 import Control.Monad (mapM_)
 import Data.Array as Array
-import Data.HashSet as Set
+import Data.HashSet (HashSet)
+import qualified Data.HashSet as Set
 import Data.Hashable (Hashable, hashWithSalt)
 import qualified Data.List as List
 import qualified Data.Maybe as Maybe
@@ -14,9 +16,6 @@ import GHC.Generics (Generic)
 
 instance (Hashable i, Hashable e) => Hashable (Array i e) where
   hashWithSalt salt array = foldl hashWithSalt (hashWithSalt salt (bounds array)) (Array.elems array)
-
-instance (Hashable a) => Hashable (Set a) where
-  hashWithSalt salt set = foldl hashWithSalt salt (Set.elems set)
 
 data Item = Generator Element | Microchip Element
   deriving (Eq, Ord, Generic)
@@ -45,7 +44,7 @@ type Moves = Int
 
 type Floor = Int
 
-type Placement = Array Floor (Set Item)
+type Placement = Array Floor (HashSet Item)
 
 data State = State {stateMoves :: Moves, stateFloor :: Floor, statePlacement :: Placement}
   deriving (Eq)
@@ -55,43 +54,42 @@ floors = (1, 4)
 
 input :: State
 input =
-  ( State
-      0
-      (fst floors)
-      ( listArray
-          floors
-          [ fromList
-              [ Generator Cobalt,
-                Microchip Cobalt,
-                Generator Dilithium,
-                Microchip Dilithium,
-                Generator Elerium,
-                Microchip Elerium,
-                Generator Polonium,
-                Generator Promethium,
-                Generator Ruthenium,
-                Microchip Ruthenium,
-                Generator Thulium,
-                Microchip Thulium
-              ],
-            fromList
-              [ Microchip Polonium,
-                Microchip Promethium
-              ],
-            empty,
-            empty
-          ]
-      )
-  )
+  State
+    0
+    (fst floors)
+    ( listArray
+        floors
+        [ Set.fromList
+            [ Generator Cobalt,
+              Microchip Cobalt,
+              Generator Dilithium,
+              Microchip Dilithium,
+              Generator Elerium,
+              Microchip Elerium,
+              Generator Polonium,
+              Generator Promethium,
+              Generator Ruthenium,
+              Microchip Ruthenium,
+              Generator Thulium,
+              Microchip Thulium
+            ],
+          Set.fromList
+            [ Microchip Polonium,
+              Microchip Promethium
+            ],
+          Set.empty,
+          Set.empty
+        ]
+    )
 
 expected :: Placement
 expected =
   listArray
     floors
-    [ empty,
-      empty,
-      empty,
-      fromList
+    [ Set.empty,
+      Set.empty,
+      Set.empty,
+      Set.fromList
         [ Generator Cobalt,
           Microchip Cobalt,
           Generator Dilithium,
@@ -110,28 +108,28 @@ expected =
     ]
 
 main = do
-  let iterations = solve [input] (singleton (stateFloor input, statePlacement input))
+  let iterations = solve [input] (Set.singleton (stateFloor input, statePlacement input))
   let solution = List.find solved iterations
   print solution
 
 solved :: State -> Bool
 solved (State _ _ placement) = placement == expected
 
-solve :: [State] -> Set (Floor, Placement) -> [State]
+solve :: [State] -> HashSet (Floor, Placement) -> [State]
 solve (state@(State movesMade currentFloor placement) : rest) seen =
   if solved state
     then state : solve rest seen
-    else state : solve (List.map addMovesMade moves ++ rest) (seen `union` Set.fromList moves)
+    else state : solve (List.map addMovesMade moves ++ rest) (seen `Set.union` Set.fromList moves)
   where
     moves = ascendingMoves ++ descendingMoves
     ascendingMoves = move currentFloor (currentFloor + 1) [2, 1] seen placement
     descendingMoves = move currentFloor (currentFloor - 1) [1, 2] seen placement
     addMovesMade = uncurry $ State (movesMade + 1)
 
-move :: Floor -> Floor -> [Int] -> Set (Floor, Placement) -> Placement -> [(Floor, Placement)]
+move :: Floor -> Floor -> [Int] -> HashSet (Floor, Placement) -> Placement -> [(Floor, Placement)]
 move currentFloor newFloor itemCounts seen =
   List.filter (valid . snd)
-    . List.filter (`notMember` seen)
+    . List.filter (not . (`Set.member` seen))
     . deriveMoves currentFloor newFloor itemCounts
 
 deriveMoves :: Floor -> Floor -> [Int] -> Placement -> [(Floor, Placement)]
@@ -141,25 +139,25 @@ deriveMoves currentFloor newFloor itemCounts placement =
     else List.map (\items -> (newFloor, placement // update items)) itemsToMove
   where
     floorItems = placement ! currentFloor
-    itemsToMove = concatMap (\itemCount -> combinations itemCount floorItems) itemCounts
-    update items = [(newFloor, (placement ! newFloor) `union` items), (currentFloor, floorItems `difference` items)]
+    itemsToMove = concatMap (`combinations` floorItems) itemCounts
+    update items = [(newFloor, (placement ! newFloor) `Set.union` items), (currentFloor, floorItems `Set.difference` items)]
 
 valid :: Placement -> Bool
 valid placement = all validFloor (Array.elems placement)
 
-validFloor :: Set Item -> Bool
-validFloor items = all microchipSafe (Set.toList microchips)
+validFloor :: HashSet Item -> Bool
+validFloor items = all microchipSafe microchips
   where
-    (microchips, generators) = Set.partition isMicrochip items
+    (microchips, generators) = List.partition isMicrochip (Set.toList items)
     microchipSafe (Microchip element) =
-      let (mine, others) = Set.partition (== Generator element) generators
-       in Set.null mine || not (Set.null others)
+      let (mine, others) = List.partition (== Generator element) generators
+       in null mine || not (null others)
 
 isMicrochip :: Item -> Bool
 isMicrochip (Microchip _) = True
 isMicrochip _ = False
 
-combinations :: (Ord a, Hashable a) => Int -> Set a -> [Set a]
+combinations :: (Ord a, Hashable a) => Int -> HashSet a -> [HashSet a]
 combinations n set = List.map Set.fromList $ combinations' n (Set.toList set)
   where
     combinations' 0 _ = [[]]
@@ -173,7 +171,7 @@ instance Show State where
       ++ concatFor
         (reverse $ assocs placement)
         ( \(f, items) ->
-            (if f == floor then " * " else "   ") ++ concatFor (Set.elems items) (\item -> show item ++ " ") ++ "\n"
+            (if f == floor then " * " else "   ") ++ concatFor (Set.toList items) (\item -> show item ++ " ") ++ "\n"
         )
     where
       concatFor = flip concatMap
