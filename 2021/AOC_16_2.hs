@@ -54,19 +54,21 @@ eval = eval' . extract
     eval' (Product packets) = product $ map eval packets
     eval' (Minimum packets) = minimum $ map eval packets
     eval' (Maximum packets) = maximum $ map eval packets
-    eval' (GreaterThan a b) = bool 0 1 $ eval a > eval b
-    eval' (LessThan a b) = bool 0 1 $ eval a < eval b
-    eval' (EqualTo a b) = bool 0 1 $ eval a == eval b
+    eval' (GreaterThan a b) = boolToInt $ eval a > eval b
+    eval' (LessThan a b) = boolToInt $ eval a < eval b
+    eval' (EqualTo a b) = boolToInt $ eval a == eval b
+    boolToInt = bool 0 1
 
 decode :: Bits -> Versioned (Packet Versioned)
-decode = either (error . show) id . parse (packet <* ending) ""
+decode = either (error . show) id . parse (versioned packet <* ending) ""
   where
     ending = many zero *> eof
-    packet :: Parsec Bits () (Versioned (Packet Versioned))
+    versioned :: Parsec Bits () a -> Parsec Bits () (Versioned a)
+    versioned parser = Versioned <$> readBits 3 <*> parser
+    packet :: Parsec Bits () (Packet Versioned)
     packet = do
-      version <- readBits 3
       typeId <- readBits 3
-      value <- case typeId of
+      case typeId of
         4 -> literal
         0 -> Sum <$> subPackets
         1 -> Product <$> subPackets
@@ -76,20 +78,20 @@ decode = either (error . show) id . parse (packet <* ending) ""
         6 -> uncurry LessThan <$> (exactlyTwo =<< subPackets)
         7 -> uncurry EqualTo <$> (exactlyTwo =<< subPackets)
         _ -> fail $ "Unknown type ID: " ++ show typeId
-      return $ Versioned version value
-    literal :: Parsec Bits () (Packet f)
+    subPackets = containing (versioned packet)
+    literal :: Parsec Bits () (Packet m)
     literal = Literal . bitsToInt <$> literal'
     literal' = do
       (b : bs) <- countBits 5
       case b of
         O -> return bs
         X -> (bs <>) <$> literal'
-    subPackets :: Parsec Bits () [Versioned (Packet Versioned)]
-    subPackets = do
+    containing :: Parsec Bits () a -> Parsec Bits () [a]
+    containing parser = do
       lengthTypeId <- bit
       case lengthTypeId of
-        O -> readBits 15 >>= upTo packet
-        X -> readBits 11 >>= (`count` packet)
+        O -> readBits 15 >>= upTo parser
+        X -> readBits 11 >>= (`count` parser)
     readBits n = bitsToInt <$> countBits n
     countBits n = count n bit
     zero = bitToken (\case O -> Just O; X -> Nothing)
