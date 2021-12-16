@@ -1,6 +1,12 @@
 {-# OPTIONS -Wall #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE QuantifiedConstraints #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
 
+import Control.Comonad
 import Data.Bool (bool)
 import Helpers.Parse
 import Text.Parsec
@@ -15,18 +21,23 @@ instance Show Bit where
   show X = "1"
 
 data Versioned a = Versioned Int a
-  deriving (Eq, Show)
+  deriving (Eq, Show, Functor)
 
-data Packet
-  = Literal Int
-  | Sum [Versioned Packet]
-  | Product [Versioned Packet]
-  | Minimum [Versioned Packet]
-  | Maximum [Versioned Packet]
-  | GreaterThan (Versioned Packet) (Versioned Packet)
-  | LessThan (Versioned Packet) (Versioned Packet)
-  | EqualTo (Versioned Packet) (Versioned Packet)
-  deriving (Eq, Show)
+instance Comonad Versioned where
+  extract (Versioned _ value) = value
+  duplicate versioned@(Versioned version _) = Versioned version versioned
+
+data Packet m where
+  Literal :: Int -> Packet m
+  Sum :: [m (Packet m)] -> Packet m
+  Product :: [m (Packet m)] -> Packet m
+  Minimum :: [m (Packet m)] -> Packet m
+  Maximum :: [m (Packet m)] -> Packet m
+  GreaterThan :: m (Packet m) -> m (Packet m) -> Packet m
+  LessThan :: m (Packet m) -> m (Packet m) -> Packet m
+  EqualTo :: m (Packet m) -> m (Packet m) -> Packet m
+
+deriving instance (Comonad m, (forall a. Show a => Show (m a))) => Show (Packet m)
 
 main :: IO ()
 main = do
@@ -34,21 +45,24 @@ main = do
   let packet = decode input
   print $ eval packet
 
-eval :: Versioned Packet -> Int
-eval (Versioned _ (Literal n)) = n
-eval (Versioned _ (Sum packets)) = sum $ map eval packets
-eval (Versioned _ (Product packets)) = product $ map eval packets
-eval (Versioned _ (Minimum packets)) = minimum $ map eval packets
-eval (Versioned _ (Maximum packets)) = maximum $ map eval packets
-eval (Versioned _ (GreaterThan a b)) = bool 0 1 $ eval a > eval b
-eval (Versioned _ (LessThan a b)) = bool 0 1 $ eval a < eval b
-eval (Versioned _ (EqualTo a b)) = bool 0 1 $ eval a == eval b
+eval :: Comonad m => m (Packet m) -> Int
+eval = eval' . extract
+  where
+    eval' :: Comonad m => Packet m -> Int
+    eval' (Literal n) = n
+    eval' (Sum packets) = sum $ map eval packets
+    eval' (Product packets) = product $ map eval packets
+    eval' (Minimum packets) = minimum $ map eval packets
+    eval' (Maximum packets) = maximum $ map eval packets
+    eval' (GreaterThan a b) = bool 0 1 $ eval a > eval b
+    eval' (LessThan a b) = bool 0 1 $ eval a < eval b
+    eval' (EqualTo a b) = bool 0 1 $ eval a == eval b
 
-decode :: Bits -> Versioned Packet
+decode :: Bits -> Versioned (Packet Versioned)
 decode = either (error . show) id . parse (packet <* ending) ""
   where
     ending = many zero *> eof
-    packet :: Parsec Bits () (Versioned Packet)
+    packet :: Parsec Bits () (Versioned (Packet Versioned))
     packet = do
       version <- readBits 3
       typeId <- readBits 3
@@ -63,14 +77,14 @@ decode = either (error . show) id . parse (packet <* ending) ""
         7 -> uncurry EqualTo <$> (exactlyTwo =<< subPackets)
         _ -> fail $ "Unknown type ID: " ++ show typeId
       return $ Versioned version value
-    literal :: Parsec Bits () Packet
+    literal :: Parsec Bits () (Packet f)
     literal = Literal . bitsToInt <$> literal'
     literal' = do
       (b : bs) <- countBits 5
       case b of
         O -> return bs
         X -> (bs <>) <$> literal'
-    subPackets :: Parsec Bits () [Versioned Packet]
+    subPackets :: Parsec Bits () [Versioned (Packet Versioned)]
     subPackets = do
       lengthTypeId <- bit
       case lengthTypeId of

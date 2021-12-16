@@ -6,6 +6,7 @@ let
       array
       base
       bytestring
+      comonad
       containers
       cryptonite
       heap
