@@ -8,6 +8,7 @@
 
 import Control.Comonad
 import Data.Bool (bool)
+import Helpers.Function
 import Helpers.Parse
 import Text.Parsec
 
@@ -46,18 +47,16 @@ main = do
   print $ eval packet
 
 eval :: Comonad m => m (Packet m) -> Int
-eval = eval' . extract
-  where
-    eval' :: Comonad m => Packet m -> Int
-    eval' (Literal n) = n
-    eval' (Sum packets) = sum $ map eval packets
-    eval' (Product packets) = product $ map eval packets
-    eval' (Minimum packets) = minimum $ map eval packets
-    eval' (Maximum packets) = maximum $ map eval packets
-    eval' (GreaterThan a b) = boolToInt $ eval a > eval b
-    eval' (LessThan a b) = boolToInt $ eval a < eval b
-    eval' (EqualTo a b) = boolToInt $ eval a == eval b
-    boolToInt = bool 0 1
+eval =
+  extract .> \case
+    Literal n -> n
+    Sum packets -> sum $ map eval packets
+    Product packets -> product $ map eval packets
+    Minimum packets -> minimum $ map eval packets
+    Maximum packets -> maximum $ map eval packets
+    GreaterThan a b -> bool 0 1 $ eval a > eval b
+    LessThan a b -> bool 0 1 $ eval a < eval b
+    EqualTo a b -> bool 0 1 $ eval a == eval b
 
 decode :: Bits -> Versioned (Packet Versioned)
 decode = either (error . show) id . parse (versioned packet <* ending) ""
