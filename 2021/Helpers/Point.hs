@@ -2,6 +2,7 @@
 
 module Helpers.Point
   ( Point (..),
+    withinBounds,
     allPointsWithinBounds,
     neighboringPoints,
     neighboringPointsWithDiagonals,
@@ -23,6 +24,10 @@ instance Semigroup Point where
 
 instance Monoid Point where
   mempty = Point 0 0
+
+withinBounds :: (Point, Point) -> Point -> Bool
+withinBounds (Point yStart xStart, Point yEnd xEnd) (Point y x) =
+  y >= yStart && y <= yEnd && x >= xStart && x <= xEnd
 
 allPointsWithinBounds :: Int -> Int -> [Point]
 allPointsWithinBounds h w = [Point y x | x <- [0 .. w - 1], y <- [0 .. h - 1]]

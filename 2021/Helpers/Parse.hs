@@ -2,6 +2,7 @@
 
 module Helpers.Parse where
 
+import qualified Data.Maybe as Maybe
 import Data.Text (Text)
 import qualified Data.Text.IO as Text.IO
 import Text.Parsec
@@ -22,4 +23,4 @@ linesP :: Parsec Text () a -> Parsec Text () [a]
 linesP parser = many (parser <* optional (string "\n"))
 
 int :: Parsec Text a Int
-int = read <$> many1 digit
+int = read <$> ((++) <$> (Maybe.fromMaybe "" <$> optionMaybe (string "-")) <*> many1 digit)
