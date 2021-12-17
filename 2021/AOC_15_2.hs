@@ -1,6 +1,5 @@
 {-# OPTIONS -Wall #-}
 
-import qualified Data.Heap as Heap
 import qualified Data.Map.Strict as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -8,18 +7,15 @@ import Helpers.Grid (Grid)
 import qualified Helpers.Grid as Grid
 import Helpers.Point (Point (..))
 
-type Queue = Heap.MinHeap QueueEntry
+type Queue = Set QueueEntry
 
 data QueueEntry = QueueEntry Int Point
-  deriving (Eq)
-
-instance Ord QueueEntry where
-  compare (QueueEntry a _) (QueueEntry b _) = compare a b
+  deriving (Eq, Ord, Show)
 
 main :: IO ()
 main = do
   riskLevels <- Grid.update (Map.singleton (Point 0 0) 0) . grow . Grid.fromDigits <$> getContents
-  let distance = distanceFromStart riskLevels Set.empty $ Heap.fromDescList [QueueEntry 0 (snd (Grid.bounds riskLevels))]
+  let distance = distanceFromStart riskLevels Set.empty $ Set.singleton $ QueueEntry 0 (snd (Grid.bounds riskLevels))
   print distance
 
 grow :: Grid Int -> Grid Int
@@ -40,17 +36,15 @@ grow grid = Grid.fromPoints undefined $ Map.fromList repeatedPoints
 
 distanceFromStart :: Grid Int -> Set Point -> Queue -> Int
 distanceFromStart grid done queue =
-  case Heap.view queue of
-    Nothing ->
-      error "Failed."
-    Just (QueueEntry cumulativeValue point@(Point 0 0), _) ->
+  case Set.deleteFindMin queue of
+    (QueueEntry cumulativeValue point@(Point 0 0), _) ->
       cumulativeValue + (grid Grid.! point)
-    Just (QueueEntry _ point, rest)
+    (QueueEntry _ point, rest)
       | point `Set.member` done ->
         distanceFromStart grid done rest
-    Just (QueueEntry cumulativeValue point, rest) ->
+    (QueueEntry cumulativeValue point, rest) ->
       let newValue = cumulativeValue + (grid Grid.! point)
           newDone = Set.insert point done
-          neighbors = Heap.fromDescList $ map (QueueEntry newValue) $ Set.toList $ Grid.neighboringPoints point grid
-          next = Heap.union neighbors rest
+          neighbors = Set.map (QueueEntry newValue) $ Grid.neighboringPoints point grid
+          next = Set.union neighbors rest
        in distanceFromStart grid newDone next

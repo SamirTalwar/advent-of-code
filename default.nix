@@ -9,7 +9,6 @@ let
       comonad
       containers
       cryptonite
-      heap
       lens
       parsec
       scientific
