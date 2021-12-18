@@ -1,5 +1,5 @@
 #!/usr/bin/env nix-shell
-#!nix-shell -I nixpkgs=https://github.com/NixOS/nixpkgs/archive/f366af7a1b3891d9370091ab03150d3a6ee138fa.tar.gz -i zsh ./shell.nix
+#!nix-shell -i zsh ./shell.nix
 
 set -e
 set -u
