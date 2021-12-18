@@ -39,8 +39,10 @@ fi
 input="${year}/AOC_${day}.input"
 if (( ${+exercise} )); then
   answer="${year}/AOC_${day}_${exercise}.answer"
+  echo >&2 "Running year ${year}, day ${day}, exercise ${exercise}..."
 else
   answer="${year}/AOC_${day}.answer"
+  echo >&2 "Running year ${year}, day ${day}..."
 fi
 
 if [[ -t 0 ]]; then
