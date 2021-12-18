@@ -62,15 +62,12 @@ reduce = progress (reduce . consumeExplosion) (progress reduce id . split) . exp
 
 explode :: Int -> Number -> Progress Explosion Number
 explode _ number@Value {} = Next number
-explode depth (left :+ right)
-  | depth == 4 =
-    case (left, right) of
-      (Value l, Value r) -> Restart $ Explosion (Just l) (Value 0) (Just r)
-      _ -> error $ "Cannot explode " ++ show left ++ " and " ++ show right ++ "."
-  | otherwise = do
-    left' <- first (propagateExplosion L right) (explode (succ depth) left)
-    right' <- first (propagateExplosion R left') (explode (succ depth) right)
-    return $ left' :+ right'
+explode 4 (Value left :+ Value right) =
+  Restart $ Explosion (Just left) (Value 0) (Just right)
+explode depth (left :+ right) = do
+  left' <- first (propagateExplosion L right) (explode (succ depth) left)
+  right' <- first (propagateExplosion R left') (explode (succ depth) right)
+  return $ left' :+ right'
   where
     propagateExplosion L r (Explosion incL l incR) = Explosion incL (l :+ propagateExplosion' L incR r) Nothing
     propagateExplosion R l (Explosion incL r incR) = Explosion Nothing (propagateExplosion' R incL l :+ r) incR
