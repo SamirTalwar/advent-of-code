@@ -8,7 +8,7 @@ struct State: CustomStringConvertible {
     var elfBPosition: Int
 
     var description: String {
-        return recipes.enumerated().map({ recipe in
+        return recipes.enumerated().map { recipe in
             if elfAPosition == recipe.offset {
                 return "(\(recipe.element))"
             } else if elfBPosition == recipe.offset {
@@ -16,7 +16,7 @@ struct State: CustomStringConvertible {
             } else {
                 return " \(recipe.element) "
             }
-        }).joined()
+        }.joined()
     }
 
     mutating func createNewRecipes() {
@@ -27,7 +27,7 @@ struct State: CustomStringConvertible {
 }
 
 func main() {
-    let marker: [Recipe] = readLine()!.map({ character in Recipe(String(character))! })
+    let marker: [Recipe] = readLine()!.map { character in Recipe(String(character))! }
     var state = State(recipes: startingRecipes, elfAPosition: 0, elfBPosition: 1)
     var searchResult = SearchResult.notFound(stoppingAtIndex: 0)
     while true {

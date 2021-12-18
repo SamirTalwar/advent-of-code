@@ -40,19 +40,19 @@ struct Grid: Equatable, CustomStringConvertible {
     }
 
     var description: String {
-        return values.map({ row in row.map({ acre in acre.description }).joined() + "\n" }).joined()
+        return values.map { row in row.map { acre in acre.description }.joined() + "\n" }.joined()
     }
 
     func count(of acreType: Acre) -> Int {
-        return values.flatMap({ row in row.filter({ acre in acre == acreType }) }).count
+        return values.flatMap { row in row.filter { acre in acre == acreType } }.count
     }
 
     func iterate() -> Grid {
-        return Grid(yRange.map({ y in
-            xRange.map({ x in
+        return Grid(yRange.map { y in
+            xRange.map { x in
                 values[y][x].convert(adjacentCounts: adjacentValueCounts(x: x, y: y))
-            })
-        }))
+            }
+        })
     }
 
     private func adjacentValueCounts(x: Int, y: Int) -> [Acre: Int] {
@@ -67,8 +67,8 @@ struct Grid: Equatable, CustomStringConvertible {
             (x + 1, y + 1),
         ]
         let adjacentValues = adjacentPositions
-            .filter({ x, y in xRange.contains(x) && yRange.contains(y) })
-            .map({ x, y in values[y][x] })
+            .filter { x, y in xRange.contains(x) && yRange.contains(y) }
+            .map { x, y in values[y][x] }
 
         var counts: [Acre: Int] = [:]
         for value in adjacentValues {
@@ -84,7 +84,7 @@ struct Grid: Equatable, CustomStringConvertible {
 
 func main() {
     var past: [Grid] = []
-    var grid = Grid(StdIn().map({ line in line.map(parseInputCharacter) }))
+    var grid = Grid(StdIn().map { line in line.map(parseInputCharacter) })
     for i in 0 ..< iterations {
         grid = grid.iterate()
         if let cycle = findCycle(startingWith: grid, inPast: past) {

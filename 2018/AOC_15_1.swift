@@ -59,16 +59,16 @@ struct Cave: CustomStringConvertible {
     }
 
     var description: String {
-        return cave.map({ row in row.map({ cell in cell.description }).joined() }).joined(separator: "\n")
+        return cave.map { row in row.map { cell in cell.description }.joined() }.joined(separator: "\n")
     }
 
     func description(with warriors: [Warrior]) -> String {
-        let warriorsByPosition = Dictionary(uniqueKeysWithValues: warriors.map({ warrior in (warrior.position, warrior) }))
-        return cave.enumerated().map({ row in
-            row.element.enumerated().map({ cell in
+        let warriorsByPosition = Dictionary(uniqueKeysWithValues: warriors.map { warrior in (warrior.position, warrior) })
+        return cave.enumerated().map { row in
+            row.element.enumerated().map { cell in
                 warriorsByPosition[Position(x: cell.offset, y: row.offset)]?.race.symbol ?? cell.element.description
-            }).joined() + "\n"
-        }).joined()
+            }.joined() + "\n"
+        }.joined()
     }
 
     subscript(position: Position) -> CaveSquare {
@@ -133,9 +133,9 @@ struct Warrior {
 
     func findTargets(in warriors: [Warrior]) -> [(offset: Int, element: Warrior)] {
         return warriors.enumerated()
-            .filter({ warrior in warrior.element.race != race })
-            .sorted(by: comparing({ target in target.element.position }))
-            .sorted(by: comparing({ target in target.element.hitPoints }))
+            .filter { warrior in warrior.element.race != race }
+            .sorted(by: comparing { target in target.element.position })
+            .sorted(by: comparing { target in target.element.hitPoints })
     }
 
     func move(along route: Route) -> Warrior {
@@ -144,15 +144,15 @@ struct Warrior {
 }
 
 func main() {
-    let caveSquaresAndWarriors = StdIn().enumerated().map({ line in
-        line.element.enumerated().map({ character in
+    let caveSquaresAndWarriors = StdIn().enumerated().map { line in
+        line.element.enumerated().map { character in
             parseCave(position: Position(x: character.offset, y: line.offset), character: character.element)
-        })
+        }
+    }
+    let cave = Cave(caveSquaresAndWarriors.map { row in
+        row.map { caveSquare, _ in caveSquare }
     })
-    let cave = Cave(caveSquaresAndWarriors.map({ row in
-        row.map({ caveSquare, _ in caveSquare })
-    }))
-    var warriors = caveSquaresAndWarriors.flatMap({ row in row.compactMap({ _, warrior in warrior }) })
+    var warriors = caveSquaresAndWarriors.flatMap { row in row.compactMap { _, warrior in warrior } }
 
     // print(cave.description(with: warriors))
 
@@ -168,7 +168,7 @@ func main() {
 
     var rounds = 0
     while true {
-        warriors.sort(by: comparing({ warriors in warriors.position }))
+        warriors.sort(by: comparing { warriors in warriors.position })
         var i = 0
         var roundWasCompleted = true
         while i < warriors.count {
@@ -181,11 +181,11 @@ func main() {
             if let target = targets.first(where: { target in target.element.isInRange(of: warriors[i]) }) {
                 attack(offset: target.offset, i: &i)
             } else {
-                let blocked = Set(warriors.map({ warrior in warrior.position }))
-                let optimisticDistances = Set(targets.flatMap({ target in target.element.position.neighbors }))
-                    .map({ position in (position, position.distance(from: warriors[i].position)) })
-                    .sorted(by: comparing({ position, _ in position }))
-                    .sorted(by: comparing({ _, distance in distance }))
+                let blocked = Set(warriors.map { warrior in warrior.position })
+                let optimisticDistances = Set(targets.flatMap { target in target.element.position.neighbors })
+                    .map { position in (position, position.distance(from: warriors[i].position)) }
+                    .sorted(by: comparing { position, _ in position })
+                    .sorted(by: comparing { _, distance in distance })
                 var bestRoute: (Position, Route)?
                 for (position, optimisticDistance) in optimisticDistances {
                     if let (_, chosenRoute) = bestRoute {
@@ -233,7 +233,7 @@ func main() {
         // print(cave.description(with: warriors))
     }
 
-    let totalHitPoints = warriors.map({ warrior in warrior.hitPoints }).reduce(0, +)
+    let totalHitPoints = warriors.map { warrior in warrior.hitPoints }.reduce(0, +)
     print("Outcome = \(rounds) * \(totalHitPoints) = \(rounds * totalHitPoints)")
 }
 

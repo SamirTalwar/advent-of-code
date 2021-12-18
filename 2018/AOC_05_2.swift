@@ -55,7 +55,7 @@ let opposites = [
 
 func main() {
     let polymer = readLine()!
-    let unitTypes = Set(opposites.map({ a, b in Set([a, b]) }))
+    let unitTypes = Set(opposites.map { a, b in Set([a, b]) })
     let counts = unitTypes.map { unitType -> Int in
         var unproblematicPolymer = polymer
         for unit in unitType {

@@ -42,9 +42,9 @@ struct Clay: Equatable {
 
     init(tiles: Set<Position>) {
         self.tiles = tiles
-        let xs = tiles.map({ tile in tile.x }).sorted()
+        let xs = tiles.map { tile in tile.x }.sorted()
         xRange = (xs.first! - 3) ... (xs.last! + 3)
-        let ys = tiles.map({ tile in tile.y }).sorted()
+        let ys = tiles.map { tile in tile.y }.sorted()
         yRange = ys.first! ... ys.last!
     }
 
@@ -164,7 +164,7 @@ struct Ground: Equatable, CustomStringConvertible {
 }
 
 func main() {
-    let clay = Clay(tiles: StdIn().map(parseInput).reduce(Set(), { a, b in a.union(b) }))
+    let clay = Clay(tiles: StdIn().map(parseInput).reduce(Set()) { a, b in a.union(b) })
     var ground = Ground(spring: spring, clay: clay)
     while true {
         let nextGround = ground.flow()
@@ -186,10 +186,10 @@ func parseInput(line: String) -> Set<Position> {
     if match[1] == "x" {
         let x = Int(match[2])!
         let ys = Int(match[4])! ... Int(match[5])!
-        return Set(ys.map({ y in Position(x: x, y: y) }))
+        return Set(ys.map { y in Position(x: x, y: y) })
     } else {
         let y = Int(match[2])!
         let xs = Int(match[4])! ... Int(match[5])!
-        return Set(xs.map({ x in Position(x: x, y: y) }))
+        return Set(xs.map { x in Position(x: x, y: y) })
     }
 }

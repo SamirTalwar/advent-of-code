@@ -12,9 +12,9 @@ func main() {
         for x in 1 ... gridSize {
             summedArea[y][x] =
                 powerLevel(x: x, y: y, serialNumber: serialNumber)
-                + summedArea[y][x - 1]
-                + summedArea[y - 1][x]
-                - summedArea[y - 1][x - 1]
+                    + summedArea[y][x - 1]
+                    + summedArea[y - 1][x]
+                    - summedArea[y - 1][x - 1]
         }
     }
 

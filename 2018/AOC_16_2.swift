@@ -17,9 +17,9 @@ struct Sample {
 func main() {
     let (samples, program) = parse(lines: Array(StdIn()))
     let opCodeMappings = figureOutOpCodes(from: samples)
-    let instructions = program.map({ opCode, a, b, output in
+    let instructions = program.map { opCode, a, b, output in
         ElfCode.Instruction(operation: opCodeMappings[opCode]!, inputA: a, inputB: b, output: output)
-    })
+    }
     let registers = execute(instructions: instructions, registers: ElfCode.Registers(values: [0, 0, 0, 0]))
     print("Registers:", registers.values)
 }
@@ -33,25 +33,25 @@ func execute(instructions: [ElfCode.Instruction], registers: ElfCode.Registers) 
 }
 
 func figureOutOpCodes(from samples: [Sample]) -> [OpCode: ElfCode.Operation] {
-    let allOpCodes: Set<OpCode> = Set(samples.map({ sample in sample.instruction.0 }))
+    let allOpCodes: Set<OpCode> = Set(samples.map { sample in sample.instruction.0 })
     let allOperations: Set<ElfCode.Operation> = Set(ElfCode.Operation.allCases)
     var validOperations: [OpCode: Set<ElfCode.Operation>] = Dictionary(
-        uniqueKeysWithValues: allOpCodes.map({ opCode in (opCode, allOperations) })
+        uniqueKeysWithValues: allOpCodes.map { opCode in (opCode, allOperations) }
     )
 
     for sample in samples {
         let sampleValidOperations =
             ElfCode.Operation.allCases
-            .filter({ operation in
-                let instruction = ElfCode.Instruction(
-                    operation: operation,
-                    inputA: sample.instruction.1,
-                    inputB: sample.instruction.2,
-                    output: sample.instruction.3
-                )
-                let actual = instruction.apply(to: sample.before)
-                return actual == sample.after
-            })
+                .filter { operation in
+                    let instruction = ElfCode.Instruction(
+                        operation: operation,
+                        inputA: sample.instruction.1,
+                        inputB: sample.instruction.2,
+                        output: sample.instruction.3
+                    )
+                    let actual = instruction.apply(to: sample.before)
+                    return actual == sample.after
+                }
         validOperations[sample.instruction.0]!.formIntersection(sampleValidOperations)
     }
 
@@ -63,12 +63,12 @@ func figureOutOpCodes(from samples: [Sample]) -> [OpCode: ElfCode.Operation] {
         }
     }
 
-    let opCodeMappings = validOperations.mapValues({ operations -> ElfCode.Operation in
+    let opCodeMappings = validOperations.mapValues { operations -> ElfCode.Operation in
         if operations.count != 1 {
             fatalError("Multiple operations for an opcode: \(operations)")
         }
         return operations.first!
-    })
+    }
     if opCodeMappings.keys.count != 16 {
         fatalError("There aren't enough opcode mappings.")
     }
@@ -79,9 +79,9 @@ func findUniqueOperation(in validOperations: [OpCode: Set<ElfCode.Operation>]) -
     for (opCode, operations) in validOperations {
         if operations.count == 1 {
             let operation = operations.first!
-            let otherOperations = validOperations.filter({ otherOpCode, otherOperations in
+            let otherOperations = validOperations.filter { otherOpCode, otherOperations in
                 opCode != otherOpCode && otherOperations.contains(operation)
-            })
+            }
             if otherOperations.isEmpty {
                 continue
             }
@@ -94,8 +94,8 @@ func findUniqueOperation(in validOperations: [OpCode: Set<ElfCode.Operation>]) -
 func parse(lines: [String]) -> ([Sample], [UnknownInstruction]) {
     let chunks =
         lines
-        .split(separator: "")
-        .map({ chunk in Array(chunk) })
+            .split(separator: "")
+            .map { chunk in Array(chunk) }
     let sampleSection = chunks.dropLast()
     let programSection = chunks.last!
     let samples: [Sample] = Array(sampleSection.map(parseSample))
@@ -112,7 +112,7 @@ func parseSample(chunk: [String]) -> Sample {
 }
 
 func parseInstruction(_ string: String) -> UnknownInstruction {
-    let values = string.split(separator: " ").map({ value in Int(value)! })
+    let values = string.split(separator: " ").map { value in Int(value)! }
     return (values[0], values[1], values[2], values[3])
 }
 
@@ -123,6 +123,6 @@ func parseBeforeAfter(_ string: String) -> ElfCode.Registers {
     return ElfCode.Registers(
         values: match[1]
             .split(separator: ",")
-            .map({ value in Int(value.trimmingCharacters(in: CharacterSet.whitespaces))! })
+            .map { value in Int(value.trimmingCharacters(in: CharacterSet.whitespaces))! }
     )
 }

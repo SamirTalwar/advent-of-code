@@ -65,9 +65,9 @@ enum Directions: CustomStringConvertible {
         case let .move(direction):
             return direction.description
         case let .sequence(parts):
-            return "[" + parts.map({ $0.description }).joined() + "]"
+            return "[" + parts.map { $0.description }.joined() + "]"
         case let .choice(choices):
-            return "(" + choices.map({ $0.description }).joined(separator: "|") + ")"
+            return "(" + choices.map { $0.description }.joined(separator: "|") + ")"
         }
     }
 
@@ -87,13 +87,13 @@ enum Directions: CustomStringConvertible {
         case .move:
             return self
         case let .sequence(parts):
-            var simplifiedParts = parts.map({ $0.simplified() }).filter({ !$0.isEmpty })
+            var simplifiedParts = parts.map { $0.simplified() }.filter { !$0.isEmpty }
             if simplifiedParts.count == 1 {
                 return simplifiedParts[0]
             }
             return .sequence(parts: simplifiedParts[0 ..< simplifiedParts.count])
         case let .choice(choices):
-            let simplifiedChoices = choices.map({ $0.simplified() })
+            let simplifiedChoices = choices.map { $0.simplified() }
             if simplifiedChoices.count == 1 {
                 return simplifiedChoices[0]
             }
@@ -107,7 +107,7 @@ func main() {
     var distances: [Room: Distance] = [:]
     _ = roomDistances(directions: directions, room: Room(x: 0, y: 0), currentDistance: 0, record: &distances)
     print("Part 1:", distances.values.max()!)
-    print("Part 2:", distances.values.filter({ $0 >= 1000 }).count)
+    print("Part 2:", distances.values.filter { $0 >= 1000 }.count)
 }
 
 func roomDistances(directions: Directions, room: Room, currentDistance: Distance, record: inout [Room: Distance]) -> Set<Room> {
@@ -129,18 +129,18 @@ func roomDistances(directions: Directions, room: Room, currentDistance: Distance
         let nextRooms = roomDistances(directions: first, room: room, currentDistance: currentDistance, record: &record)
         let rest = parts.dropFirst()
         let directions = rest.count == 1 ? rest.first! : Directions.sequence(parts: rest)
-        return Set(nextRooms.flatMap({ nextRoom in
+        return Set(nextRooms.flatMap { nextRoom in
             roomDistances(directions: directions, room: nextRoom, currentDistance: record[nextRoom]!, record: &record)
-        })).filter({ furtherRoom in record[furtherRoom] == nil || record[furtherRoom]! >= currentDistance })
+        }).filter { furtherRoom in record[furtherRoom] == nil || record[furtherRoom]! >= currentDistance }
     case let .choice(choices):
-        return Set(choices.flatMap({ choice in
+        return Set(choices.flatMap { choice in
             roomDistances(directions: choice, room: room, currentDistance: currentDistance, record: &record)
-        })).filter({ furtherRoom in record[furtherRoom] == nil || record[furtherRoom]! >= currentDistance })
+        }).filter { furtherRoom in record[furtherRoom] == nil || record[furtherRoom]! >= currentDistance }
     }
 }
 
 func merged(_ roomsAndDistances: [([Room], [Room: Distance])]) -> ([Room], [Room: Distance]) {
-    return roomsAndDistances.reduce(([], [:]), { a, b in (a.0 + b.0, a.1.merging(b.1, uniquingKeysWith: min)) })
+    return roomsAndDistances.reduce(([], [:])) { a, b in (a.0 + b.0, a.1.merging(b.1, uniquingKeysWith: min)) }
 }
 
 func parseInput(_ string: String) -> Directions {

@@ -7,7 +7,7 @@ struct State: CustomStringConvertible {
     let elfPositions: [Int]
 
     var description: String {
-        return recipes.enumerated().map({ recipe in
+        return recipes.enumerated().map { recipe in
             if elfPositions[0] == recipe.offset {
                 return "(\(recipe.element))"
             } else if elfPositions[1] == recipe.offset {
@@ -15,14 +15,14 @@ struct State: CustomStringConvertible {
             } else {
                 return " \(recipe.element) "
             }
-        }).joined()
+        }.joined()
     }
 
     func createNewRecipes() -> State {
-        let newRecipes = recipes + digits(elfPositions.map({ position in recipes[position] }).reduce(0, +))
-        let newElfPositions = elfPositions.map({ position in
+        let newRecipes = recipes + digits(elfPositions.map { position in recipes[position] }.reduce(0, +))
+        let newElfPositions = elfPositions.map { position in
             (position + 1 + Int(newRecipes[position])) % newRecipes.count
-        })
+        }
         return State(recipes: newRecipes, elfPositions: newElfPositions)
     }
 }
@@ -34,7 +34,7 @@ func main() {
         state = state.createNewRecipes()
     }
 
-    print(state.recipes[discard ..< discard + 10].map({ recipe in recipe.description }).joined())
+    print(state.recipes[discard ..< discard + 10].map { recipe in recipe.description }.joined())
 }
 
 func digits(_ number: Recipe) -> [Recipe] {

@@ -11,17 +11,17 @@ func main() {
     let orderings = StdIn().map(parseOrdering)
     let orderingLookup: [Step: Set<Step>] =
         Dictionary(grouping: orderings, by: { $0.after })
-        .mapValues({ steps in Set(steps.map({ $0.before })) })
+            .mapValues { steps in Set(steps.map { $0.before }) }
 
-    let befores: Set<Step> = Set(orderings.map({ $0.before }))
-    let afters: Set<Step> = Set(orderings.map({ $0.after }))
+    let befores: Set<Step> = Set(orderings.map { $0.before })
+    let afters: Set<Step> = Set(orderings.map { $0.after })
     let steps = befores.union(afters)
 
     var sequence: [Step] = []
     var seen: Set<Step> = Set()
     var unseen = steps
     while true {
-        let next = unseen.filter({ step in (orderingLookup[step] ?? Set()).isSubset(of: seen) }).subtracting(seen)
+        let next = unseen.filter { step in (orderingLookup[step] ?? Set()).isSubset(of: seen) }.subtracting(seen)
         guard let selected = next.sorted().first else {
             break
         }

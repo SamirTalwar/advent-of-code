@@ -12,7 +12,7 @@ struct Node {
 }
 
 func main() {
-    let tokens = readLine()!.split(separator: " ").map({ Data($0)! })
+    let tokens = readLine()!.split(separator: " ").map { Data($0)! }
     let (tree, _) = parseNode(data: tokens.dropFirst(0))
     let sum = tree.allMetadata.reduce(0, +)
     print(sum)

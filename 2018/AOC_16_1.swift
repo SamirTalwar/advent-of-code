@@ -18,17 +18,17 @@ func main() {
     for sample in samples {
         let validInstructionCount =
             ElfCode.Operation.allCases
-            .filter({ operation in
-                let instruction = ElfCode.Instruction(
-                    operation: operation,
-                    inputA: sample.instruction.1,
-                    inputB: sample.instruction.2,
-                    output: sample.instruction.3
-                )
-                let actual = instruction.apply(to: sample.before)
-                return actual == sample.after
-            })
-            .count
+                .filter { operation in
+                    let instruction = ElfCode.Instruction(
+                        operation: operation,
+                        inputA: sample.instruction.1,
+                        inputB: sample.instruction.2,
+                        output: sample.instruction.3
+                    )
+                    let actual = instruction.apply(to: sample.before)
+                    return actual == sample.after
+                }
+                .count
         if validInstructionCount >= 3 {
             count += 1
         }
@@ -41,13 +41,13 @@ func parseSamples(lines: [String]) -> [Sample] {
         lines
             .split(separator: "", maxSplits: Int.max, omittingEmptySubsequences: false)
             .prefix(while: { value in !value.isEmpty })
-            .map({ chunk in Array(chunk) })
+            .map { chunk in Array(chunk) }
     )
     return chunks.map(parseSample)
 }
 
 func parseSample(chunk: [String]) -> Sample {
-    let instructionValues = chunk[1].split(separator: " ").map({ value in Int(value)! })
+    let instructionValues = chunk[1].split(separator: " ").map { value in Int(value)! }
     let instruction = (
         instructionValues[0],
         instructionValues[1],
@@ -68,6 +68,6 @@ func parseBeforeAfter(_ string: String) -> ElfCode.Registers {
     return ElfCode.Registers(
         values: match[1]
             .split(separator: ",")
-            .map({ value in Int(value.trimmingCharacters(in: CharacterSet.whitespaces))! })
+            .map { value in Int(value.trimmingCharacters(in: CharacterSet.whitespaces))! }
     )
 }

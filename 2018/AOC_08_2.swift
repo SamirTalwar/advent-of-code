@@ -10,12 +10,12 @@ struct Node {
         if children.isEmpty {
             return metadata.reduce(0, +)
         }
-        return metadata.map({ index in children.count >= index ? children[index - 1].value : 0 }).reduce(0, +)
+        return metadata.map { index in children.count >= index ? children[index - 1].value : 0 }.reduce(0, +)
     }
 }
 
 func main() {
-    let tokens = readLine()!.split(separator: " ").map({ Data($0)! })
+    let tokens = readLine()!.split(separator: " ").map { Data($0)! }
     let (tree, _) = parseNode(data: tokens.dropFirst(0))
     print(tree.value)
 }

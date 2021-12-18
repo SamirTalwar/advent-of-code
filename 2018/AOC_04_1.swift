@@ -108,8 +108,8 @@ func main() {
         }
     }
 
-    let (idOfGuardAsleepMost, times) = asleep.max(by: comparing({ _, times in times.values.reduce(0, { $0 + $1 }) }))!
-    let (timeAsleepMost, _) = times.max(by: comparing({ _, count in count }))!
+    let (idOfGuardAsleepMost, times) = asleep.max(by: comparing { _, times in times.values.reduce(0) { $0 + $1 } })!
+    let (timeAsleepMost, _) = times.max(by: comparing { _, count in count })!
     let result = idOfGuardAsleepMost * timeAsleepMost.minute
     print("\(idOfGuardAsleepMost) * \(timeAsleepMost.minute) = \(result)")
 }

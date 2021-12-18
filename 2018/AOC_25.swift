@@ -50,7 +50,7 @@ func main() {
 func parseInput(string: String) -> Point {
     let coordinates = string
         .components(separatedBy: ",")
-        .map({ Int($0.trimmingCharacters(in: CharacterSet.whitespaces))! })
+        .map { Int($0.trimmingCharacters(in: CharacterSet.whitespaces))! }
     return Point(
         w: coordinates[0],
         x: coordinates[1],

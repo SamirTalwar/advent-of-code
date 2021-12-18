@@ -1,8 +1,9 @@
 func main() {
     let ids = Array(StdIn())
     let distances = ids.enumerated()
-        .flatMap({ a in ids.dropFirst(a.offset)
-                .map({ b in distanceBetween(a.element, b) }) })
+        .flatMap { a in ids.dropFirst(a.offset)
+            .map { b in distanceBetween(a.element, b) }
+        }
     guard let (lettersInCommon, _) = distances.first(where: { _, distance in distance == 1 }) else {
         fatalError("Could not find two IDs with a distance of 1.")
     }

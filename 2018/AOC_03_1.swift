@@ -4,7 +4,7 @@ struct Claim {
 
     init(id: Int, left: Int, top: Int, width: Int, height: Int) {
         self.id = id
-        positions = Set((left ..< (left + width)).flatMap { x in (top ..< (top + height)).map { y in (Position(x: x, y: y)) } })
+        positions = Set((left ..< (left + width)).flatMap { x in (top ..< (top + height)).map { y in Position(x: x, y: y) } })
     }
 }
 

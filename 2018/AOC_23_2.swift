@@ -33,7 +33,7 @@ struct Graph<T>: CustomStringConvertible where T: Hashable {
     }
 
     var description: String {
-        return edges.flatMap({ a, bs in bs.map({ b in "\(a) -> \(b)" }) }).joined(separator: "\n")
+        return edges.flatMap { a, bs in bs.map { b in "\(a) -> \(b)" } }.joined(separator: "\n")
     }
 
     mutating func addEdge(between a: T, and b: T) {
@@ -57,7 +57,7 @@ struct Graph<T>: CustomStringConvertible where T: Hashable {
         if p.isEmpty, x.isEmpty {
             return [r]
         }
-        let u = p.union(x).max(by: comparing({ v in self.edges[v]!.count }))!
+        let u = p.union(x).max(by: comparing { v in self.edges[v]!.count })!
         var rs: Set<Set<T>> = []
         for v in p.subtracting(edges[u]!) {
             rs.formUnion(bronKerbosch(r: r.union([v]), p: p.intersection(edges[v]!), x: x.intersection(edges[v]!)))
@@ -82,13 +82,13 @@ func main() {
         }
     }
     let cliques = graph.maximalCliques()
-    let bestSize = cliques.map({ clique in clique.count }).max()
-    let bestCliques = cliques.filter({ clique in clique.count == bestSize })
+    let bestSize = cliques.map { clique in clique.count }.max()
+    let bestCliques = cliques.filter { clique in clique.count == bestSize }
     if bestCliques.count != 1 {
         fatalError("Got \(bestCliques.count) cliques.")
     }
     let clique = bestCliques.first!
-    let bestDistance = clique.map({ bot in bot.center.distance(from: me) - bot.radius }).max()!
+    let bestDistance = clique.map { bot in bot.center.distance(from: me) - bot.radius }.max()!
     print(bestDistance)
 }
 

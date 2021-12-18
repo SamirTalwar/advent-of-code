@@ -25,8 +25,8 @@ struct Nanobot: CustomStringConvertible {
 
 func main() {
     let nanobots = StdIn().map(parseInput)
-    let strongestNanobot = nanobots.max(by: comparing({ bot in bot.signalRadius }))!
-    let inRange = nanobots.filter({ bot in bot.isInRange(of: strongestNanobot) })
+    let strongestNanobot = nanobots.max(by: comparing { bot in bot.signalRadius })!
+    let inRange = nanobots.filter { bot in bot.isInRange(of: strongestNanobot) }
     print(inRange.count)
 }
 

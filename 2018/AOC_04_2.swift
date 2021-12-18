@@ -111,7 +111,7 @@ func main() {
         }
     }
 
-    let (selected, _) = asleep.max(by: comparing({ _, count in count }))!
+    let (selected, _) = asleep.max(by: comparing { _, count in count })!
     let result = selected.guardId * selected.time.minute
     print("\(selected.guardId) * \(selected.time.minute) = \(result)")
 }

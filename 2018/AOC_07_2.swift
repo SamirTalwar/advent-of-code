@@ -6,7 +6,7 @@ let orderingParser = try! RegExp(pattern: "^Step (\\w) must be finished before s
 typealias Step = String
 typealias Time = Int
 
-let allSteps: [Step] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".map({ Step($0) })
+let allSteps: [Step] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".map { Step($0) }
 
 extension Step {
     func timeTaken() -> Time {
@@ -35,10 +35,10 @@ func main() {
     let orderings = StdIn().map(parseOrdering)
     let orderingLookup: [Step: Set<Step>] =
         Dictionary(grouping: orderings, by: { $0.after })
-        .mapValues({ steps in Set(steps.map({ $0.before })) })
+            .mapValues { steps in Set(steps.map { $0.before }) }
 
-    let befores: Set<Step> = Set(orderings.map({ $0.before }))
-    let afters: Set<Step> = Set(orderings.map({ $0.after }))
+    let befores: Set<Step> = Set(orderings.map { $0.before })
+    let afters: Set<Step> = Set(orderings.map { $0.after })
     let steps = befores.union(afters)
 
     var workers = Array(repeating: Worker(), count: workerCount)
@@ -46,9 +46,9 @@ func main() {
     var seen: Set<Step> = Set()
     var unseen = steps
     while !unseen.isEmpty {
-        for currentTime in Set(workers.map({ $0.busyUntil })).sorted() {
-            let done = Set(workers.flatMap({ worker in worker.done.filter({ _, time in time <= currentTime }).map({ step, _ in step }) }))
-            let next = unseen.subtracting(done).filter({ step in (orderingLookup[step] ?? Set()).isSubset(of: done) })
+        for currentTime in Set(workers.map { $0.busyUntil }).sorted() {
+            let done = Set(workers.flatMap { worker in worker.done.filter { _, time in time <= currentTime }.map { step, _ in step } })
+            let next = unseen.subtracting(done).filter { step in (orderingLookup[step] ?? Set()).isSubset(of: done) }
             if !next.isEmpty {
                 for selected in next.sorted() {
                     for i in 0 ..< workers.count {
@@ -65,7 +65,7 @@ func main() {
         }
     }
 
-    let timeTaken = workers.map({ $0.busyUntil }).max()!
+    let timeTaken = workers.map { $0.busyUntil }.max()!
     print(timeTaken)
 }
 

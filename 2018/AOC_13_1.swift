@@ -96,7 +96,7 @@ struct Tracks: CustomStringConvertible {
     }
 
     var description: String {
-        return tracks.map({ row in row.map({ cell in cell.description }).joined() }).joined(separator: "\n")
+        return tracks.map { row in row.map { cell in cell.description }.joined() }.joined(separator: "\n")
     }
 
     subscript(position: Position) -> TrackPiece {
@@ -115,16 +115,16 @@ struct Crash {
 }
 
 func main() {
-    let tracksAndCarts = StdIn().enumerated().map({ line in
-        line.element.enumerated().map({ character in
+    let tracksAndCarts = StdIn().enumerated().map { line in
+        line.element.enumerated().map { character in
             parseTrack(position: Position(x: character.offset, y: line.offset), character: character.element)
-        })
+        }
+    }
+    let columns = tracksAndCarts.map { row in row.count }.max()!
+    let tracks = Tracks(tracksAndCarts.map { row in
+        pad(row.map { track, _ in track }, to: columns, with: .empty)
     })
-    let columns = tracksAndCarts.map({ row in row.count }).max()!
-    let tracks = Tracks(tracksAndCarts.map({ row in
-        pad(row.map({ track, _ in track }), to: columns, with: .empty)
-    }))
-    let initialCarts = tracksAndCarts.flatMap({ row in row.compactMap({ _, cart in cart }) })
+    let initialCarts = tracksAndCarts.flatMap { row in row.compactMap { _, cart in cart } }
 
     var carts = initialCarts
     var crashes: [Crash] = []
@@ -137,7 +137,7 @@ func main() {
 }
 
 func tick(tracks: Tracks, carts: [Cart]) -> [Cart] {
-    return carts.map({ cart in
+    return carts.map { cart in
         let newPosition = cart.position.move(cart.direction)
         var direction = cart.direction
         var intersectionTurning = cart.intersectionTurning
@@ -168,7 +168,7 @@ func tick(tracks: Tracks, carts: [Cart]) -> [Cart] {
             }
         }
         return Cart(position: newPosition, direction: direction, intersectionTurning: intersectionTurning)
-    })
+    }
 }
 
 func findCrashes(carts: [Cart]) -> [Crash] {

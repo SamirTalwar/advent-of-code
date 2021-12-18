@@ -22,31 +22,31 @@ struct Army {
     }
 
     var units: Int {
-        return groups.map({ $0.units }).reduce(0, +)
+        return groups.map { $0.units }.reduce(0, +)
     }
 
     func target(_ other: Army) -> [(ArmyType, Index, ArmyType, Index)] {
         let attackingGroups = Array(
             groups
                 .enumerated()
-                .filter({ $0.element.isAlive })
-                .sorted(by: comparing({ $0.element.initiative }))
-                .sorted(by: comparing({ $0.element.effectivePower }))
+                .filter { $0.element.isAlive }
+                .sorted(by: comparing { $0.element.initiative })
+                .sorted(by: comparing { $0.element.effectivePower })
                 .reversed()
         )
         var defendingGroups = Array(
             other.groups.enumerated()
-                .filter({ $0.element.isAlive })
-                .sorted(by: comparing({ $0.element.initiative }))
-                .sorted(by: comparing({ $0.element.effectivePower }))
+                .filter { $0.element.isAlive }
+                .sorted(by: comparing { $0.element.initiative })
+                .sorted(by: comparing { $0.element.effectivePower })
                 .reversed()
         )
         var targets: [(ArmyType, Index, ArmyType, Index)] = []
         for (attackingGroupIndex, attackingGroup) in attackingGroups {
             let damageToBeDealt = defendingGroups
-                .map({ index, defendingGroup in (index, defendingGroup, attackingGroup.damage(to: defendingGroup)) })
-                .filter({ _, _, damage in damage > 0 })
-            guard let (defendingGroupIndex, _, _) = damageToBeDealt.max(by: comparing({ _, _, damage in damage })) else {
+                .map { index, defendingGroup in (index, defendingGroup, attackingGroup.damage(to: defendingGroup)) }
+                .filter { _, _, damage in damage > 0 }
+            guard let (defendingGroupIndex, _, _) = damageToBeDealt.max(by: comparing { _, _, damage in damage }) else {
                 continue
             }
             targets.append((type, attackingGroupIndex, other.type, defendingGroupIndex))
@@ -149,8 +149,8 @@ func main() {
     while armies.values.allSatisfy({ $0.hasUnits }) {
         let targets =
             (armies[.immuneSystem]!.target(armies[.infection]!) + armies[.infection]!.target(armies[.immuneSystem]!))
-            .sorted(by: comparing({ armyType, armyIndex, _, _ in armies[armyType]!.groups[armyIndex].initiative }))
-            .reversed()
+                .sorted(by: comparing { armyType, armyIndex, _, _ in armies[armyType]!.groups[armyIndex].initiative })
+                .reversed()
         for (attackerType, attackerIndex, defenderType, defenderIndex) in targets {
             let attacker = armies[attackerType]!.groups[attackerIndex]
             if attacker.isDead {
@@ -195,23 +195,23 @@ func parseInput(string: String) -> Group {
 }
 
 func parseModifiers(string: String) -> Modifiers {
-    let modifiers = string.components(separatedBy: "; ").flatMap({ part -> [(AttackType, Modifier)] in
+    let modifiers = string.components(separatedBy: "; ").flatMap { part -> [(AttackType, Modifier)] in
         if let match = weaknessParser.firstMatch(in: part) {
-            return parseAttackTypes(string: String(match[1])).map({ ($0, Modifier.weak) })
+            return parseAttackTypes(string: String(match[1])).map { ($0, Modifier.weak) }
         }
         if let match = immunityParser.firstMatch(in: part) {
-            return parseAttackTypes(string: String(match[1])).map({ ($0, Modifier.immune) })
+            return parseAttackTypes(string: String(match[1])).map { ($0, Modifier.immune) }
         }
         fatalError("Could not parse the modifier part \"\(part)\".")
-    })
+    }
     return Modifiers(modifiers)
 }
 
 func parseAttackTypes(string: String) -> [AttackType] {
-    return string.components(separatedBy: ", ").map({ component in
+    return string.components(separatedBy: ", ").map { component in
         guard let value = AttackType(rawValue: component) else {
             fatalError("Could not parse attack type: \(component)")
         }
         return value
-    })
+    }
 }

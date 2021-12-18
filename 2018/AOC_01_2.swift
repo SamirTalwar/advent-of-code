@@ -1,5 +1,5 @@
 func main() {
-    let numbers = StdIn().map({ Int($0)! })
+    let numbers = StdIn().map { Int($0)! }
     var seen: Set<Int> = []
     var i = 0
     var current = 0

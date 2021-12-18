@@ -23,7 +23,7 @@ struct Pots: Hashable, BidirectionalCollection, CustomStringConvertible {
     private let pots: Collection
 
     var description: String {
-        return pots.map({ pot in pot.description }).joined()
+        return pots.map { pot in pot.description }.joined()
     }
 
     var count: Int {
@@ -87,7 +87,7 @@ struct State: Hashable, CustomStringConvertible {
 
     var result: Int {
         return pots.enumerated()
-            .reduce(0, { value, pot in value + (pot.element == Pot.withPlant ? pot.offset + offset : 0) })
+            .reduce(0) { value, pot in value + (pot.element == Pot.withPlant ? pot.offset + offset : 0) }
     }
 
     init(pots: Pots) {
@@ -102,10 +102,10 @@ struct State: Hashable, CustomStringConvertible {
 
     func spread(spreading: Spreading) -> State {
         let indices = pots.index(pots.startIndex, offsetBy: -2) ... pots.index(pots.endIndex, offsetBy: 2)
-        let newPots = indices.map({ i -> Pot in
+        let newPots = indices.map { i -> Pot in
             let surrounding = Pots([self.pots[i - 2], self.pots[i - 1], self.pots[i], self.pots[i + 1], self.pots[i + 2]])
             return spreading[surrounding] ?? Pot.empty
-        })
+        }
         return State(pots: Pots(newPots), offset: offset - 2)
     }
 }

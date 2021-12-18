@@ -56,15 +56,15 @@ struct Bounds {
 }
 
 func main() {
-    let locations: Set<Location> = Set(StdIn().enumerated().map({ line -> Location in
+    let locations: Set<Location> = Set(StdIn().enumerated().map { line -> Location in
         let split = line.element.split(separator: ",")
         let x = Int(split[0].trimmingCharacters(in: CharacterSet.whitespaces))!
         let y = Int(split[1].trimmingCharacters(in: CharacterSet.whitespaces))!
         return Location(region: Region(line.offset), coordinates: Coordinates(x: x, y: y))
-    }))
+    })
 
-    let xs: [Int] = locations.map({ $0.x })
-    let ys: [Int] = locations.map({ $0.y })
+    let xs: [Int] = locations.map { $0.x }
+    let ys: [Int] = locations.map { $0.y }
     let bounds = Bounds(
         left: xs.min()!,
         top: ys.min()!,
@@ -72,14 +72,14 @@ func main() {
         bottom: ys.max()!
     )
 
-    let gridLocations: Set<Location> = Set(locations.map({ $0.offset(by: bounds) }))
+    let gridLocations: Set<Location> = Set(locations.map { $0.offset(by: bounds) })
 
     var count = 0
     for y in 0 ..< bounds.height {
         for x in 0 ..< bounds.width {
             let totalDistance = gridLocations
-                .map({ location in location.distance(from: Coordinates(x: x, y: y)) })
-                .reduce(0, { $0 + $1 })
+                .map { location in location.distance(from: Coordinates(x: x, y: y)) }
+                .reduce(0) { $0 + $1 }
             if totalDistance < MAXIMUM_DISTANCE {
                 count += 1
             }

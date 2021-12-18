@@ -67,15 +67,15 @@ struct Bounds {
 }
 
 func main() {
-    let locations: Set<Location> = Set(StdIn().enumerated().map({ line -> Location in
+    let locations: Set<Location> = Set(StdIn().enumerated().map { line -> Location in
         let split = line.element.split(separator: ",")
         let x = Int(split[0].trimmingCharacters(in: CharacterSet.whitespaces))!
         let y = Int(split[1].trimmingCharacters(in: CharacterSet.whitespaces))!
         return Location(region: Region(line.offset), coordinates: Coordinates(x: x, y: y))
-    }))
+    })
 
-    let xs: [Int] = locations.map({ $0.x })
-    let ys: [Int] = locations.map({ $0.y })
+    let xs: [Int] = locations.map { $0.x }
+    let ys: [Int] = locations.map { $0.y }
     let bounds = Bounds(
         left: xs.min()!,
         top: ys.min()!,
@@ -83,7 +83,7 @@ func main() {
         bottom: ys.max()!
     )
 
-    let gridLocations: Set<Location> = Set(locations.map({ $0.offset(by: bounds) }))
+    let gridLocations: Set<Location> = Set(locations.map { $0.offset(by: bounds) })
     let gridBounds = bounds.reorient()
 
     var grid: Grid = Array(repeating: Array(repeating: nil, count: gridBounds.width), count: gridBounds.height)
@@ -96,8 +96,8 @@ func main() {
         distance += 1
     }
 
-    let disqualified: Set<Region> = Set([grid.first!, grid.last!, grid.map({ $0.first! }), grid.map({ $0.last! })].joined().filter({ $0 != nil }).map({ $0! }))
-    let qualified = Set(locations.map({ $0.region })).subtracting(disqualified)
+    let disqualified: Set<Region> = Set([grid.first!, grid.last!, grid.map { $0.first! }, grid.map { $0.last! }].joined().filter { $0 != nil }.map { $0! })
+    let qualified = Set(locations.map { $0.region }).subtracting(disqualified)
 
     var counts: [Region: Int] = [:]
     for y in 0 ..< gridBounds.height {
@@ -110,7 +110,7 @@ func main() {
         }
     }
 
-    let result = counts.max(by: comparing({ _, count in count }))!
+    let result = counts.max(by: comparing { _, count in count })!
     print("Region: \(result.key)")
     print("Size: \(result.value)")
 }

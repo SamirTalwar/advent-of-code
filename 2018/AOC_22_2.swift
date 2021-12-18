@@ -18,7 +18,7 @@ struct Position: Hashable, CustomStringConvertible {
             Position(x: x, y: y + 1),
             Position(x: x - 1, y: y),
             Position(x: x, y: y - 1),
-        ].filter({ position in position.isValid })
+        ].filter { position in position.isValid }
     }
 
     func distance(from other: Position) -> Int {
@@ -120,11 +120,11 @@ func main() {
 
     func neighbors(of traversal: Traversal) -> [(Traversal, Cost)] {
         let adjacent = traversal.position.neighbors
-            .map({ position in Traversal(position: position, equipped: traversal.equipped) })
-            .filter({ traversal in regionType(of: traversal.position).equipment.contains(traversal.equipped) })
-            .map({ traversal in (traversal, 1) })
+            .map { position in Traversal(position: position, equipped: traversal.equipped) }
+            .filter { traversal in regionType(of: traversal.position).equipment.contains(traversal.equipped) }
+            .map { traversal in (traversal, 1) }
         let switchEquipment = regionType(of: traversal.position).equipment
-            .map({ equipment in (Traversal(position: traversal.position, equipped: equipment), 7) })
+            .map { equipment in (Traversal(position: traversal.position, equipped: equipment), 7) }
         return adjacent + switchEquipment
     }
 

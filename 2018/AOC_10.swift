@@ -28,24 +28,24 @@ struct PointsOfLight: CustomStringConvertible {
     let points: [PointOfLight]
 
     var description: String {
-        let positions = Set(points.map({ point in point.position }))
-        let xs = positions.map({ position in position.x })
-        let ys = positions.map({ position in position.y })
+        let positions = Set(points.map { point in point.position })
+        let xs = positions.map { position in position.x }
+        let ys = positions.map { position in position.y }
 
-        return (ys.min()! ... ys.max()!).map({ y in
-            (xs.min()! ... xs.max()!).map({ x in
+        return (ys.min()! ... ys.max()!).map { y in
+            (xs.min()! ... xs.max()!).map { x in
                 positions.contains(Position(x: x, y: y)) ? "#" : " "
-            }).joined()
-        }).joined(separator: "\n")
+            }.joined()
+        }.joined(separator: "\n")
     }
 
     func move() -> PointsOfLight {
-        return PointsOfLight(points: points.map({ point in point.move() }))
+        return PointsOfLight(points: points.map { point in point.move() })
     }
 
     func aligned() -> Bool {
-        let pointsByX = Dictionary(grouping: points.map({ point in point.position }), by: { position in position.x })
-            .mapValues({ positions in Set(positions.map({ position in position.y })).sorted() })
+        let pointsByX = Dictionary(grouping: points.map { point in point.position }, by: { position in position.x })
+            .mapValues { positions in Set(positions.map { position in position.y }).sorted() }
         var lineCount = 0
         for ys in pointsByX.values {
             var consecutiveCount = 1
