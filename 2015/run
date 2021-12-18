@@ -32,27 +32,27 @@ else
   name="AOC_${day}"
 fi
 
-mkdir -p $output_directory
-
-files=("${dir}/${name}.hs")
-output_directory="${output_directory}/${name}"
-executable="${output_directory}/run"
-mkdir -p $output_directory
-compilation_args=('-Wall')
+haskell_args=('-Wall')
 if $optimize; then
-  compilation_args+=('-O2')
+  file="${dir}/${name}.hs"
+  output_directory="${output_directory}/${name}"
+  executable="${output_directory}/run"
+  (
+    ormolu -i $file
+    hlint $file || :
+    ghc \
+      $haskell_args \
+      -O2 \
+      -o $executable \
+      -odir $output_directory \
+      -hidir $output_directory \
+      $file
+    echo
+  )>&2
+  time $executable $@
+else
+  (
+    cd $dir
+    time runhaskell $haskell_args "${name}.hs"
+  )
 fi
-
-(
-  ormolu -i $files
-  hlint $files || :
-  ghc \
-    $compilation_args \
-    -o $executable \
-    -odir $output_directory \
-    -hidir $output_directory \
-    $files
-  echo
-)>&2
-
-time $executable $@
