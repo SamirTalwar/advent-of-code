@@ -1,4 +1,5 @@
 {-# OPTIONS -Wall #-}
+{-# LANGUAGE DeriveFunctor #-}
 
 import Data.Bifunctor
 import qualified Data.List as List
@@ -6,16 +7,40 @@ import Data.Text (Text)
 import Helpers.Parse
 import Text.Parsec
 
-data Number = Value Int | Pair Number Number
+data Number = Value Int | Number :+ Number
 
 instance Show Number where
   show (Value n) = show n
-  show (Pair left right) = "[" <> show left <> ", " <> show right <> "]"
+  show (left :+ right) = "[" <> show left <> ", " <> show right <> "]"
 
 data Explosion = Explosion (Maybe Int) Number (Maybe Int)
   deriving (Show)
 
 data ExplosionDirection = L | R
+
+data Progress a b = Restart a | Next b
+  deriving (Functor)
+
+instance Applicative (Progress a) where
+  pure = Next
+  Restart f <*> _ = Restart f
+  Next _ <*> Restart x = Restart x
+  Next f <*> Next x = Next (f x)
+
+instance Monad (Progress a) where
+  Restart x >>= _ = Restart x
+  Next x >>= f = f x
+
+instance Bifunctor Progress where
+  bimap f _ (Restart x) = Restart (f x)
+  bimap _ g (Next x) = Next (g x)
+
+both :: Bifunctor f => (a -> b) -> f a a -> f b b
+both func = bimap func func
+
+progress :: (a -> c) -> (b -> c) -> Progress a b -> c
+progress f _ (Restart x) = f x
+progress _ g (Next x) = g x
 
 main :: IO ()
 main = do
@@ -25,61 +50,51 @@ main = do
 
 magnitude :: Number -> Int
 magnitude (Value n) = n
-magnitude (Pair left right) = 3 * magnitude left + 2 * magnitude right
+magnitude (left :+ right) = 3 * magnitude left + 2 * magnitude right
 
 add :: Number -> Number -> Number
-add a b = reduce $ Pair a b
+add a b = reduce $ a :+ b
 
 reduce :: Number -> Number
-reduce number =
-  case explode 0 number of
-    Left (Explosion _ result _) -> reduce result
-    Right exploded ->
-      case split exploded of
-        Left result -> reduce result
-        Right result -> result
+reduce = progress (reduce . consumeExplosion) (progress reduce id . split) . explode 0
+  where
+    consumeExplosion (Explosion _ value _) = value
 
-explode :: Int -> Number -> Either Explosion Number
-explode _ number@Value {} = Right number
-explode depth (Pair left right)
+explode :: Int -> Number -> Progress Explosion Number
+explode _ number@Value {} = Next number
+explode depth (left :+ right)
   | depth == 4 =
     case (left, right) of
-      (Value l, Value r) -> Left $ Explosion (Just l) (Value 0) (Just r)
+      (Value l, Value r) -> Restart $ Explosion (Just l) (Value 0) (Just r)
       _ -> error $ "Cannot explode " ++ show left ++ " and " ++ show right ++ "."
   | otherwise = do
-    case explode (succ depth) left of
-      Left (Explosion incL l incR) ->
-        let r = propagateExplosion L incR right
-         in Left $ Explosion incL (Pair l r) Nothing
-      Right l -> do
-        case explode (succ depth) right of
-          Left (Explosion incL r incR) ->
-            let l' = propagateExplosion R incL l
-             in Left $ Explosion Nothing (Pair l' r) incR
-          Right r -> Right $ Pair l r
+    left' <- first (propagateExplosion L right) (explode (succ depth) left)
+    right' <- first (propagateExplosion R left') (explode (succ depth) right)
+    return $ left' :+ right'
   where
-    propagateExplosion _ Nothing number = number
-    propagateExplosion _ (Just inc) (Value n) = Value (n + inc)
-    propagateExplosion L inc (Pair l r) = Pair (propagateExplosion L inc l) r
-    propagateExplosion R inc (Pair l r) = Pair l (propagateExplosion R inc r)
+    propagateExplosion L r (Explosion incL l incR) = Explosion incL (l :+ propagateExplosion' L incR r) Nothing
+    propagateExplosion R l (Explosion incL r incR) = Explosion Nothing (propagateExplosion' R incL l :+ r) incR
+    propagateExplosion' _ Nothing number = number
+    propagateExplosion' _ (Just inc) (Value n) = Value (n + inc)
+    propagateExplosion' L inc (l :+ r) = propagateExplosion' L inc l :+ r
+    propagateExplosion' R inc (l :+ r) = l :+ propagateExplosion' R inc r
 
-split :: Number -> Either Number Number
+split :: Number -> Progress Number Number
 split number@(Value n)
   | n >= 10 =
     let (d, r) = n `divMod` 2
-     in Left $ Pair (Value d) (Value (d + r))
+     in Restart $ Value d :+ Value (d + r)
   | otherwise =
-    Right number
-split (Pair left right) = do
-  left' <- first (`Pair` right) $ split left
-  right' <- first (Pair left') $ split right
-  return $ Pair left' right'
+    Next number
+split (left :+ right) = do
+  left' <- first (:+ right) (split left)
+  both (left' :+) (split right)
 
 parser :: Parsec Text () Number
 parser = do
   _ <- char '['
-  left <- (Value <$> try int) <|> try parser
+  left <- Value <$> try int <|> try parser
   _ <- char ','
-  right <- (Value <$> try int) <|> try parser
+  right <- Value <$> try int <|> try parser
   _ <- char ']'
-  return $ Pair left right
+  return $ left :+ right
