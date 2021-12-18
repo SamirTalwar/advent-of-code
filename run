@@ -1,5 +1,4 @@
-#!/usr/bin/env nix-shell
-#!nix-shell -i zsh -p coreutils
+#!/usr/bin/env zsh
 
 set -e
 set -u
@@ -7,16 +6,16 @@ set -o pipefail
 
 cd $(dirname $0)
 
-optimize=false
+args=()
 input_mechanism=stdin
 while [[ $1 =~ ^- ]]; do
   case $1 in
-    -O)
-      optimize=true
-      shift
-      ;;
     --input-as-arg)
       input_mechanism=arg
+      shift
+      ;;
+    *)
+      args+=($1)
       shift
       ;;
   esac
@@ -30,118 +29,18 @@ fi
 year=$1
 day=$(printf '%02d' $2)
 shift 2
+args+=($year $day)
 if [[ $# -gt 0 ]]; then
   exercise=${1:-}
+  args+=($exercise)
   shift
 fi
 
 input="${year}/AOC_${day}.input"
-output_directory="build/${year}"
 if (( ${+exercise} )); then
-  name="AOC_${day}_${exercise}"
   answer="${year}/AOC_${day}_${exercise}.answer"
 else
-  name="AOC_${day}"
   answer="${year}/AOC_${day}.answer"
-fi
-
-mkdir -p $output_directory
-
-if [[ -e "${year}/${name}.hs" ]]; then
-  files=("${year}/${name}.hs")
-  if [[ -d "${year}/Helpers" ]]; then
-    files+=(${year}/Helpers/*.hs)
-  fi
-  output_directory="${output_directory}/${name}"
-  executable="${output_directory}/run"
-  mkdir -p $output_directory
-  compilation_args=('-Wall')
-  if $optimize; then
-    compilation_args+=('-O2')
-  fi
-  ormolu -i $files
-  hlint $files || :
-  ghc \
-    $compilation_args \
-    -o $executable \
-    -odir $output_directory \
-    -hidir $output_directory \
-    $files
-  echo >&2
-elif [[ -e "${year}/${name}.pl" ]]; then
-  executable=(swipl "${year}/${name}.pl")
-elif [[ -e "${year}/${name}.pony" ]]; then
-  executable="${output_directory}/${name}"
-  if $optimize; then
-    compilation_args=()
-  else
-    compilation_args=(--debug)
-  fi
-  temp_src_root="${TMPDIR:-/tmp}/advent-of-code/${year}"
-  trap 'rm -rf $temp_src_root' EXIT
-  temp_src="${temp_src_root}/${name}"
-  mkdir -p $temp_src
-  (
-    cd $year
-    files=(helpers/*.pony corral.json lock.json)
-    if [[ -e _corral ]]; then
-      files+=(_corral)
-    fi
-    if [[ -e _repos ]]; then
-      files+=(_repos)
-    fi
-    cp -R "${name}.pony" $files $temp_src
-  )
-  output_directory="${PWD}/${output_directory}"
-  hash_file="${output_directory}/${name}.input-hash"
-  current_hash=$([[ -e $hash_file ]] && cat $hash_file || :)
-  (
-    cd $temp_src
-    new_hash=$((echo $compilation_args; find . -type f | sort | xargs sha256sum) | sha256sum)
-    if [[ $current_hash != $new_hash ]]; then
-      rm -f $hash_file
-      corral run -- ponyc $compilation_args --output=${output_directory} >&2
-      echo $new_hash > $hash_file
-    fi
-    rm -rf $temp_src_root
-  )
-elif [[ -e "${year}/${name}.rs" ]]; then
-  file="${year}/${name}.rs"
-  executable_name="aoc_${year}_${day}_${exercise}"
-  if $optimize; then
-    executable="${output_directory}/release/${executable_name}"
-    compilation_args=('--release')
-  else
-    executable="${output_directory}/debug/${executable_name}"
-    compilation_args=()
-    export RUST_BACKTRACE=1
-  fi
-  cargo_file="${year}/Cargo.toml"
-  cp -f "${year}/Cargo.template.toml" $cargo_file
-  for bin in ${year}/AOC_*.rs; do
-    echo >> $cargo_file
-    echo '[[bin]]' >> $cargo_file
-    echo "name = \"$(basename $bin .rs | sed "s/^AOC_/aoc_${year}_/")\"" >> $cargo_file
-    echo "path = \"$(basename $bin)\"" >> $cargo_file
-  done
-  cargo fmt
-  cargo build $compilation_args --target-dir $output_directory --bin $executable_name
-  echo >&2
-elif [[ -e "${year}/${name}.swift" ]]; then
-  files=("${year}/${name}.swift" ${year}/Helpers/*.swift)
-  executable="${output_directory}/${name}"
-  if $optimize; then
-    compilation_args=('-O')
-  else
-    compilation_args=()
-  fi
-  swiftformat $files
-  swiftc $compilation_args -o $executable $files
-  echo >&2 'Compiled.'
-  echo >&2
-else
-  echo >&2 'The program does not exist.'
-  exit 1
 fi
 
 if [[ -t 0 ]]; then
@@ -152,9 +51,9 @@ if [[ -t 0 ]]; then
   output=$(mktemp)
   trap 'rm -f $output' EXIT
   if [[ $input_mechanism == 'arg' ]]; then
-    (time $executable "$@" $input) | tee $output
+    (./compile-and-run $args $input) | tee $output
   else
-    (time $executable "$@" < $input) | tee $output
+    (./compile-and-run $args < $input) | tee $output
   fi
   if [[ -e $answer ]]; then
     if ! diff_output=$(git diff --color --no-index $answer $output); then
@@ -165,5 +64,5 @@ if [[ -t 0 ]]; then
     fi
   fi
 else
-  time $executable "$@"
+  ./compile-and-run $args
 fi
