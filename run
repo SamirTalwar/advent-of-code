@@ -22,7 +22,7 @@ while [[ $1 =~ ^- ]]; do
 done
 
 if [[ ! -d $1 || ! ( $2 =~ '^[0-9]+$' ) ]]; then
-  echo >&2 "Usage: $0 [-O] <year> <day> [<exercise>]"
+  echo >&2 "Usage: $0 [-O] <year> <day> [<part>]"
   exit 2
 fi
 
@@ -31,15 +31,15 @@ day=$(printf '%02d' $2)
 shift 2
 args+=($day)
 if [[ $# -gt 0 ]]; then
-  exercise=${1:-}
-  args+=($exercise)
+  part=${1:-}
+  args+=($part)
   shift
 fi
 
 input="${year}/AOC_${day}.input"
-if (( ${+exercise} )); then
-  answer="${year}/AOC_${day}_${exercise}.answer"
-  echo >&2 "Running year ${year}, day ${day}, exercise ${exercise}..."
+if (( ${+part} )); then
+  answer="${year}/AOC_${day}_${part}.answer"
+  echo >&2 "Running year ${year}, day ${day}, part ${part}..."
 else
   answer="${year}/AOC_${day}.answer"
   echo >&2 "Running year ${year}, day ${day}..."

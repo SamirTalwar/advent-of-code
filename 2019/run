@@ -21,14 +21,14 @@ done
 day=$(printf '%02d' $1)
 shift
 if [[ $# -gt 0 ]]; then
-  exercise=${1:-}
+  part=${1:-}
   shift
 fi
 
 output_directory=("${PWD}/build/${year}")
-if (( ${+exercise} )); then
-  name="AOC_${day}_${exercise}"
-  executable_name="aoc_${year}_${day}_${exercise}"
+if (( ${+part} )); then
+  name="AOC_${day}_${part}"
+  executable_name="aoc_${year}_${day}_${part}"
 else
   name="AOC_${day}"
   executable_name="aoc_${year}_${day}"
