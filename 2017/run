@@ -7,6 +7,15 @@ set -o pipefail
 
 dir=$(dirname $0)
 
+while [[ $1 =~ ^- ]]; do
+  case $1 in
+    # ignore `-O` so this operates in line with other `run` scripts
+    -O)
+      shift
+      ;;
+  esac
+done
+
 day=$(printf '%02d' $1)
 shift
 if [[ $# -gt 0 ]]; then
