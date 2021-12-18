@@ -1,0 +1,64 @@
+#!/usr/bin/env nix-shell
+#!nix-shell -I nixpkgs=https://github.com/NixOS/nixpkgs/archive/f366af7a1b3891d9370091ab03150d3a6ee138fa.tar.gz -i zsh ../shell.nix
+
+set -e
+set -u
+set -o pipefail
+
+dir=$(dirname $0)
+year=$(basename $dir)
+
+optimize=false
+while [[ $1 =~ ^- ]]; do
+  case $1 in
+    -O)
+      optimize=true
+      shift
+      ;;
+  esac
+done
+
+day=$(printf '%02d' $1)
+shift
+if [[ $# -gt 0 ]]; then
+  exercise=${1:-}
+  shift
+fi
+
+output_directory=("${PWD}/build/${year}")
+if (( ${+exercise} )); then
+  name="AOC_${day}_${exercise}"
+  executable_name="aoc_${year}_${day}_${exercise}"
+else
+  name="AOC_${day}"
+  executable_name="aoc_${year}_${day}"
+fi
+
+mkdir -p $output_directory
+
+file="${dir}/${name}.rs"
+if $optimize; then
+  executable="${output_directory}/release/${executable_name}"
+  compilation_args=('--release')
+else
+  executable="${output_directory}/debug/${executable_name}"
+  compilation_args=()
+  export RUST_BACKTRACE=1
+fi
+cargo_file="${dir}/Cargo.toml"
+cp -f "${dir}/Cargo.template.toml" $cargo_file
+for bin in ${dir}/AOC_*.rs; do
+  echo >> $cargo_file
+  echo '[[bin]]' >> $cargo_file
+  echo "name = \"$(basename $bin .rs | sed "s/^AOC_/aoc_${year}_/")\"" >> $cargo_file
+  echo "path = \"$(basename $bin)\"" >> $cargo_file
+done
+
+(
+  cd $dir
+  cargo fmt
+  cargo build $compilation_args --target-dir $output_directory --bin $executable_name
+  echo >&2
+) >&2
+
+time $executable $@

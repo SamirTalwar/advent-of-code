@@ -1,12 +1,6 @@
-.direnv
-.envrc.local
-build
+/.direnv
+/.envrc.local
+/build
+
 *.input
 *.answer
-
-# Prolog
-prolog/packs
-
-# Rust
-/*/Cargo.toml
-/target

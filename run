@@ -29,7 +29,7 @@ fi
 year=$1
 day=$(printf '%02d' $2)
 shift 2
-args+=($year $day)
+args+=($day)
 if [[ $# -gt 0 ]]; then
   exercise=${1:-}
   args+=($exercise)
@@ -51,9 +51,9 @@ if [[ -t 0 ]]; then
   output=$(mktemp)
   trap 'rm -f $output' EXIT
   if [[ $input_mechanism == 'arg' ]]; then
-    (./compile-and-run $args $input) | tee $output
+    (./$year/run $args $input) | tee $output
   else
-    (./compile-and-run $args < $input) | tee $output
+    (./$year/run $args < $input) | tee $output
   fi
   if [[ -e $answer ]]; then
     if ! diff_output=$(git diff --color --no-index $answer $output); then
@@ -64,5 +64,5 @@ if [[ -t 0 ]]; then
     fi
   fi
 else
-  ./compile-and-run $args
+  ./$year/run $args
 fi

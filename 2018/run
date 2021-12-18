@@ -1,0 +1,52 @@
+#!/usr/bin/env nix-shell
+#!nix-shell -I nixpkgs=https://github.com/NixOS/nixpkgs/archive/f366af7a1b3891d9370091ab03150d3a6ee138fa.tar.gz -i zsh ../shell.nix
+
+set -e
+set -u
+set -o pipefail
+
+dir=$(dirname $0)
+year=$(basename $dir)
+
+optimize=false
+while [[ $1 =~ ^- ]]; do
+  case $1 in
+    -O)
+      optimize=true
+      shift
+      ;;
+  esac
+done
+
+day=$(printf '%02d' $1)
+shift
+if [[ $# -gt 0 ]]; then
+  exercise=${1:-}
+  shift
+fi
+
+output_directory=("${PWD}/build/${year}")
+if (( ${+exercise} )); then
+  name="AOC_${day}_${exercise}"
+else
+  name="AOC_${day}"
+fi
+
+mkdir -p $output_directory
+
+files=("${dir}/${name}.swift" ${dir}/Helpers/*.swift)
+executable="${output_directory}/${name}"
+if $optimize; then
+  compilation_args=('-O')
+else
+  compilation_args=()
+fi
+
+(
+  swiftformat $files
+  swiftc $compilation_args -o $executable $files
+  echo 'Compiled.'
+  echo
+) >&2
+
+time $executable $@
