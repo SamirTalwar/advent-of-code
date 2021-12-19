@@ -1,10 +1,9 @@
 {-# OPTIONS -Wall #-}
 {-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE TupleSections #-}
 
 import Data.Bifunctor
-import qualified Data.List as List
 import Data.Text (Text)
+import Helpers.List
 import Helpers.Parse
 import Text.Parsec
 
@@ -49,9 +48,6 @@ main = do
   let selections = selectPairs numbers
   let results = map (magnitude . uncurry add) selections
   print $ maximum results
-
-selectPairs :: [a] -> [(a, a)]
-selectPairs xs = concat $ zipWith (\i x -> let (before, after) = List.splitAt i xs in map (x,) (before ++ tail after)) [0 ..] xs
 
 magnitude :: Number -> Int
 magnitude (Value n) = n

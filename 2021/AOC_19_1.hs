@@ -1,7 +1,7 @@
 {-# OPTIONS -Wall #-}
 
-import Control.Applicative ((<|>))
 import qualified Data.Either as Either
+import qualified Data.Foldable as Foldable
 import qualified Data.List as List
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -9,7 +9,7 @@ import Data.Text (Text)
 import Helpers.Parse
 import Text.Parsec hiding ((<|>))
 
-data Scanner = Scanner Int (Set Beacon)
+newtype Scanner = Scanner (Set Beacon)
   deriving (Show)
 
 data Beacon = Beacon Int Int Int
@@ -25,7 +25,7 @@ data Coordinate = X | Y | Z
 main :: IO ()
 main = do
   scanners <- parseTextIO parser
-  let reoriented = map (\(Scanner _ beacons) -> beacons) $ reorient scanners
+  let reoriented = map (\(Scanner beacons) -> beacons) $ reorient scanners
   let allBeacons = foldr Set.union Set.empty reoriented
   print $ Set.size allBeacons
 
@@ -35,29 +35,31 @@ reorient (first : rest) = reorient' [first] rest
   where
     reorient' oriented [] = oriented
     reorient' oriented scanners =
-      let rotatedScanners = map (\s -> maybe (Left s) Right $ List.foldl' (\x o -> x <|> matchBeacons o (concatMap (translate o) (rotate s))) Nothing oriented) scanners
-          (remaining, reoriented) = Either.partitionEithers rotatedScanners
+      let (remaining, reoriented) = Either.partitionEithers $ map (reorientScanner oriented) scanners
        in if null reoriented
             then error ("Could not orient these scanners: " <> show remaining)
             else reorient' (oriented ++ reoriented) remaining
+    reorientScanner oriented scanner =
+      maybe (Left scanner) Right $ Foldable.asum $ map (`matchBeacons` scanner) oriented
 
-matchBeacons :: Scanner -> [Scanner] -> Maybe Scanner
-matchBeacons against = List.find (overlaps 12 against)
+matchBeacons :: Scanner -> Scanner -> Maybe Scanner
+matchBeacons against scanner = List.find (overlaps 12 against) aligned
   where
-    overlaps n (Scanner _ as) (Scanner _ bs) =
+    aligned = rotate scanner >>= translate against
+    overlaps n (Scanner as) (Scanner bs) =
       Set.size (as `Set.intersection` bs) >= n
 
 translate :: Scanner -> Scanner -> [Scanner]
-translate (Scanner _ as) (Scanner n bs) = do
+translate (Scanner as) (Scanner bs) = do
   a <- Set.toList as
   b <- Set.toList bs
   let (dX, dY, dZ) = b `diff` a
-  return $ Scanner n (Set.map (\(Beacon x y z) -> Beacon (x - dX) (y - dY) (z - dZ)) bs)
+  return $ Scanner (Set.map (\(Beacon x y z) -> Beacon (x - dX) (y - dY) (z - dZ)) bs)
   where
     diff (Beacon aX aY aZ) (Beacon bX bY bZ) = (aX - bX, aY - bY, aZ - bZ)
 
 rotate :: Scanner -> [Scanner]
-rotate (Scanner n beacons) = map (\d -> Scanner n $ Set.map (rotate' d) beacons) rotations
+rotate (Scanner beacons) = map (\d -> Scanner $ Set.map (rotate' d) beacons) rotations
   where
     rotate' (dX, dY, dZ) beacon =
       Beacon (getDirection dX beacon) (getDirection dY beacon) (getDirection dZ beacon)
@@ -100,9 +102,9 @@ parser :: Parsec Text () [Scanner]
 parser = sepBy scanner (string "\n")
   where
     scanner = do
-      number <- string "--- scanner " *> int <* string " ---\n"
+      _ <- string "--- scanner " *> int <* string " ---\n"
       beacons <- Set.fromList <$> many beacon
-      return $ Scanner number beacons
+      return $ Scanner beacons
     beacon = do
       x <- int
       _ <- char ','
