@@ -32,12 +32,11 @@ else
   name="AOC_${day}"
 fi
 
-mkdir -p $output_directory
-
 haskell_args=('-Wall')
 if $optimize; then
   files=("${dir}/${name}.hs" ${dir}/Helpers/*.hs)
   output_directory="${output_directory}/${name}"
+  mkdir -p $output_directory
   executable="${output_directory}/run"
   (
     ormolu -i $files

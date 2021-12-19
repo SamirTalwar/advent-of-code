@@ -36,6 +36,7 @@ haskell_args=('-Wall')
 if $optimize; then
   file="${dir}/${name}.hs"
   output_directory="${output_directory}/${name}"
+  mkdir -p $output_directory
   executable="${output_directory}/run"
   (
     ormolu -i $file
