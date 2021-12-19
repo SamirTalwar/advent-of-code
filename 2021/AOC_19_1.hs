@@ -38,7 +38,7 @@ reorient (first : rest) = reorient' [first] rest
       let (remaining, reoriented) = Either.partitionEithers $ map (reorientScanner oriented) scanners
        in if null reoriented
             then error ("Could not orient these scanners: " <> show remaining)
-            else reorient' (oriented ++ reoriented) remaining
+            else reorient' (reoriented ++ oriented) remaining
     reorientScanner oriented scanner =
       maybe (Left scanner) Right $ Foldable.asum $ map (`matchBeacons` scanner) oriented
 
