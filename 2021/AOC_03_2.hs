@@ -1,6 +1,7 @@
 {-# OPTIONS -Wall #-}
 
 import qualified Data.List as List
+import Helpers.Numbers
 import Helpers.Parse
 import Text.Parsec
 
@@ -25,11 +26,7 @@ locateValue p report =
         else pValue : locateValue p (map tail filtered)
 
 binaryToInt :: [Bit] -> Int
-binaryToInt = binaryToInt' . reverse
-  where
-    binaryToInt' [] = 0
-    binaryToInt' (Off : xs) = binaryToInt' xs * 2
-    binaryToInt' (On : xs) = binaryToInt' xs * 2 + 1
+binaryToInt = unBits . map toBool . reverse
 
 mostCommon :: [Bit] -> Bit
 mostCommon xs =
@@ -47,6 +44,10 @@ leastCommon = flipBit . mostCommon
 flipBit :: Bit -> Bit
 flipBit Off = On
 flipBit On = Off
+
+toBool :: Bit -> Bool
+toBool Off = False
+toBool On = True
 
 parseInput :: IO [[Bit]]
 parseInput = parseLinesIO $ many1 $ try (char '0' >> pure Off) <|> try (char '1' >> pure On)

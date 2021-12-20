@@ -24,3 +24,9 @@ main = hspec $ do
       hedgehog $ do
         x <- forAll $ Gen.int (Range.linear 0 100)
         Helpers.Numbers.triangular x === sum [1 .. x]
+
+    it "computes bits" $ do
+      hedgehog $ do
+        x <- forAll $ Gen.int (Range.linear 0 maxBound)
+        let roundTrip = Helpers.Numbers.unBits (Helpers.Numbers.bits x)
+        roundTrip === x

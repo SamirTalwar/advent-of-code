@@ -1,6 +1,7 @@
 {-# OPTIONS -Wall #-}
 {-# LANGUAGE LambdaCase #-}
 
+import Helpers.Numbers
 import Helpers.Parse
 import Text.Parsec
 
@@ -93,9 +94,8 @@ hexCharToBin 'F' = [X, X, X, X]
 hexCharToBin c = error $ "Invalid hex character: '" ++ pure c ++ "'"
 
 bitsToInt :: Bits -> Int
-bitsToInt = bitsToInt' . reverse
-  where
-    bitsToInt' [] = 0
-    bitsToInt' (b : bs) = bitToInt b + 2 * bitsToInt' bs
-    bitToInt O = 0
-    bitToInt X = 1
+bitsToInt = unBits . map toBool . reverse
+
+toBool :: Bit -> Bool
+toBool O = False
+toBool X = True

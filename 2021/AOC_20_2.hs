@@ -13,6 +13,7 @@ import Data.Vector (Vector)
 import qualified Data.Vector as Vector
 import Helpers.Grid (Grid)
 import qualified Helpers.Grid as Grid
+import Helpers.Numbers (unBits)
 import Helpers.Parse
 import Helpers.Point (Point (..))
 import qualified Helpers.Point as Point
@@ -57,7 +58,11 @@ opposite Light = Dark
 opposite Dark = Light
 
 pixelsToInt :: [Pixel] -> Int
-pixelsToInt = foldl (\m pixel -> 2 * m + case pixel of Dark -> 0; Light -> 1) 0
+pixelsToInt = unBits . map toBool . reverse
+
+toBool :: Pixel -> Bool
+toBool Dark = False
+toBool Light = True
 
 considered :: Point -> [Point]
 considered (Point y x) =
