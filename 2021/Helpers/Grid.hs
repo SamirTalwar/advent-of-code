@@ -105,17 +105,17 @@ bounds (SparseGrid _ entries) = gridBounds
         then (Point 0 0, Point 0 0)
         else (Point (Set.findMin ys) (Set.findMin xs), Point (Set.findMax ys) (Set.findMax xs))
 
-lookup :: Set Point -> Grid a -> [a]
+lookup :: [Point] -> Grid a -> [a]
 lookup points (DenseGrid values) =
-  map (values Array.!) (Set.toList points)
+  map (values Array.!) points
 lookup points (SparseGrid defaultValue entries) =
-  map (Maybe.fromMaybe defaultValue . (`Map.lookup` entries)) (Set.toList points)
+  map (Maybe.fromMaybe defaultValue . (`Map.lookup` entries)) points
 
 (!) :: Grid a -> Point -> a
-(!) grid point = head $ lookup (Set.singleton point) grid
+(!) grid point = head $ lookup [point] grid
 
 allValues :: Grid a -> [a]
-allValues grid = lookup (allPoints grid) grid
+allValues grid = lookup (allPointsList grid) grid
 
 all :: (a -> Bool) -> Grid a -> Bool
 all predicate = List.all predicate . allValues
