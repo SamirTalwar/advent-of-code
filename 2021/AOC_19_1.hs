@@ -1,4 +1,6 @@
 {-# OPTIONS -Wall #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 
 import qualified Data.Either as Either
 import qualified Data.Foldable as Foldable
@@ -6,14 +8,25 @@ import qualified Data.List as List
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Text (Text)
+import Helpers.Memoization
 import Helpers.Parse
 import Text.Parsec hiding ((<|>))
 
 newtype Scanner = Scanner (Set Beacon)
   deriving (Show)
 
+instance HasTrie Scanner where
+  data Scanner :->: b = ScannerTrie (Set Beacon :->: b)
+  trie f = ScannerTrie $ trie $ f . Scanner
+  unTrie (ScannerTrie f) (Scanner beacons) = unTrie f beacons
+
 data Beacon = Beacon Int Int Int
   deriving (Eq, Ord)
+
+instance HasTrie Beacon where
+  data Beacon :->: b = BeaconTrie ((Int, Int, Int) :->: b)
+  trie f = BeaconTrie $ trie $ \(x, y, z) -> f (Beacon x y z)
+  unTrie (BeaconTrie f) (Beacon x y z) = unTrie f (x, y, z)
 
 instance Show Beacon where
   show (Beacon x y z) = "(" ++ show x ++ ", " ++ show y ++ ", " ++ show z ++ ")"
@@ -40,7 +53,10 @@ reorient (first : rest) = reorient' [first] rest
             then error ("Could not orient these scanners: " <> show remaining)
             else reorient' (reoriented ++ oriented) remaining
     reorientScanner oriented scanner =
-      maybe (Left scanner) Right $ Foldable.asum $ map (`matchBeacons` scanner) oriented
+      maybe (Left scanner) Right $ Foldable.asum $ map (`memoMatchBeacons` scanner) oriented
+
+memoMatchBeacons :: Scanner -> Scanner -> Maybe Scanner
+memoMatchBeacons = memo2 matchBeacons
 
 matchBeacons :: Scanner -> Scanner -> Maybe Scanner
 matchBeacons against scanner = List.find (overlaps 12 against) aligned

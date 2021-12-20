@@ -1,5 +1,6 @@
 {-# OPTIONS -Wall #-}
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 
 import qualified Data.Either as Either
 import qualified Data.Foldable as Foldable
@@ -8,14 +9,25 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Text (Text)
 import Helpers.List
+import Helpers.Memoization
 import Helpers.Parse
 import Text.Parsec hiding ((<|>))
 
 data Scanner = Scanner Point (Set Beacon)
   deriving (Show)
 
+instance HasTrie Scanner where
+  data Scanner :->: b = ScannerTrie (Point :->: Set Beacon :->: b)
+  trie f = ScannerTrie $ trie $ \point -> trie $ \beacons -> f (Scanner point beacons)
+  unTrie (ScannerTrie f) (Scanner point beacons) = unTrie (unTrie f point) beacons
+
 newtype Beacon = Beacon Point
   deriving (Eq, Ord)
+
+instance HasTrie Beacon where
+  data Beacon :->: b = BeaconTrie (Point :->: b)
+  trie f = BeaconTrie $ trie $ f . Beacon
+  unTrie (BeaconTrie f) (Beacon point) = unTrie f point
 
 instance Show Beacon where
   show (Beacon point) = show point
@@ -25,6 +37,11 @@ data Point = Point Int Int Int
 
 instance Show Point where
   show (Point x y z) = "(" ++ show x ++ ", " ++ show y ++ ", " ++ show z ++ ")"
+
+instance HasTrie Point where
+  data Point :->: b = PointTrie ((Int, Int, Int) :->: b)
+  trie f = PointTrie $ trie $ \(x, y, z) -> f (Point x y z)
+  unTrie (PointTrie f) (Point x y z) = unTrie f (x, y, z)
 
 data Direction = Pos Coordinate | Neg Coordinate
 
@@ -48,7 +65,10 @@ reorient (first : rest) = reorient' [first] rest
             then error ("Could not orient these scanners: " <> show remaining)
             else reorient' (reoriented ++ oriented) remaining
     reorientScanner oriented scanner =
-      maybe (Left scanner) Right $ Foldable.asum $ map (`matchBeacons` scanner) oriented
+      maybe (Left scanner) Right $ Foldable.asum $ map (`memoMatchBeacons` scanner) oriented
+
+memoMatchBeacons :: Scanner -> Scanner -> Maybe Scanner
+memoMatchBeacons = memo2 matchBeacons
 
 matchBeacons :: Scanner -> Scanner -> Maybe Scanner
 matchBeacons against scanner = List.find (overlaps 12 against) aligned
