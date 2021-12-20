@@ -11,6 +11,10 @@ let
       split
       text
       vector
+
+      hedgehog
+      hspec
+      hspec-hedgehog
     ]
   );
 in
