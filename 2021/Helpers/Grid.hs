@@ -7,6 +7,7 @@ module Helpers.Grid
     fromList,
     fromPoints,
     fromDigits,
+    toSparse,
     toList,
     bounds,
     lookup,
@@ -53,7 +54,7 @@ instance Eq a => Eq (Grid a) where
   DenseGrid valuesA == DenseGrid valuesB = valuesA == valuesB
   SparseGrid _ entriesA == SparseGrid _ entriesB =
     entriesA == entriesB
-  a == b = toSparse a == toSparse b
+  a == b = toSparse undefined a == toSparse undefined b
 
 instance Ord a => Ord (Grid a) where
   compare = compare `on` allValues
@@ -82,6 +83,10 @@ fromPoints = SparseGrid
 
 fromDigits :: String -> Grid Int
 fromDigits = fromList . map (map (read . pure)) . lines
+
+toSparse :: a -> Grid a -> Grid a
+toSparse defaultValue grid@(DenseGrid values) = fromPoints defaultValue $ Map.fromList $ zip (allPointsList grid) (Array.elems values)
+toSparse defaultValue (SparseGrid _ entries) = SparseGrid defaultValue entries
 
 toList :: Grid a -> [(Point, a)]
 toList grid@(DenseGrid values) = allPointsList grid `zip` Array.elems values
@@ -142,14 +147,15 @@ subGrid (Point startY startX) (Point endY endX) (SparseGrid defaultValue entries
    in fromPoints defaultValue newEntries
 
 mapPoints :: (Point -> Point) -> Grid a -> Grid a
-mapPoints f grid@DenseGrid {} = mapPoints f $ toSparse grid
+mapPoints f grid@DenseGrid {} = mapPoints f $ toSparse undefined grid
 mapPoints f (SparseGrid defaultValue entries) = fromPoints defaultValue (Map.mapKeys f entries)
 
 allPoints :: Grid a -> Set Point
 allPoints = Set.fromList . allPointsList
 
 allPointsList :: Grid a -> [Point]
-allPointsList grid = Array.range $ bounds grid
+allPointsList grid@DenseGrid {} = Array.range $ bounds grid
+allPointsList (SparseGrid _ entries) = Map.keys entries
 
 pointsWhere :: (a -> Bool) -> Grid a -> Set Point
 pointsWhere predicate grid = Set.filter (predicate . (grid !)) (allPoints grid)
@@ -169,7 +175,3 @@ neighboringPointsWithDiagonals point (SparseGrid _ entries) =
 neighboringValues :: Point -> Grid a -> [a]
 neighboringValues point grid =
   map (grid !) (Set.toList (neighboringPoints point grid))
-
-toSparse :: Grid a -> Grid a
-toSparse grid@(DenseGrid values) = fromPoints undefined $ Map.fromList $ zip (allPointsList grid) (Array.elems values)
-toSparse grid@SparseGrid {} = grid

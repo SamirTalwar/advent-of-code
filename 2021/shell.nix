@@ -10,6 +10,7 @@ let
       parsec
       split
       text
+      vector
     ]
   );
 in
