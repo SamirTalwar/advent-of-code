@@ -32,7 +32,6 @@ else
   name="AOC_${day}"
 fi
 
-haskell_args=('-Wall')
 if $optimize; then
   file="${dir}/${name}.hs"
   output_directory="${output_directory}/${name}"
@@ -40,9 +39,7 @@ if $optimize; then
   executable="${output_directory}/run"
   (
     ormolu -i $file
-    hlint $file || :
     ghc \
-      $haskell_args \
       -O2 \
       -o $executable \
       -odir $output_directory \
@@ -54,6 +51,6 @@ if $optimize; then
 else
   (
     cd $dir
-    time runhaskell $haskell_args "${name}.hs"
+    time runhaskell "${name}.hs"
   )
 fi
