@@ -54,6 +54,13 @@ if $optimize; then
 else
   (
     cd $dir
-    time runhaskell $haskell_args "${name}.hs"
+    file="${name}.hs"
+    files=($file Helpers/*.hs)
+    (
+      ormolu -i $files
+      hlint $files || :
+      echo
+    ) >&2
+    time runhaskell $haskell_args $file
   )
 fi

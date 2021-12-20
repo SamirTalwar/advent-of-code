@@ -51,6 +51,8 @@ if $optimize; then
 else
   (
     cd $dir
-    time runhaskell "${name}.hs"
+    file="${name}.hs"
+    ormolu -i $file >&2
+    time runhaskell $file
   )
 fi
