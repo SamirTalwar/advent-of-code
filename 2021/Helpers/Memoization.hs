@@ -5,7 +5,14 @@
 {- This is basically copied from the `MemoTrie` package, for learning. -}
 {- https://hackage.haskell.org/package/MemoTrie -}
 
-module Helpers.Memoization where
+module Helpers.Memoization
+  ( memo,
+    memo2,
+    memo3,
+    memo4,
+    HasTrie (..),
+  )
+where
 
 import Data.Bool (bool)
 import Data.Set (Set)
@@ -17,6 +24,24 @@ memo = unTrie . trie
 
 memo2 :: (HasTrie a, HasTrie b) => (a -> b -> c) -> a -> b -> c
 memo2 = curry . memo . uncurry
+
+memo3 :: (HasTrie a, HasTrie b, HasTrie c) => (a -> b -> c -> d) -> a -> b -> c -> d
+memo3 = curry3 . memo . uncurry3
+
+memo4 :: (HasTrie a, HasTrie b, HasTrie c, HasTrie d) => (a -> b -> c -> d -> e) -> a -> b -> c -> d -> e
+memo4 = curry4 . memo . uncurry4
+
+curry3 :: ((a, b, c) -> d) -> a -> b -> c -> d
+curry3 f a b c = f (a, b, c)
+
+uncurry3 :: (a -> b -> c -> d) -> (a, b, c) -> d
+uncurry3 f (a, b, c) = f a b c
+
+curry4 :: ((a, b, c, d) -> e) -> a -> b -> c -> d -> e
+curry4 f a b c d = f (a, b, c, d)
+
+uncurry4 :: (a -> b -> c -> d -> e) -> (a, b, c, d) -> e
+uncurry4 f (a, b, c, d) = f a b c d
 
 class HasTrie a where
   infixr 2 :->:
@@ -48,6 +73,11 @@ instance (HasTrie a, HasTrie b, HasTrie c) => HasTrie (a, b, c) where
   data (a, b, c) :->: x = Tuple3Trie (a :->: b :->: c :->: x)
   trie f = Tuple3Trie $ trie $ \a -> trie $ \b -> trie $ \c -> f (a, b, c)
   unTrie (Tuple3Trie f) (a, b, c) = unTrie (unTrie (unTrie f a) b) c
+
+instance (HasTrie a, HasTrie b, HasTrie c, HasTrie d) => HasTrie (a, b, c, d) where
+  data (a, b, c, d) :->: x = Tuple4Trie (a :->: b :->: c :->: d :->: x)
+  trie f = Tuple4Trie $ trie $ \a -> trie $ \b -> trie $ \c -> trie $ \d -> f (a, b, c, d)
+  unTrie (Tuple4Trie f) (a, b, c, d) = unTrie (unTrie (unTrie (unTrie f a) b) c) d
 
 instance HasTrie a => HasTrie [a] where
   data [a] :->: x = ListTrie x (a :->: [a] :->: x)
