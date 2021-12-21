@@ -4,6 +4,7 @@
 
 import qualified Data.Either as Either
 import qualified Data.Foldable as Foldable
+import Data.Int (Int16)
 import qualified Data.List as List
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -32,14 +33,14 @@ instance HasTrie Beacon where
 instance Show Beacon where
   show (Beacon point) = show point
 
-data Point = Point Int Int Int
+data Point = Point Int16 Int16 Int16
   deriving (Eq, Ord)
 
 instance Show Point where
   show (Point x y z) = "(" ++ show x ++ ", " ++ show y ++ ", " ++ show z ++ ")"
 
 instance HasTrie Point where
-  data Point :->: b = PointTrie ((Int, Int, Int) :->: b)
+  data Point :->: b = PointTrie ((Int16, Int16, Int16) :->: b)
   trie f = PointTrie $ trie $ \(x, y, z) -> f (Point x y z)
   unTrie (PointTrie f) (Point x y z) = unTrie f (x, y, z)
 
@@ -127,7 +128,7 @@ rotations =
 diff :: Point -> Point -> Point
 diff (Point aX aY aZ) (Point bX bY bZ) = Point (aX - bX) (aY - bY) (aZ - bZ)
 
-manhattanDistance :: Point -> Int
+manhattanDistance :: Point -> Int16
 manhattanDistance (Point x y z) = abs x + abs y + abs z
 
 parser :: Parsec Text () [Scanner]
@@ -138,10 +139,10 @@ parser = sepBy scanner (string "\n")
       beacons <- Set.fromList <$> many beacon
       return $ Scanner (Point 0 0 0) beacons
     beacon = do
-      x <- int
+      x <- fromIntegral <$> int
       _ <- char ','
-      y <- int
+      y <- fromIntegral <$> int
       _ <- char ','
-      z <- int
+      z <- fromIntegral <$> int
       _ <- char '\n'
       return $ Beacon (Point x y z)

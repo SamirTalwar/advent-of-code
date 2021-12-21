@@ -17,6 +17,7 @@ where
 import Data.Array (Array)
 import qualified Data.Array as Array
 import Data.Bool (bool)
+import Data.Int
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Word (Word8)
@@ -102,3 +103,8 @@ instance HasTrie Int where
   data Int :->: x = IntTrie ([Word8] :->: x)
   trie f = IntTrie $ trie $ f . unWord8s
   unTrie (IntTrie f) = unTrie f . word8s
+
+instance HasTrie Int16 where
+  data Int16 :->: x = Int16Trie ([Word8] :->: x)
+  trie f = Int16Trie $ trie $ f . unWord8s
+  unTrie (Int16Trie f) = unTrie f . word8s

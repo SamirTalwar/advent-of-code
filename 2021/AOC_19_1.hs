@@ -4,6 +4,7 @@
 
 import qualified Data.Either as Either
 import qualified Data.Foldable as Foldable
+import Data.Int (Int16)
 import qualified Data.List as List
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -20,11 +21,11 @@ instance HasTrie Scanner where
   trie f = ScannerTrie $ trie $ f . Scanner
   unTrie (ScannerTrie f) (Scanner beacons) = unTrie f beacons
 
-data Beacon = Beacon Int Int Int
+data Beacon = Beacon Int16 Int16 Int16
   deriving (Eq, Ord)
 
 instance HasTrie Beacon where
-  data Beacon :->: b = BeaconTrie ((Int, Int, Int) :->: b)
+  data Beacon :->: b = BeaconTrie ((Int16, Int16, Int16) :->: b)
   trie f = BeaconTrie $ trie $ \(x, y, z) -> f (Beacon x y z)
   unTrie (BeaconTrie f) (Beacon x y z) = unTrie f (x, y, z)
 
@@ -122,10 +123,10 @@ parser = sepBy scanner (string "\n")
       beacons <- Set.fromList <$> many beacon
       return $ Scanner beacons
     beacon = do
-      x <- int
+      x <- fromIntegral <$> int
       _ <- char ','
-      y <- int
+      y <- fromIntegral <$> int
       _ <- char ','
-      z <- int
+      z <- fromIntegral <$> int
       _ <- char '\n'
       return $ Beacon x y z
