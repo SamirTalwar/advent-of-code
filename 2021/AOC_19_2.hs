@@ -6,19 +6,17 @@ import qualified Data.Either as Either
 import qualified Data.Foldable as Foldable
 import Data.Int (Int16)
 import qualified Data.List as List
-import Data.Set (Set)
-import qualified Data.Set as Set
 import Data.Text (Text)
 import Helpers.List
 import Helpers.Memoization
 import Helpers.Parse
 import Text.Parsec hiding ((<|>))
 
-data Scanner = Scanner Point (Set Beacon)
+data Scanner = Scanner Point [Beacon]
   deriving (Show)
 
 instance HasTrie Scanner where
-  data Scanner :->: b = ScannerTrie (Point :->: Set Beacon :->: b)
+  data Scanner :->: b = ScannerTrie (Point :->: [Beacon] :->: b)
   trie f = ScannerTrie $ trie $ \point -> trie $ \beacons -> f (Scanner point beacons)
   unTrie (ScannerTrie f) (Scanner point beacons) = unTrie (unTrie f point) beacons
 
@@ -76,17 +74,17 @@ matchBeacons against scanner = List.find (overlaps 12 against) aligned
   where
     aligned = rotate scanner >>= translate against
     overlaps n (Scanner _ as) (Scanner _ bs) =
-      Set.size (as `Set.intersection` bs) >= n
+      countIntersectSorted as bs >= n
 
 translate :: Scanner -> Scanner -> [Scanner]
 translate (Scanner _ as) (Scanner position bs) = do
-  Beacon a <- Set.toList as
-  Beacon b <- Set.toList bs
+  Beacon a <- as
+  Beacon b <- bs
   let d = b `diff` a
-  return $ Scanner (position `diff` d) (Set.map (\(Beacon beaconPosition) -> Beacon (beaconPosition `diff` d)) bs)
+  return $ Scanner (position `diff` d) (map (\(Beacon beaconPosition) -> Beacon (beaconPosition `diff` d)) bs)
 
 rotate :: Scanner -> [Scanner]
-rotate (Scanner position beacons) = map (\d -> Scanner position $ Set.map (rotate' d) beacons) rotations
+rotate (Scanner position beacons) = map (\d -> Scanner position $ List.sort $ map (rotate' d) beacons) rotations
   where
     rotate' (dX, dY, dZ) (Beacon point) =
       Beacon (Point (getDirection dX point) (getDirection dY point) (getDirection dZ point))
@@ -131,12 +129,21 @@ diff (Point aX aY aZ) (Point bX bY bZ) = Point (aX - bX) (aY - bY) (aZ - bZ)
 manhattanDistance :: Point -> Int16
 manhattanDistance (Point x y z) = abs x + abs y + abs z
 
+countIntersectSorted :: Ord a => [a] -> [a] -> Int
+countIntersectSorted [] _ = 0
+countIntersectSorted _ [] = 0
+countIntersectSorted (a : as) (b : bs) =
+  case compare a b of
+    EQ -> succ $ countIntersectSorted as bs
+    LT -> countIntersectSorted as (b : bs)
+    GT -> countIntersectSorted (a : as) bs
+
 parser :: Parsec Text () [Scanner]
 parser = sepBy scanner (string "\n")
   where
     scanner = do
       _ <- string "--- scanner " *> int <* string " ---\n"
-      beacons <- Set.fromList <$> many beacon
+      beacons <- List.sort <$> many beacon
       return $ Scanner (Point 0 0 0) beacons
     beacon = do
       x <- fromIntegral <$> int

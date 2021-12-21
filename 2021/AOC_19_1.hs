@@ -6,18 +6,16 @@ import qualified Data.Either as Either
 import qualified Data.Foldable as Foldable
 import Data.Int (Int16)
 import qualified Data.List as List
-import Data.Set (Set)
-import qualified Data.Set as Set
 import Data.Text (Text)
 import Helpers.Memoization
 import Helpers.Parse
 import Text.Parsec hiding ((<|>))
 
-newtype Scanner = Scanner (Set Beacon)
+newtype Scanner = Scanner [Beacon]
   deriving (Show)
 
 instance HasTrie Scanner where
-  data Scanner :->: b = ScannerTrie (Set Beacon :->: b)
+  data Scanner :->: b = ScannerTrie ([Beacon] :->: b)
   trie f = ScannerTrie $ trie $ f . Scanner
   unTrie (ScannerTrie f) (Scanner beacons) = unTrie f beacons
 
@@ -40,8 +38,8 @@ main :: IO ()
 main = do
   scanners <- parseTextIO parser
   let reoriented = map (\(Scanner beacons) -> beacons) $ reorient scanners
-  let allBeacons = foldr Set.union Set.empty reoriented
-  print $ Set.size allBeacons
+  let allBeacons = List.nub $ List.sort $ concat reoriented
+  print $ length allBeacons
 
 reorient :: [Scanner] -> [Scanner]
 reorient [] = []
@@ -64,19 +62,19 @@ matchBeacons against scanner = List.find (overlaps 12 against) aligned
   where
     aligned = rotate scanner >>= translate against
     overlaps n (Scanner as) (Scanner bs) =
-      Set.size (as `Set.intersection` bs) >= n
+      countIntersectSorted as bs >= n
 
 translate :: Scanner -> Scanner -> [Scanner]
 translate (Scanner as) (Scanner bs) = do
-  a <- Set.toList as
-  b <- Set.toList bs
+  a <- as
+  b <- bs
   let (dX, dY, dZ) = b `diff` a
-  return $ Scanner (Set.map (\(Beacon x y z) -> Beacon (x - dX) (y - dY) (z - dZ)) bs)
+  return $ Scanner (map (\(Beacon x y z) -> Beacon (x - dX) (y - dY) (z - dZ)) bs)
   where
     diff (Beacon aX aY aZ) (Beacon bX bY bZ) = (aX - bX, aY - bY, aZ - bZ)
 
 rotate :: Scanner -> [Scanner]
-rotate (Scanner beacons) = map (\d -> Scanner $ Set.map (rotate' d) beacons) rotations
+rotate (Scanner beacons) = map (\d -> Scanner $ List.sort $ map (rotate' d) beacons) rotations
   where
     rotate' (dX, dY, dZ) beacon =
       Beacon (getDirection dX beacon) (getDirection dY beacon) (getDirection dZ beacon)
@@ -115,12 +113,21 @@ rotations =
     (Pos Y, Pos X, Neg Z)
   ]
 
+countIntersectSorted :: Ord a => [a] -> [a] -> Int
+countIntersectSorted [] _ = 0
+countIntersectSorted _ [] = 0
+countIntersectSorted (a : as) (b : bs) =
+  case compare a b of
+    EQ -> succ $ countIntersectSorted as bs
+    LT -> countIntersectSorted as (b : bs)
+    GT -> countIntersectSorted (a : as) bs
+
 parser :: Parsec Text () [Scanner]
 parser = sepBy scanner (string "\n")
   where
     scanner = do
       _ <- string "--- scanner " *> int <* string " ---\n"
-      beacons <- Set.fromList <$> many beacon
+      beacons <- List.sort <$> many beacon
       return $ Scanner beacons
     beacon = do
       x <- fromIntegral <$> int
