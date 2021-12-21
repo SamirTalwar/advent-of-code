@@ -38,6 +38,12 @@ main = hspec $ do
         let roundTrip = Helpers.Numbers.unBits (Helpers.Numbers.bits x)
         roundTrip === x
 
+    it "computes words" $ do
+      hedgehog $ do
+        x <- forAll $ Gen.int (Range.linear 0 maxBound)
+        let roundTrip = Helpers.Numbers.unWord8s (Helpers.Numbers.word8s x)
+        roundTrip === x
+
   describe "Memoization" $ do
     it "memoizes booleans" $ do
       hedgehog $ do

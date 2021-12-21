@@ -14,9 +14,12 @@ module Helpers.Memoization
   )
 where
 
+import Data.Array (Array)
+import qualified Data.Array as Array
 import Data.Bool (bool)
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Data.Word (Word8)
 import Helpers.Numbers
 
 memo :: HasTrie a => (a -> b) -> a -> b
@@ -90,7 +93,12 @@ instance (Ord a, HasTrie a) => HasTrie (Set a) where
   trie f = SetTrie $ trie (f . Set.fromList)
   unTrie (SetTrie f) = unTrie f . Set.toList
 
+instance HasTrie Word8 where
+  data Word8 :->: x = Word8Trie (Array Word8 x)
+  trie f = Word8Trie $ Array.listArray (minBound, maxBound) (map f [minBound .. maxBound])
+  unTrie (Word8Trie array) = (array Array.!)
+
 instance HasTrie Int where
-  data Int :->: x = IntTrie ([Bool] :->: x)
-  trie f = IntTrie $ trie $ f . unBits
-  unTrie (IntTrie f) = unTrie f . bits
+  data Int :->: x = IntTrie ([Word8] :->: x)
+  trie f = IntTrie $ trie $ f . unWord8s
+  unTrie (IntTrie f) = unTrie f . word8s
