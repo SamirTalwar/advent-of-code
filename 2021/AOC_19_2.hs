@@ -24,7 +24,7 @@ newtype Beacon = Beacon Point
   deriving (Eq, Ord)
 
 instance HasTrie Beacon where
-  data Beacon :->: b = BeaconTrie (Point :->: b)
+  newtype Beacon :->: b = BeaconTrie (Point :->: b)
   trie f = BeaconTrie $ trie $ f . Beacon
   unTrie (BeaconTrie f) (Beacon point) = unTrie f point
 
@@ -38,9 +38,9 @@ instance Show Point where
   show (Point x y z) = "(" ++ show x ++ ", " ++ show y ++ ", " ++ show z ++ ")"
 
 instance HasTrie Point where
-  data Point :->: b = PointTrie ((Int16, Int16, Int16) :->: b)
-  trie f = PointTrie $ trie $ \(x, y, z) -> f (Point x y z)
-  unTrie (PointTrie f) (Point x y z) = unTrie f (x, y, z)
+  newtype Point :->: b = PointTrie (Int16 :->: Int16 :->: Int16 :->: b)
+  trie f = PointTrie $ trie $ \x -> trie $ \y -> trie $ \z -> f (Point x y z)
+  unTrie (PointTrie f) (Point x y z) = unTrie (unTrie (unTrie f x) y) z
 
 data Direction = Pos Coordinate | Neg Coordinate
 

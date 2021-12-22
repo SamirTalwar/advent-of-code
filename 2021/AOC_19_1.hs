@@ -15,7 +15,7 @@ newtype Scanner = Scanner [Beacon]
   deriving (Show)
 
 instance HasTrie Scanner where
-  data Scanner :->: b = ScannerTrie ([Beacon] :->: b)
+  newtype Scanner :->: b = ScannerTrie ([Beacon] :->: b)
   trie f = ScannerTrie $ trie $ f . Scanner
   unTrie (ScannerTrie f) (Scanner beacons) = unTrie f beacons
 
@@ -23,9 +23,9 @@ data Beacon = Beacon Int16 Int16 Int16
   deriving (Eq, Ord)
 
 instance HasTrie Beacon where
-  data Beacon :->: b = BeaconTrie ((Int16, Int16, Int16) :->: b)
-  trie f = BeaconTrie $ trie $ \(x, y, z) -> f (Beacon x y z)
-  unTrie (BeaconTrie f) (Beacon x y z) = unTrie f (x, y, z)
+  newtype Beacon :->: b = BeaconTrie (Int16 :->: Int16 :->: Int16 :->: b)
+  trie f = BeaconTrie $ trie $ \x -> trie $ \y -> trie $ \z -> f (Beacon x y z)
+  unTrie (BeaconTrie f) (Beacon x y z) = unTrie (unTrie (unTrie f x) y) z
 
 instance Show Beacon where
   show (Beacon x y z) = "(" ++ show x ++ ", " ++ show y ++ ", " ++ show z ++ ")"

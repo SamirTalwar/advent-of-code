@@ -69,17 +69,17 @@ instance (HasTrie a, HasTrie b) => HasTrie (Either a b) where
   unTrie (EitherTrie ifLeft ifRight) = either (unTrie ifLeft) (unTrie ifRight)
 
 instance (HasTrie a, HasTrie b) => HasTrie (a, b) where
-  data (a, b) :->: x = Tuple2Trie (a :->: b :->: x)
+  newtype (a, b) :->: x = Tuple2Trie (a :->: b :->: x)
   trie f = Tuple2Trie $ trie $ \a -> trie $ \b -> f (a, b)
   unTrie (Tuple2Trie f) (a, b) = unTrie (unTrie f a) b
 
 instance (HasTrie a, HasTrie b, HasTrie c) => HasTrie (a, b, c) where
-  data (a, b, c) :->: x = Tuple3Trie (a :->: b :->: c :->: x)
+  newtype (a, b, c) :->: x = Tuple3Trie (a :->: b :->: c :->: x)
   trie f = Tuple3Trie $ trie $ \a -> trie $ \b -> trie $ \c -> f (a, b, c)
   unTrie (Tuple3Trie f) (a, b, c) = unTrie (unTrie (unTrie f a) b) c
 
 instance (HasTrie a, HasTrie b, HasTrie c, HasTrie d) => HasTrie (a, b, c, d) where
-  data (a, b, c, d) :->: x = Tuple4Trie (a :->: b :->: c :->: d :->: x)
+  newtype (a, b, c, d) :->: x = Tuple4Trie (a :->: b :->: c :->: d :->: x)
   trie f = Tuple4Trie $ trie $ \a -> trie $ \b -> trie $ \c -> trie $ \d -> f (a, b, c, d)
   unTrie (Tuple4Trie f) (a, b, c, d) = unTrie (unTrie (unTrie (unTrie f a) b) c) d
 
@@ -90,21 +90,21 @@ instance HasTrie a => HasTrie [a] where
   unTrie (ListTrie _ ifCons) (x : xs) = unTrie (unTrie ifCons x) xs
 
 instance (Ord a, HasTrie a) => HasTrie (Set a) where
-  data Set a :->: x = SetTrie ([a] :->: x)
+  newtype Set a :->: x = SetTrie ([a] :->: x)
   trie f = SetTrie $ trie (f . Set.fromList)
   unTrie (SetTrie f) = unTrie f . Set.toList
 
 instance HasTrie Word8 where
-  data Word8 :->: x = Word8Trie (Array Word8 x)
+  newtype Word8 :->: x = Word8Trie (Array Word8 x)
   trie f = Word8Trie $ Array.listArray (minBound, maxBound) (map f [minBound .. maxBound])
   unTrie (Word8Trie array) = (array Array.!)
 
 instance HasTrie Int where
-  data Int :->: x = IntTrie ([Word8] :->: x)
+  newtype Int :->: x = IntTrie ([Word8] :->: x)
   trie f = IntTrie $ trie $ f . unWord8s
   unTrie (IntTrie f) = unTrie f . word8s
 
 instance HasTrie Int16 where
-  data Int16 :->: x = Int16Trie ([Word8] :->: x)
+  newtype Int16 :->: x = Int16Trie ([Word8] :->: x)
   trie f = Int16Trie $ trie $ f . unWord8s
   unTrie (Int16Trie f) = unTrie f . word8s
