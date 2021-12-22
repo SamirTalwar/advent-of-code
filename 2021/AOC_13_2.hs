@@ -2,7 +2,6 @@
 
 import Data.Bifunctor (first)
 import Data.Functor
-import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import qualified Data.Maybe as Maybe
 import Data.Set (Set)
@@ -88,75 +87,74 @@ parseGridText grid =
        in parseGridLetter firstLetter : parseGridText rest
   where
     parseGridLetter :: Grid Mark -> Char
-    parseGridLetter letterGrid = Maybe.fromMaybe (error ("Unknown character:\n" ++ show letterGrid)) (Map.lookup letterGrid letters)
+    parseGridLetter letterGrid = Maybe.fromMaybe (error ("Unknown character:\n" ++ show letterGrid)) (lookup letterGrid letters)
 
 -- I only encoded the letters in my answer; I don't know what the rest would look like.
-letters :: Map (Grid Mark) Char
+letters :: [(Grid Mark, Char)]
 letters =
-  Map.fromList $
-    map
-      (first Grid.fromList)
-      [ ( [ [O, X, X, O],
-            [X, O, O, X],
-            [X, O, O, X],
-            [X, X, X, X],
-            [X, O, O, X],
-            [X, O, O, X]
-          ],
-          'A'
-        ),
-        ( [ [O, X, X, O],
-            [X, O, O, X],
-            [X, O, O, O],
-            [X, O, O, O],
-            [X, O, O, X],
-            [O, X, X, O]
-          ],
-          'C'
-        ),
-        ( [ [X, X, X, X],
-            [X, O, O, O],
-            [X, X, X, O],
-            [X, O, O, O],
-            [X, O, O, O],
-            [X, O, O, O]
-          ],
-          'F'
-        ),
-        ( [ [X, O, O, X],
-            [X, O, O, X],
-            [X, X, X, X],
-            [X, O, O, X],
-            [X, O, O, X],
-            [X, O, O, X]
-          ],
-          'H'
-        ),
-        ( [ [O, O, X, X],
-            [O, O, O, X],
-            [O, O, O, X],
-            [O, O, O, X],
-            [X, O, O, X],
-            [O, X, X, O]
-          ],
-          'J'
-        ),
-        ( [ [X, O, O, X],
-            [X, O, X, O],
-            [X, X, O, O],
-            [X, O, X, O],
-            [X, O, X, O],
-            [X, O, O, X]
-          ],
-          'K'
-        ),
-        ( [ [X, X, X, X],
-            [O, O, O, X],
-            [O, O, X, O],
-            [O, X, O, O],
-            [X, O, O, O],
-            [X, X, X, X]
-          ],
-          'Z'
-        )
-      ]
+  map
+    (first Grid.fromList)
+    [ ( [ [O, X, X, O],
+          [X, O, O, X],
+          [X, O, O, X],
+          [X, X, X, X],
+          [X, O, O, X],
+          [X, O, O, X]
+        ],
+        'A'
+      ),
+      ( [ [O, X, X, O],
+          [X, O, O, X],
+          [X, O, O, O],
+          [X, O, O, O],
+          [X, O, O, X],
+          [O, X, X, O]
+        ],
+        'C'
+      ),
+      ( [ [X, X, X, X],
+          [X, O, O, O],
+          [X, X, X, O],
+          [X, O, O, O],
+          [X, O, O, O],
+          [X, O, O, O]
+        ],
+        'F'
+      ),
+      ( [ [X, O, O, X],
+          [X, O, O, X],
+          [X, X, X, X],
+          [X, O, O, X],
+          [X, O, O, X],
+          [X, O, O, X]
+        ],
+        'H'
+      ),
+      ( [ [O, O, X, X],
+          [O, O, O, X],
+          [O, O, O, X],
+          [O, O, O, X],
+          [X, O, O, X],
+          [O, X, X, O]
+        ],
+        'J'
+      ),
+      ( [ [X, O, O, X],
+          [X, O, X, O],
+          [X, X, O, O],
+          [X, O, X, O],
+          [X, O, X, O],
+          [X, O, O, X]
+        ],
+        'K'
+      ),
+      ( [ [X, X, X, X],
+          [O, O, O, X],
+          [O, O, X, O],
+          [O, X, O, O],
+          [X, O, O, O],
+          [X, X, X, X]
+        ],
+        'Z'
+      )
+    ]

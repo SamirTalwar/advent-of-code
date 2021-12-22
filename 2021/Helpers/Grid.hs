@@ -7,7 +7,6 @@ module Helpers.Grid
     fromList,
     fromPoints,
     fromDigits,
-    toSparse,
     toList,
     bounds,
     lookup,
@@ -50,14 +49,14 @@ instance Show a => Show (Grid a) where
     let (Point startY startX, Point endY endX) = bounds grid
      in List.intercalate "\n" $ map (\y -> unwords $ map (\x -> show (grid ! Point y x)) [startX .. endX]) [startY .. endY]
 
-instance Eq a => Eq (Grid a) where
+instance (Eq a, Show a) => Eq (Grid a) where
   DenseGrid valuesA == DenseGrid valuesB = valuesA == valuesB
   SparseGrid _ entriesA == SparseGrid _ entriesB =
     entriesA == entriesB
-  a == b = toSparse undefined a == toSparse undefined b
-
-instance Ord a => Ord (Grid a) where
-  compare = compare `on` allValues
+  a@DenseGrid {} == b@(SparseGrid defaultValue _) =
+    toSparse defaultValue a == b
+  a@(SparseGrid defaultValue _) == b@DenseGrid {} =
+    a == toSparse defaultValue b
 
 instance Functor Grid where
   fmap f (DenseGrid values) = DenseGrid $ fmap f values
@@ -84,9 +83,17 @@ fromPoints = SparseGrid
 fromDigits :: String -> Grid Int
 fromDigits = fromList . map (map (read . pure)) . lines
 
-toSparse :: a -> Grid a -> Grid a
-toSparse defaultValue grid@(DenseGrid values) = fromPoints defaultValue $ Map.fromList $ zip (allPointsList grid) (Array.elems values)
-toSparse defaultValue (SparseGrid _ entries) = SparseGrid defaultValue entries
+toSparse :: Eq a => a -> Grid a -> Grid a
+toSparse defaultValue grid@(DenseGrid values) =
+  fromPoints defaultValue $ Map.filter (/= defaultValue) $ Map.fromList $ zip (allPointsList grid) (Array.elems values)
+toSparse defaultValue (SparseGrid _ entries) =
+  SparseGrid defaultValue entries
+
+toSparse' :: Grid a -> Grid a
+toSparse' grid@(DenseGrid values) =
+  fromPoints undefined $ Map.fromList $ zip (allPointsList grid) (Array.elems values)
+toSparse' grid@SparseGrid {} =
+  grid
 
 toList :: Grid a -> [(Point, a)]
 toList grid@(DenseGrid values) = allPointsList grid `zip` Array.elems values
@@ -123,15 +130,15 @@ all predicate = List.all predicate . allValues
 count :: (a -> Bool) -> Grid a -> Int
 count predicate = length . filter predicate . allValues
 
-(//) :: Grid a -> [(Point, a)] -> Grid a
+(//) :: Eq a => Grid a -> [(Point, a)] -> Grid a
 DenseGrid values // updates = DenseGrid (values Array.// updates)
 grid@SparseGrid {} // updates = update (Map.fromList updates) grid
 
-update :: Map Point a -> Grid a -> Grid a
+update :: Eq a => Map Point a -> Grid a -> Grid a
 update updates grid@DenseGrid {} = grid // Map.toList updates
-update updates (SparseGrid defaultValue entries) = SparseGrid defaultValue (updates `Map.union` entries)
+update updates (SparseGrid defaultValue entries) = SparseGrid defaultValue (Map.filter (/= defaultValue) (updates `Map.union` entries))
 
-updateWith :: (a -> a -> a) -> Map Point a -> Grid a -> Grid a
+updateWith :: Eq a => (a -> a -> a) -> Map Point a -> Grid a -> Grid a
 updateWith f updates grid = grid // map (\(c, x) -> (c, f (grid ! c) x)) (Map.toList updates)
 
 subGrid :: Point -> Point -> Grid a -> Grid a
@@ -147,7 +154,7 @@ subGrid (Point startY startX) (Point endY endX) (SparseGrid defaultValue entries
    in fromPoints defaultValue newEntries
 
 mapPoints :: (Point -> Point) -> Grid a -> Grid a
-mapPoints f grid@DenseGrid {} = mapPoints f $ toSparse undefined grid
+mapPoints f grid@DenseGrid {} = mapPoints f $ toSparse' grid
 mapPoints f (SparseGrid defaultValue entries) = fromPoints defaultValue (Map.mapKeys f entries)
 
 allPoints :: Grid a -> Set Point
