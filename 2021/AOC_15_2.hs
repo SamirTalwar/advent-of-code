@@ -14,25 +14,17 @@ data QueueEntry = QueueEntry Int Point
 
 main :: IO ()
 main = do
-  riskLevels <- Grid.update (Map.singleton (Point 0 0) 0) . grow . Grid.fromDigits <$> getContents
+  riskLevels <- Grid.update (Map.singleton (Point 0 0) 0) . grow . map (map (read . pure)) . lines <$> getContents
   let distance = distanceFromStart riskLevels Set.empty $ Set.singleton $ QueueEntry 0 (snd (Grid.bounds riskLevels))
   print distance
 
-grow :: Grid Int -> Grid Int
-grow grid = Grid.fromPoints undefined $ Map.fromList repeatedPoints
+grow :: [[Int]] -> Grid Int
+grow grid = Grid.fromList wrapped
   where
-    points = Grid.toList grid
-    repeatedPoints = do
-      y <- [0 .. 4]
-      x <- [0 .. 4]
-      shiftPoint y x <$> points
-    shiftPoint :: Int -> Int -> (Point, Int) -> (Point, Int)
-    shiftPoint yOffset xOffset (Point y x, n) =
-      (Point (height * yOffset + y) (width * xOffset + x), wrap (n + yOffset + xOffset))
+    repeatedX = map (concat . zipWith (\i chunk -> map (+ i) chunk) [0 ..] . replicate 5) grid
+    repeated = concat $ zipWith (\i chunk -> map (map (+ i)) chunk) [0 ..] $ replicate 5 repeatedX
+    wrapped = map (map wrap) repeated
     wrap n = (n - 1) `mod` 9 + 1
-    height = maxY + 1
-    width = maxX + 1
-    (_, Point maxY maxX) = Grid.bounds grid
 
 distanceFromStart :: Grid Int -> Set Point -> Queue -> Int
 distanceFromStart grid done queue =
