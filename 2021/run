@@ -9,10 +9,16 @@ dir=$(dirname $0)
 year=$(basename $dir)
 
 optimize=false
+profile=false
 while [[ $1 =~ ^- ]]; do
   case $1 in
     -O)
       optimize=true
+      shift
+      ;;
+    -P)
+      optimize=true
+      profile=true
       shift
       ;;
   esac
@@ -33,7 +39,12 @@ else
 fi
 
 haskell_args=('-Wall')
+runtime_args=($@)
 if $optimize; then
+  if $profile; then
+    haskell_args+=('-prof' '-fprof-auto')
+    runtime_args+=('+RTS' '-p' '-RTS')
+  fi
   files=("${dir}/${name}.hs" ${dir}/Helpers/*.hs)
   output_directory="${output_directory}/${name}"
   mkdir -p $output_directory
@@ -50,7 +61,7 @@ if $optimize; then
       $files
     echo
   )>&2
-  time $executable $@
+  time $executable $runtime_args
 else
   (
     cd $dir
@@ -61,6 +72,6 @@ else
       hlint $files || :
       echo
     ) >&2
-    time runhaskell $haskell_args $file
+    time runhaskell $haskell_args $file $runtime_args
   )
 fi
