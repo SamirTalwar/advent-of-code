@@ -17,6 +17,9 @@ import Helpers.Memoization
 import Helpers.Parse
 import Text.Parsec
 
+depth :: Int
+depth = 4
+
 data Amphipod = A | B | C | D
   deriving (Eq, Ord, Show)
 
@@ -67,7 +70,7 @@ organize queue =
   case Set.minView queue of
     Nothing -> []
     Just (QueueEntry cost burrow@(Burrow rooms _), rest)
-      | all (\(Room expected actual) -> length actual == 2 && all (== expected) actual) rooms -> cost : organize rest
+      | all (\(Room expected actual) -> length actual == depth && all (== expected) actual) rooms -> cost : organize rest
       | otherwise -> organize (Set.fromList (memoMove burrow |> map (addCost cost)) `Set.union` rest)
 
 memoMove :: Burrow -> [QueueEntry Burrow]
@@ -87,8 +90,8 @@ moveFromRoom (Burrow rooms hallway) roomNumber (Room expected room)
     let (amphipod : room') = room
         position = roomNumber * 2 + 2
         (allLeft, allRight) = Seq.splitAt position $ Seq.zip (ints (Seq.length hallway)) hallway
-        left = (\(newPosition, _) -> QueueEntry (costOf amphipod (position - newPosition + (2 - length room) + 1)) newPosition) <$> Seq.takeWhileR (Maybe.isNothing . snd) allLeft
-        right = (\(newPosition, _) -> QueueEntry (costOf amphipod (newPosition - position + (2 - length room) + 1)) newPosition) <$> Seq.takeWhileL (Maybe.isNothing . snd) allRight
+        left = (\(newPosition, _) -> QueueEntry (costOf amphipod (position - newPosition + (depth - length room) + 1)) newPosition) <$> Seq.takeWhileR (Maybe.isNothing . snd) allLeft
+        right = (\(newPosition, _) -> QueueEntry (costOf amphipod (newPosition - position + (depth - length room) + 1)) newPosition) <$> Seq.takeWhileL (Maybe.isNothing . snd) allRight
         freeHallway = left <> right
         validHallway = Seq.filter ((`Set.member` hallwayDestinations) . queueEntryValue) freeHallway
 
@@ -96,10 +99,10 @@ moveFromRoom (Burrow rooms hallway) roomNumber (Room expected room)
         Room destinationExpected destinationRoom = rooms ! destination
         roomDirection = if destination <= roomNumber then left else right
         updatedDestinationRoom =
-          if length destinationRoom < 2 && all (== destinationExpected) destinationRoom
+          if length destinationRoom < depth && all (== destinationExpected) destinationRoom
             then
               (const (Room destinationExpected (amphipod : destinationRoom)) <$>)
-                . addCost (costOf amphipod (2 - length destinationRoom))
+                . addCost (costOf amphipod (depth - length destinationRoom))
                 . (roomDirection !)
                 <$> Seq.findIndexL ((== destination * 2 + 2) . queueEntryValue) roomDirection
             else Nothing
@@ -117,10 +120,10 @@ moveFromHallway (Burrow rooms hallway) position amphipod =
       Room destinationExpected destinationRoom = rooms ! destination
       roomDirection = if destination <= (position - 2) `div` 2 then left else right
       updatedDestinationRoom =
-        if length destinationRoom < 2 && all (== destinationExpected) destinationRoom
+        if length destinationRoom < depth && all (== destinationExpected) destinationRoom
           then
             (const (Room destinationExpected (amphipod : destinationRoom)) <$>)
-              . addCost (costOf amphipod (2 - length destinationRoom))
+              . addCost (costOf amphipod (depth - length destinationRoom))
               . (roomDirection !)
               <$> Seq.findIndexL ((== destination * 2 + 2) . queueEntryValue) roomDirection
           else Nothing
@@ -180,7 +183,7 @@ parser = do
   _ <- string "  #########"
   return $
     Burrow
-      (Seq.fromList [Room A [room1X, room1Y], Room B [room2X, room2Y], Room C [room3X, room3Y], Room D [room4X, room4Y]])
+      (Seq.fromList [Room A [room1X, D, D, room1Y], Room B [room2X, C, B, room2Y], Room C [room3X, B, A, room3Y], Room D [room4X, A, C, room4Y]])
       (Seq.fromList hallway)
   where
     amphipod =
