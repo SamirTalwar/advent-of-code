@@ -17,7 +17,10 @@ where
 import Data.Array (Array)
 import qualified Data.Array as Array
 import Data.Bool (bool)
+import Data.Foldable (toList)
 import Data.Int
+import Data.Sequence (Seq)
+import qualified Data.Sequence as Seq
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Word (Word8)
@@ -93,6 +96,11 @@ instance (Ord a, HasTrie a) => HasTrie (Set a) where
   newtype Set a :->: x = SetTrie ([a] :->: x)
   trie f = SetTrie $ trie (f . Set.fromList)
   unTrie (SetTrie f) = unTrie f . Set.toList
+
+instance (HasTrie a) => HasTrie (Seq a) where
+  newtype Seq a :->: x = SeqTrie ([a] :->: x)
+  trie f = SeqTrie $ trie (f . Seq.fromList)
+  unTrie (SeqTrie f) = unTrie f . toList
 
 instance HasTrie Word8 where
   newtype Word8 :->: x = Word8Trie (Array Word8 x)
