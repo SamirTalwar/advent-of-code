@@ -36,6 +36,8 @@ if [[ $# -gt 0 ]]; then
   shift
 fi
 
+args+=($@)
+
 input="${year}/AOC_${day}.input"
 if (( ${+part} )); then
   answer="${year}/AOC_${day}_${part}.answer"
