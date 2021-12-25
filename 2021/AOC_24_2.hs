@@ -6,10 +6,9 @@ import Control.Monad (foldM)
 import Data.Bool (bool)
 import Data.Functor
 import qualified Data.List as List
-import qualified Data.Maybe as Maybe
 import Data.Ord (comparing)
 import Data.Text (Text)
-import Data.Vector (Vector, (!), (//))
+import Data.Vector (Vector, (//))
 import qualified Data.Vector as Vector
 import Helpers.Parse
 import System.Environment (getArgs)
@@ -18,6 +17,9 @@ import Prelude hiding (lookup)
 
 modelNumberLength :: Int
 modelNumberLength = 14
+
+startingModelNumber :: Input
+startingModelNumber = Vector.replicate modelNumberLength 1
 
 data Var = W | X | Y | Z
   deriving (Show)
@@ -68,30 +70,11 @@ main = do
   program <- parseLinesIO parser
   argsInput <- Vector.fromList . map read <$> getArgs
   if null argsInput
-    then putStrLn $ concatMap show $ Vector.toList $ findInput program
+    then putStrLn $ concatMap show $ Vector.toList $ findInput program startingModelNumber
     else print $ run program argsInput
 
-findInput :: Program -> Input
-findInput program =
-  let input = findInput' program (Vector.replicate modelNumberLength Nothing)
-   in correctInput program input
-
-findInput' :: Program -> Vector (Maybe Int) -> Input
-findInput' program decided =
-  let input = Vector.catMaybes decided
-   in if length input == modelNumberLength
-        then input
-        else
-          let attempts = do
-                position <- filter (\n -> Maybe.isNothing (decided ! n)) [0 .. modelNumberLength - 1]
-                value <- [1 .. 9]
-                let updated = decided // [(position, Just value)]
-                let trial = Vector.map (Maybe.fromMaybe 1) updated
-                return (updated, run program trial)
-           in findInput' program $ selectBest attempts
-
-correctInput :: Program -> Input -> Input
-correctInput program input =
+findInput :: Program -> Input -> Input
+findInput program input =
   case run program input of
     Done (State _ _ _ 0) -> input
     _ ->
@@ -100,7 +83,7 @@ correctInput program input =
             value <- [1 .. 9]
             let trial = input // [(position, value)]
             return (trial, run program trial)
-       in correctInput program $ selectBest attempts
+       in findInput program $ selectBest attempts
 
 selectBest :: [(a, Result State)] -> a
 selectBest results =
