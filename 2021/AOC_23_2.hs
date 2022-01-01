@@ -1,8 +1,5 @@
 {-# OPTIONS -Wall #-}
 {-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
 
 import Data.Foldable (toList)
 import Data.Functor
@@ -13,7 +10,6 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Text (Text)
 import Helpers.Function
-import Helpers.Memoization
 import Helpers.Parse
 import Text.Parsec
 
@@ -21,38 +17,13 @@ depth :: Int
 depth = 4
 
 data Amphipod = A | B | C | D
-  deriving (Eq, Ord, Show)
-
-instance HasTrie Amphipod where
-  data Amphipod :->: x = AmphipodTrie x x x x
-  trie f = AmphipodTrie (f A) (f B) (f C) (f D)
-  unTrie (AmphipodTrie a _ _ _) A = a
-  unTrie (AmphipodTrie _ b _ _) B = b
-  unTrie (AmphipodTrie _ _ c _) C = c
-  unTrie (AmphipodTrie _ _ _ d) D = d
+  deriving (Eq, Ord)
 
 data Room = Room Amphipod [Amphipod]
-  deriving (Eq, Ord, Show)
-
-instance HasTrie Room where
-  newtype Room :->: x = RoomTrie ((Amphipod, [Amphipod]) :->: x)
-  trie f = RoomTrie $ trie $ \(expected, actual) -> f (Room expected actual)
-  unTrie (RoomTrie f) (Room expected actual) = curry (unTrie f) expected actual
+  deriving (Eq, Ord)
 
 data Burrow = Burrow (Seq Room) (Seq (Maybe Amphipod))
   deriving (Eq, Ord)
-
-instance HasTrie Burrow where
-  newtype Burrow :->: x = BurrowTrie ((Seq Room, Seq (Maybe Amphipod)) :->: x)
-  trie f = BurrowTrie $ trie $ \(rooms, hallway) -> f (Burrow rooms hallway)
-  unTrie (BurrowTrie f) (Burrow rooms hallway) = curry (unTrie f) rooms hallway
-
-instance Show Burrow where
-  show (Burrow rooms hallway) =
-    "Burrow: "
-      ++ unwords (map (\(Room _ actual) -> show actual) (toList rooms))
-      ++ " "
-      ++ concatMap (\case Nothing -> "."; Just x -> show x) (toList hallway)
 
 type Queue a = Set (QueueEntry a)
 
@@ -71,10 +42,7 @@ organize queue =
     Nothing -> []
     Just (QueueEntry cost burrow@(Burrow rooms _), rest)
       | all (\(Room expected actual) -> length actual == depth && all (== expected) actual) rooms -> cost : organize rest
-      | otherwise -> organize (Set.fromList (memoMove burrow |> map (addCost cost)) `Set.union` rest)
-
-memoMove :: Burrow -> [QueueEntry Burrow]
-memoMove = memo move
+      | otherwise -> organize (Set.fromList (move burrow |> map (addCost cost)) `Set.union` rest)
 
 move :: Burrow -> [QueueEntry Burrow]
 move burrow@(Burrow rooms hallway) =
