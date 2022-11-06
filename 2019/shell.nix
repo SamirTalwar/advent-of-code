@@ -6,6 +6,7 @@ stdenv.mkDerivation {
   buildInputs = [
     cargo
     libiconv
+    ncurses
     rls
     rustPlatform.rust.rustc
     rustPlatform.rustcSrc
