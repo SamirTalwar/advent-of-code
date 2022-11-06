@@ -5,8 +5,7 @@ set -e
 set -u
 set -o pipefail
 
-dir=$(dirname $0)
-year=$(basename $dir)
+cd $(dirname $0)
 
 optimize=false
 while [[ $1 =~ ^- ]]; do
@@ -25,7 +24,7 @@ if [[ $# -gt 0 ]]; then
   shift
 fi
 
-output_directory=("${PWD}/build/${year}")
+output_directory="${PWD}/build"
 if (( ${+part} )); then
   name="AOC_${day}_${part}"
 else
@@ -33,7 +32,7 @@ else
 fi
 
 if $optimize; then
-  file="${dir}/${name}.hs"
+  file="${name}.hs"
   output_directory="${output_directory}/${name}"
   mkdir -p $output_directory
   executable="${output_directory}/run"
@@ -49,10 +48,7 @@ if $optimize; then
   )>&2
   time $executable $@
 else
-  (
-    cd $dir
-    file="${name}.hs"
-    ormolu -i $file >&2
-    time runhaskell $file
-  )
+  file="${name}.hs"
+  ormolu -i $file >&2
+  time runhaskell $file
 fi

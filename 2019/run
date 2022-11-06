@@ -5,8 +5,7 @@ set -e
 set -u
 set -o pipefail
 
-dir=$(dirname $0)
-year=$(basename $dir)
+cd $(dirname $0)
 
 optimize=false
 while [[ $1 =~ ^- ]]; do
@@ -25,18 +24,18 @@ if [[ $# -gt 0 ]]; then
   shift
 fi
 
-output_directory=("${PWD}/build/${year}")
+output_directory="${PWD}/build"
 if (( ${+part} )); then
   name="AOC_${day}_${part}"
-  executable_name="aoc_${year}_${day}_${part}"
+  executable_name="aoc_${day}_${part}"
 else
   name="AOC_${day}"
-  executable_name="aoc_${year}_${day}"
+  executable_name="aoc_${day}"
 fi
 
 mkdir -p $output_directory
 
-file="${dir}/${name}.rs"
+file="${name}.rs"
 if $optimize; then
   executable="${output_directory}/release/${executable_name}"
   compilation_args=('--release')
@@ -45,20 +44,17 @@ else
   compilation_args=()
   export RUST_BACKTRACE=1
 fi
-cargo_file="${dir}/Cargo.toml"
-cp -f "${dir}/Cargo.template.toml" $cargo_file
-for bin in ${dir}/AOC_*.rs; do
+cargo_file="Cargo.toml"
+cp -f "Cargo.template.toml" $cargo_file
+for bin in AOC_*.rs; do
   echo >> $cargo_file
   echo '[[bin]]' >> $cargo_file
-  echo "name = \"$(basename $bin .rs | sed "s/^AOC_/aoc_${year}_/")\"" >> $cargo_file
+  echo "name = \"$(basename $bin .rs | sed "s/^AOC_/aoc_/")\"" >> $cargo_file
   echo "path = \"$(basename $bin)\"" >> $cargo_file
 done
 
-(
-  cd $dir
-  cargo fmt
-  cargo build $compilation_args --target-dir $output_directory --bin $executable_name
-  echo >&2
-) >&2
+cargo fmt
+cargo build $compilation_args --target-dir $output_directory --bin $executable_name
+echo >&2
 
 time $executable $@

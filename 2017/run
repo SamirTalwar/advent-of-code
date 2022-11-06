@@ -5,7 +5,7 @@ set -e
 set -u
 set -o pipefail
 
-dir=$(dirname $0)
+cd $(dirname $0)
 
 while [[ $1 =~ ^- ]]; do
   case $1 in
@@ -29,4 +29,4 @@ else
   name="AOC_${day}"
 fi
 
-time swipl "${dir}/${name}.pl" $@
+time swipl "${name}.pl" $@

@@ -5,8 +5,7 @@ set -e
 set -u
 set -o pipefail
 
-dir=$(dirname $0)
-year=$(basename $dir)
+cd $(dirname $0)
 
 optimize=false
 while [[ $1 =~ ^- ]]; do
@@ -25,7 +24,7 @@ if [[ $# -gt 0 ]]; then
   shift
 fi
 
-output_directory=("${PWD}/build/${year}")
+output_directory="${PWD}/build"
 if (( ${+part} )); then
   name="AOC_${day}_${part}"
 else
@@ -34,7 +33,7 @@ fi
 
 mkdir -p $output_directory
 
-files=("${dir}/${name}.swift" ${dir}/Helpers/*.swift)
+files=("${name}.swift" Helpers/*.swift)
 executable="${output_directory}/${name}"
 if $optimize; then
   compilation_args=('-O')

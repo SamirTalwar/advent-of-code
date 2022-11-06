@@ -5,8 +5,7 @@ set -e
 set -u
 set -o pipefail
 
-dir=$(dirname $0)
-year=$(basename $dir)
+cd $(dirname $0)
 
 optimize=false
 profile=false
@@ -31,7 +30,7 @@ if [[ $# -gt 0 ]]; then
   shift
 fi
 
-output_directory="build/${year}"
+output_directory="${PWD}/build"
 if (( ${+part} )); then
   name="AOC_${day}_${part}"
 else

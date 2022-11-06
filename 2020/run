@@ -5,8 +5,7 @@ set -e
 set -u
 set -o pipefail
 
-dir=$(dirname $0)
-year=$(basename $dir)
+cd $(dirname $0)
 
 optimize=false
 while [[ $1 =~ ^- ]]; do
@@ -25,7 +24,7 @@ if [[ $# -gt 0 ]]; then
   shift
 fi
 
-output_directory=("${PWD}/build/${year}")
+output_directory="${PWD}/build"
 if (( ${+part} )); then
   name="AOC_${day}_${part}"
 else
@@ -40,21 +39,20 @@ if $optimize; then
 else
   compilation_args=(--debug)
 fi
-temp_src_root="${TMPDIR:-/tmp}/advent-of-code/${year}"
+temp_src_root="${TMPDIR:-/tmp}/advent-of-code/$(basename $(dirname $0))"
 trap 'rm -rf $temp_src_root' EXIT
 temp_src="${temp_src_root}/${name}"
 mkdir -p $temp_src
-(
-  cd $dir
-  files=(helpers/*.pony corral.json lock.json)
-  if [[ -e _corral ]]; then
-    files+=(_corral)
-  fi
-  if [[ -e _repos ]]; then
-    files+=(_repos)
-  fi
-  cp -R "${name}.pony" $files $temp_src
-)
+
+files=(helpers/*.pony corral.json lock.json)
+if [[ -e _corral ]]; then
+  files+=(_corral)
+fi
+if [[ -e _repos ]]; then
+  files+=(_repos)
+fi
+cp -R "${name}.pony" $files $temp_src
+
 hash_file="${output_directory}/${name}.input-hash"
 current_hash=$([[ -e $hash_file ]] && cat $hash_file || :)
 (
