@@ -1,0 +1,47 @@
+#!/usr/bin/env nix-shell
+#!nix-shell -i zsh ./shell.nix
+
+set -e
+set -u
+set -o pipefail
+
+cd $(dirname $0)
+
+while [[ $1 =~ ^- ]]; do
+  case $1 in
+    -O)
+      # ignore
+      shift
+      ;;
+  esac
+done
+
+day=$(printf '%02d' $1)
+shift
+if [[ $# -gt 0 ]]; then
+  part=${1:-}
+  shift
+fi
+
+name="AOC_${day}_${part}"
+db_name="aoc_${day}_${part}"
+
+file="${name}.sql"
+if [[ ! -e $file ]]; then
+  echo >&2 "${file} does not exist."
+  exit 2
+fi
+
+function psql {
+  docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U postgres "$@"
+}
+
+# start PostgreSQL
+docker compose up --detach --wait
+# recreate the database
+psql -q <<< "DROP DATABASE IF EXISTS ${db_name}; CREATE DATABASE ${db_name};"
+
+# write the input to a file inside the container
+docker compose exec -T postgres bash -c 'cat > /tmp/input'
+
+psql "$db_name" -v input=/tmp/input -f "/src/${file}" -o /dev/stderr

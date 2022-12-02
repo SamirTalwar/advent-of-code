@@ -1,0 +1,28 @@
+version: '3'
+
+name: aoc-2022
+
+services:
+  postgres:
+    image: postgres
+    command:
+      - -F # turn fsync off for speed
+    ports:
+      - 5432
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - type: volume
+        target: /var/lib/postgresql/data
+      - type: bind
+        source: .
+        target: /src
+        read_only: true
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - psql -U "$${POSTGRES_USER:-postgres}" < /dev/null && sleep 1 && psql -U "$${POSTGRES_USER:-postgres}" < /dev/null
+      start_period: 5s
+      interval: 5s
+      timeout: 10s
+      retries: 20
