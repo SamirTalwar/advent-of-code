@@ -32,16 +32,15 @@ if [[ ! -e $file ]]; then
   exit 2
 fi
 
-function psql {
-  docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U postgres "$@"
-}
+psql=(docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U postgres)
 
 # start PostgreSQL
 docker compose up --detach --wait
 # recreate the database
-psql -q <<< "DROP DATABASE IF EXISTS ${db_name}; CREATE DATABASE ${db_name};"
+$psql -q <<< "DROP DATABASE IF EXISTS ${db_name}; CREATE DATABASE ${db_name};"
 
 # write the input to a file inside the container
 docker compose exec -T postgres bash -c 'cat > /tmp/input'
 
-psql "$db_name" -v input=/tmp/input -f "/src/${file}" -o /dev/stderr
+command=($psql $db_name -v input=/tmp/input -f "/src/${file}" -o /dev/stderr)
+time $command
