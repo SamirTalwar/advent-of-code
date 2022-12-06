@@ -9,18 +9,21 @@ CREATE TABLE data_values(
 );
 INSERT INTO data_values(c) (SELECT string_to_table(datastream, NULL) FROM input);
 
-CREATE MATERIALIZED VIEW marker_end AS
-  SELECT d.i
-    FROM data_values AS a
-    JOIN data_values AS b on a.i + 1 = b.i
-    JOIN data_values AS c on a.i + 2 = c.i
-    JOIN data_values AS d on a.i + 3 = d.i
-  WHERE a.c NOT IN (b.c, c.c, d.c)
-    AND b.c NOT IN (a.c, c.c, d.c)
-    AND c.c NOT IN (a.c, b.c, d.c);
+CREATE MATERIALIZED VIEW potential AS
+    SELECT initial.i, array_agg(values.c) segment
+      FROM data_values initial
+      JOIN data_values values
+           ON values.i BETWEEN initial.i AND initial.i + 3
+  GROUP BY initial.i;
+
+CREATE MATERIALIZED VIEW marker AS
+  SELECT i AS marker_start,
+         i + array_length(segment, 1) - 1 AS marker_end
+    FROM potential
+   WHERE array_length(array(SELECT DISTINCT x FROM unnest(segment) x), 1) = array_length(segment, 1);
 
 \echo
 \t on
 \o
 
-SELECT MIN(i) FROM marker_end;
+SELECT MIN(marker_end) FROM marker;
