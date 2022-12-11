@@ -20,10 +20,26 @@ COPY input(direction, amount) FROM :'input' WITH (FORMAT csv, HEADER false, DELI
 CREATE TABLE position(
   generation int NOT NULL,
   head point NOT NULL,
+  knot_1 point NOT NULL,
+  knot_2 point NOT NULL,
+  knot_3 point NOT NULL,
+  knot_4 point NOT NULL,
+  knot_5 point NOT NULL,
+  knot_6 point NOT NULL,
+  knot_7 point NOT NULL,
+  knot_8 point NOT NULL,
   tail point NOT NULL
 );
 INSERT INTO position VALUES (
   0,
+  point(0, 0),
+  point(0, 0),
+  point(0, 0),
+  point(0, 0),
+  point(0, 0),
+  point(0, 0),
+  point(0, 0),
+  point(0, 0),
   point(0, 0),
   point(0, 0)
 );
@@ -75,12 +91,46 @@ CREATE FUNCTION follow(head point, tail point)
 CREATE FUNCTION process_instruction()
   RETURNS trigger
   AS $$
+  DECLARE
+    old_position position%rowtype;
+    new_head point;
+    new_knot_1 point;
+    new_knot_2 point;
+    new_knot_3 point;
+    new_knot_4 point;
+    new_knot_5 point;
+    new_knot_6 point;
+    new_knot_7 point;
+    new_knot_8 point;
+    new_tail point;
   BEGIN
+    SELECT *
+      INTO old_position
+      FROM position
+      WHERE position.generation + 1 = new.generation;
+    new_head := old_position.head + new.direction;
+    new_knot_1 := follow(new_head, old_position.knot_1);
+    new_knot_2 := follow(new_knot_1, old_position.knot_2);
+    new_knot_3 := follow(new_knot_2, old_position.knot_3);
+    new_knot_4 := follow(new_knot_3, old_position.knot_4);
+    new_knot_5 := follow(new_knot_4, old_position.knot_5);
+    new_knot_6 := follow(new_knot_5, old_position.knot_6);
+    new_knot_7 := follow(new_knot_6, old_position.knot_7);
+    new_knot_8 := follow(new_knot_7, old_position.knot_8);
+    new_tail := follow(new_knot_8, old_position.tail);
     INSERT INTO position (
       SELECT
         new.generation,
-        position.head + new.direction,
-        follow(position.head + new.direction, position.tail)
+        new_head,
+        new_knot_1,
+        new_knot_2,
+        new_knot_3,
+        new_knot_4,
+        new_knot_5,
+        new_knot_6,
+        new_knot_7,
+        new_knot_8,
+        new_tail
       FROM position
       WHERE position.generation + 1 = new.generation
     );
@@ -105,4 +155,9 @@ INSERT INTO instruction(direction) (
 \t on
 \o
 
-SELECT count(*) FROM (SELECT DISTINCT position.tail[0], position.tail[1] FROM position) result;
+SELECT count(*) FROM (
+  SELECT DISTINCT
+    position.tail[0],
+    position.tail[1]
+  FROM position
+) result;
