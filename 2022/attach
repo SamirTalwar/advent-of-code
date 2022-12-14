@@ -1,0 +1,22 @@
+#!/usr/bin/env nix-shell
+#!nix-shell -i zsh ./shell.nix
+
+set -e
+set -u
+set -o pipefail
+
+cd $(dirname $0)
+
+if [[ $# -eq 1 ]]; then
+  day=$1
+  name="aoc_${day}"
+elif [[ $# -eq 2 ]]; then
+  day=$1
+  part=$2
+  name="aoc_${day}_${part}"
+else
+  echo >&2 "Usage: $0 DAY [PART]"
+  exit 2
+fi
+
+exec docker compose exec postgres psql $name postgres
