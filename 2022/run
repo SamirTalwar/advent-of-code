@@ -37,7 +37,12 @@ psql=(docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U postgres)
 # start PostgreSQL
 docker compose up --detach --wait
 # recreate the database
-$psql -q <<< "DROP DATABASE IF EXISTS ${db_name}; CREATE DATABASE ${db_name};"
+$psql -q <<< "DROP DATABASE IF EXISTS ${db_name}; CREATE DATABASE ${db_name};" || {
+  # if that fails, drop everything and try again
+  docker compose down --volumes
+  docker compose up --detach --wait
+  $psql -q <<< "CREATE DATABASE ${db_name};"
+}
 
 # write the input to a file inside the container
 docker compose exec -T postgres bash -c 'cat > /tmp/input'
