@@ -19,9 +19,9 @@ let
   loadPacks = pkgs.writeTextFile {
     name = "load_packs.pl";
     text = pkgs.lib.strings.concatMapStrings (s: s + "\n") (
-      [":-"] ++
+      [ ":-" ] ++
       (pkgs.lib.lists.map (pack: "  asserta( (file_search_path(pack, '${pack}')) ),") packs) ++
-      ["  attach_packs."]
+      [ "  attach_packs." ]
     );
   };
 in
