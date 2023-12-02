@@ -1,0 +1,80 @@
+#!/usr/bin/env nix-shell
+#!nix-shell -i zsh ./shell.nix
+
+set -e
+set -u
+set -o pipefail
+
+cd $(dirname $0)
+
+optimize=false
+profile=false
+while [[ $1 =~ ^- ]]; do
+  case $1 in
+    -O)
+      optimize=true
+      shift
+      ;;
+    -P)
+      optimize=true
+      profile=true
+      shift
+      ;;
+  esac
+done
+
+day=$(printf '%02d' $1)
+shift
+if [[ $# -gt 0 ]]; then
+  part=${1:-}
+  shift
+fi
+
+output_directory="${PWD}/build"
+if (( ${+part} )); then
+  name="AOC_${day}_${part}"
+else
+  name="AOC_${day}"
+fi
+
+extensions=('-XGHC2021' '-XImportQualifiedPost')
+ghc_args=("${extensions[@]}" '-Wall')
+ormolu_args=()
+for extension in $extensions; do
+  ormolu_args+=(-o $extension)
+done
+runtime_args=($@)
+file="${name}.hs"
+files=($file)
+
+if $optimize; then
+  if $profile; then
+    ghc_args+=('-prof' '-fprof-auto')
+    runtime_args+=('+RTS' '-p' '-RTS')
+  fi
+  output_directory="${output_directory}/${name}"
+  mkdir -p $output_directory
+  executable="${output_directory}/run"
+  (
+    ormolu -i $ormolu_args $files
+    hlint $extensions $files || :
+    ghc \
+      $ghc_args \
+      -O2 \
+      -o $executable \
+      -odir $output_directory \
+      -hidir $output_directory \
+      $files
+    echo
+  )>&2
+  time $executable $runtime_args
+else
+  (
+    (
+      ormolu -i $ormolu_args $files
+      hlint $extensions $files || :
+      echo
+    ) >&2
+    time runghc $ghc_args $file $runtime_args
+  )
+fi
