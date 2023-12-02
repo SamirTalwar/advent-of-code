@@ -17,4 +17,4 @@ if [[ ! -e $shell_file ]]; then
   exit 1
 fi
 
-nix-shell --command zsh "$(dirname $0)/${shell_file}"
+nix-shell --command "$SHELL" "$(dirname $0)/${shell_file}"
