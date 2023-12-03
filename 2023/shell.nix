@@ -3,6 +3,7 @@ let
   ghc = pkgs.haskellPackages.ghcWithPackages (
     ps: with ps; [
       base
+      containers
       megaparsec
     ]
   );
