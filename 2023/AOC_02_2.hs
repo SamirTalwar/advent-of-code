@@ -1,12 +1,7 @@
-import Data.Functor (void, ($>))
+import Data.Functor (($>))
 import Data.List qualified as List
 import Data.Maybe (mapMaybe)
-import Data.Void (Void)
-import Text.Megaparsec as Megaparsec
-import Text.Megaparsec.Char
-import Text.Megaparsec.Char.Lexer qualified as Lexer
-
-type Parser = Megaparsec.Parsec Void String
+import Helpers.Parse
 
 newtype Game = Game [Reveal]
   deriving (Eq, Show)
@@ -23,8 +18,7 @@ data Color = Red | Green | Blue
 
 main :: IO ()
 main = do
-  contents <- getContents
-  games <- either (fail . Megaparsec.errorBundlePretty) pure $ Megaparsec.parse parser "input" contents
+  games <- parseInput parser
   let powers = map gamePower games
   let result = sum powers
   print result
@@ -37,21 +31,19 @@ gamePower (Game reveals) = red * green * blue
     blue = maximum $ mapMaybe revealBlue reveals
 
 parser :: Parser [Game]
-parser = many game <* eof
+parser = many $ do
+  _ <- string "Game"
+  spaces
+  _ <- some digitChar
+  _ <- string ":"
+  spaces
+  reveals <- reveal `sepBy` (char ';' *> spaces)
+  _ <- newline
+  pure $ Game reveals
   where
-    game :: Parser Game
-    game = do
-      _ <- string "Game"
-      spaces
-      _ <- some digitChar
-      _ <- string ":"
-      spaces
-      reveals <- reveal `sepBy` (char ';' *> spaces)
-      _ <- newline
-      pure $ Game reveals
     reveal :: Parser Reveal
     reveal = do
-      colors <- (flip (,) <$> integer <* spaces <*> color) `sepBy` (char ',' *> spaces)
+      colors <- (flip (,) <$> decimal <* spaces <*> color) `sepBy` (char ',' *> spaces)
       let red = List.lookup Red colors
           green = List.lookup Green colors
           blue = List.lookup Blue colors
@@ -63,7 +55,3 @@ parser = many game <* eof
           string "green" $> Green,
           string "blue" $> Blue
         ]
-    integer :: (Integral a) => Parser a
-    integer = Lexer.decimal
-    spaces :: Parser ()
-    spaces = void $ some (char ' ')

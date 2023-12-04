@@ -45,7 +45,7 @@ for extension in $extensions; do
 done
 runtime_args=($@)
 file="${name}.hs"
-files=($file)
+files=($file Helpers/*.hs)
 
 if $optimize; then
   if $profile; then
