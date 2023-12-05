@@ -5,6 +5,7 @@ module Helpers.Parse
     Parser,
     parseInput,
     spaces,
+    word,
   )
 where
 
@@ -24,3 +25,6 @@ parseInput parser = do
 
 spaces :: Parser ()
 spaces = void $ some (char ' ')
+
+word :: Parser String
+word = many letterChar
