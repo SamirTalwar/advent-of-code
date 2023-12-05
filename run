@@ -38,6 +38,8 @@ fi
 
 args+=($@)
 
+command=(nix-shell ./$year/shell.nix --run "./$year/run ${args[*]}")
+
 input="${year}/AOC_${day}.input"
 if (( ${+part} )); then
   answer="${year}/AOC_${day}_${part}.answer"
@@ -55,9 +57,9 @@ if [[ -t 0 ]]; then
   output=$(mktemp)
   trap 'rm -f $output' EXIT
   if [[ $input_mechanism == 'arg' ]]; then
-    (./$year/run $args $input) | tee $output
+    ($command $input) | tee $output
   else
-    (./$year/run $args < $input) | tee $output
+    ($command < $input) | tee $output
   fi
   if [[ -e $answer ]]; then
     if ! diff_output=$(git diff --no-ext-diff --color --no-index --ignore-all-space --ignore-blank-lines $answer $output); then
@@ -68,5 +70,5 @@ if [[ -t 0 ]]; then
     fi
   fi
 else
-  ./$year/run $args
+  $command
 fi

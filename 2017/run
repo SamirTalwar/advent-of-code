@@ -1,5 +1,4 @@
-#!/usr/bin/env nix-shell
-#!nix-shell -i zsh ./shell.nix
+#!/usr/bin/env zsh
 
 set -e
 set -u
