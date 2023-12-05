@@ -1,0 +1,18 @@
+#!/usr/bin/env zsh
+
+set -e
+set -u
+set -o pipefail
+
+cd $(dirname $0)
+
+if [[ $# -ne 1 || ! -d $1 ]]; then
+  echo >&2 "Usage: $0 [-O] <year>"
+  exit 2
+fi
+
+year=$1
+
+./download-answers $year
+
+nix-shell ./$year/shell.nix --run "zsh ./check-inner $year"
