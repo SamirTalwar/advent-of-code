@@ -1,0 +1,25 @@
+#!/usr/bin/env zsh
+
+set -e
+set -u
+set -o pipefail
+
+cd $(dirname $0)
+
+day=$(printf '%02d' $1)
+shift
+if [[ $# -gt 0 ]]; then
+  part=${1:-}
+  shift
+fi
+
+if (( ${+part} )); then
+  name="AOC_${day}_${part}"
+else
+  name="AOC_${day}"
+fi
+
+# Force a rebuild with the new `StartupObject`.
+touch AOC_2024.csproj
+
+time dotnet run -p:StartupObject=${name}
