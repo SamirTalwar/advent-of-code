@@ -16,4 +16,22 @@ class Input
             yield return line;
         }
     }
+
+    public static char[,] Grid()
+    {
+        var rows = Lines().ToList();
+
+        if (rows.Count == 0)
+        {
+            throw new Exception("No input.");
+        }
+        var columnCount = rows[0].Length;
+
+        var grid = new char[rows.Count, columnCount];
+        foreach (var (row, i) in rows.Select((row, index) => (row, index)))
+        {
+            Buffer.BlockCopy(row.ToCharArray(), 0, grid, columnCount * i * sizeof(char), columnCount * sizeof(char));
+        }
+        return grid;
+    }
 }
