@@ -7,19 +7,19 @@ class AOC_04_1
         var grid = Input.Grid();
 
         var result = 0;
-        result += Search(grid, 0, 1);
-        result += Search(grid, 0, -1);
-        result += Search(grid, 1, 0);
-        result += Search(grid, -1, 0);
-        result += Search(grid, 1, 1);
-        result += Search(grid, -1, -1);
-        result += Search(grid, -1, 1);
-        result += Search(grid, 1, -1);
+        result += Search(grid, new Point2D { Y = 0, X = 1 });
+        result += Search(grid, new Point2D { Y = 0, X = -1 });
+        result += Search(grid, new Point2D { Y = 1, X = 0 });
+        result += Search(grid, new Point2D { Y = -1, X = 0 });
+        result += Search(grid, new Point2D { Y = 1, X = 1 });
+        result += Search(grid, new Point2D { Y = -1, X = -1 });
+        result += Search(grid, new Point2D { Y = -1, X = 1 });
+        result += Search(grid, new Point2D { Y = 1, X = -1 });
 
         Console.WriteLine("{0}", result);
     }
 
-    static int Search(char[,] grid, int moveY, int moveX)
+    static int Search(char[,] grid, Point2D move)
     {
         var count = 0;
         var rows = grid.GetLength(0);
@@ -28,7 +28,7 @@ class AOC_04_1
         {
             for (var x = 0; x < columns; x++)
             {
-                if (CheckWord(grid, y, x, moveY, moveX))
+                if (CheckWord(grid, new Point2D { Y = y, X = x }, move))
                 {
                     count += 1;
                 }
@@ -37,16 +37,15 @@ class AOC_04_1
         return count;
     }
 
-    static bool CheckWord(char[,] grid, int y, int x, int moveY, int moveX)
+    static bool CheckWord(char[,] grid, Point2D position, Point2D move)
     {
         try
         {
             foreach (var c in word)
             {
-                if (grid[y, x] == c)
+                if (position.In(grid) == c)
                 {
-                    y += moveY;
-                    x += moveX;
+                    position += move;
                 }
                 else
                 {

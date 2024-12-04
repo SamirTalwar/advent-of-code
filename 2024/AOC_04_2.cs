@@ -25,7 +25,7 @@ class AOC_04_2
         {
             for (var x = 0; x < columns; x++)
             {
-                if (CheckCross(grid, wordOne, wordTwo, y, x))
+                if (CheckCross(grid, wordOne, wordTwo, new Point2D { Y = y, X = x }))
                 {
                     count += 1;
                 }
@@ -34,13 +34,13 @@ class AOC_04_2
         return count;
     }
 
-    static bool CheckCross(char[,] grid, char[] wordOne, char[] wordTwo, int y, int x)
+    static bool CheckCross(char[,] grid, char[] wordOne, char[] wordTwo, Point2D position)
     {
         try
         {
             foreach (var (i, c) in wordOne.Index())
             {
-                if (!(grid[y + i, x + i] == c))
+                if ((position + i).In(grid) != c)
                 {
                     return false;
                 }
@@ -48,7 +48,7 @@ class AOC_04_2
             var yOffset = wordOne.Length - 1;
             foreach (var (i, c) in wordTwo.Index())
             {
-                if (!(grid[y + yOffset - i, x + i] == c))
+                if ((position + new Point2D { Y = yOffset - i, X = i }).In(grid) != c)
                 {
                     return false;
                 }
