@@ -19,7 +19,9 @@ else
   name="AOC_${day}"
 fi
 
-# Force a rebuild with the new `StartupObject`.
-touch AOC_2024.csproj
+touch AOC_2024.csproj  # Force a rebuild with the new `StartupObject`.
+dotnet build -p:StartupObject=${name} >&2
+echo >&2
 
 time dotnet run -p:StartupObject=${name}
+echo >&2
