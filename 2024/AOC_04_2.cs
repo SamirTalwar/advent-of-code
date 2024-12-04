@@ -38,7 +38,7 @@ class AOC_04_2
     {
         try
         {
-            foreach (var (c, i) in wordOne.Select((c, i) => (c, i)))
+            foreach (var (i, c) in wordOne.Index())
             {
                 if (!(grid[y + i, x + i] == c))
                 {
@@ -46,7 +46,7 @@ class AOC_04_2
                 }
             }
             var yOffset = wordOne.Length - 1;
-            foreach (var (c, i) in wordTwo.Select((c, i) => (c, i)))
+            foreach (var (i, c) in wordTwo.Index())
             {
                 if (!(grid[y + yOffset - i, x + i] == c))
                 {

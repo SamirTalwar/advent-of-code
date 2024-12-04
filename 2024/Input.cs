@@ -28,7 +28,7 @@ class Input
         var columnCount = rows[0].Length;
 
         var grid = new char[rows.Count, columnCount];
-        foreach (var (row, i) in rows.Select((row, index) => (row, index)))
+        foreach (var (i, row) in rows.Index())
         {
             Buffer.BlockCopy(row.ToCharArray(), 0, grid, columnCount * i * sizeof(char), columnCount * sizeof(char));
         }
