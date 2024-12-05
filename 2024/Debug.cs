@@ -1,6 +1,6 @@
 class Debug
 {
-    public static void Value(Object value)
+    public static void Value(Object? value)
     {
         Console.WriteLine(value);
     }
@@ -11,6 +11,27 @@ class Debug
         {
             Console.WriteLine(line);
         }
+    }
+
+    public static void List<T>(ICollection<T>? list)
+    {
+        if (list == null)
+        {
+            Console.WriteLine("null");
+            return;
+        }
+        Console.Write("[");
+        var enumerator = list.GetEnumerator();
+        if (enumerator.MoveNext())
+        {
+            Console.Write(enumerator.Current);
+            while (enumerator.MoveNext())
+            {
+                Console.Write(", ");
+                Console.Write(enumerator.Current);
+            }
+        }
+        Console.WriteLine("]");
     }
 
     public static void Grid(char[,] grid)
