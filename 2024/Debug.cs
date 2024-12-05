@@ -34,6 +34,31 @@ class Debug
         Console.WriteLine("]");
     }
 
+    public static void Dictionary<K, V>(IDictionary<K, V>? dictionary)
+    {
+        if (dictionary == null)
+        {
+            Console.WriteLine("null");
+            return;
+        }
+        Console.Write("[");
+        var enumerator = dictionary.GetEnumerator();
+        if (enumerator.MoveNext())
+        {
+            Console.Write(enumerator.Current.Key);
+            Console.Write(" -> ");
+            Console.Write(enumerator.Current.Value);
+            while (enumerator.MoveNext())
+            {
+                Console.Write(", ");
+                Console.Write(enumerator.Current.Key);
+                Console.Write(" -> ");
+                Console.Write(enumerator.Current.Value);
+            }
+        }
+        Console.WriteLine("]");
+    }
+
     public static void Grid(char[,] grid)
     {
         var rows = grid.GetLength(0);
