@@ -11,4 +11,6 @@ struct Point2D
 
     public T In<T>(T[,] grid) =>
         grid[Y, X];
+
+    public override string ToString() => string.Format("({0},{1})", X, Y);
 }
