@@ -1,3 +1,5 @@
+using System.Numerics;
+
 class AOC_07_2
 {
     public static void Main(string[] args)
@@ -32,7 +34,11 @@ class AOC_07_2
 
         bool IsSolveable(long value, int nextIndex)
         {
-            if (nextIndex == Inputs.Count)
+            if (value > Output)
+            {
+                return false;
+            }
+            else if (nextIndex == Inputs.Count)
             {
                 return value == Output;
             }
@@ -44,7 +50,7 @@ class AOC_07_2
             }
         }
 
-        long Concat(long a, long b) => long.Parse(a.ToString() + b.ToString());
+        long Concat(long a, long b) => a * (long)BigInteger.Pow(10, (int)BigInteger.Log10(b) + 1) + b;
 
         public override string ToString() =>
             string.Format("{0}: {1}", Output, string.Join(' ', Inputs));
