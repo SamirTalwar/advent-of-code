@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-
 class AOC_06_2
 {
     public static void Main(string[] args)
@@ -30,8 +28,8 @@ class AOC_06_2
         static readonly SortedSet<int> emptySet = new();
 
         HashSet<Point2D> positions;
-        ConcurrentDictionary<int, SortedSet<int>> obstaclesByY = new();
-        ConcurrentDictionary<int, SortedSet<int>> obstaclesByX = new();
+        MultiDictionary<int, int> obstaclesByY = new();
+        MultiDictionary<int, int> obstaclesByX = new();
 
         public Obstacles(ISet<Point2D> positions)
         {
@@ -39,16 +37,13 @@ class AOC_06_2
 
             foreach (var position in positions)
             {
-                obstaclesByY.AddOrUpdate(position.Y, _ => new SortedSet<int> { position.X }, (_, xs) => { xs.Add(position.X); return xs; });
-                obstaclesByX.AddOrUpdate(position.X, _ => new SortedSet<int> { position.Y }, (_, ys) => { ys.Add(position.Y); return ys; });
+                obstaclesByY.Add(position.Y, position.X);
+                obstaclesByX.Add(position.X, position.Y);
             }
         }
 
-        public SortedSet<int> ByY(int y) =>
-            obstaclesByY.GetValue(y) ?? emptySet;
-
-        public SortedSet<int> ByX(int x) =>
-            obstaclesByX.GetValue(x) ?? emptySet;
+        public SortedSet<int> ByY(int y) => obstaclesByY.GetValueSet(y);
+        public SortedSet<int> ByX(int x) => obstaclesByX.GetValueSet(x);
 
         public Obstacles WithExtra(Point2D extraPosition) =>
             new Obstacles(positions.Union(new HashSet<Point2D> { extraPosition }).ToHashSet());
@@ -130,7 +125,7 @@ class AOC_06_2
                     {
                         var view = obstacles.ByX(guard.Position.X).GetViewBetween(0, guard.Position.Y);
                         var running = view.Count > 0;
-                        var newPositionY = running ? view.Last() + 1 : 0;
+                        var newPositionY = running ? view.Max + 1 : 0;
                         var newGuard = new Guard
                         {
                             Position = new Point2D { Y = newPositionY, X = guard.Position.X },
@@ -143,7 +138,7 @@ class AOC_06_2
                     {
                         var view = obstacles.ByX(guard.Position.X).GetViewBetween(guard.Position.Y, rows);
                         var running = view.Count > 0;
-                        var newPositionY = running ? view.First() - 1 : rows - 1;
+                        var newPositionY = running ? view.Min - 1 : rows - 1;
                         var newGuard = new Guard
                         {
                             Position = new Point2D { Y = newPositionY, X = guard.Position.X },
@@ -156,7 +151,7 @@ class AOC_06_2
                     {
                         var view = obstacles.ByY(guard.Position.Y).GetViewBetween(0, guard.Position.X);
                         var running = view.Count > 0;
-                        var newPositionX = running ? view.Last() + 1 : 0;
+                        var newPositionX = running ? view.Max + 1 : 0;
                         var newGuard = new Guard
                         {
                             Position = new Point2D { Y = guard.Position.Y, X = newPositionX },
@@ -169,7 +164,7 @@ class AOC_06_2
                     {
                         var view = obstacles.ByY(guard.Position.Y).GetViewBetween(guard.Position.X, columns);
                         var running = view.Count > 0;
-                        var newPositionX = running ? view.First() - 1 : columns - 1;
+                        var newPositionX = running ? view.Min - 1 : columns - 1;
                         var newGuard = new Guard
                         {
                             Position = new Point2D { Y = guard.Position.Y, X = newPositionX },

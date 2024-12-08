@@ -1,12 +1,8 @@
-using System.Collections.Concurrent;
-
 class AOC_05_2
 {
-    static readonly ISet<int> emptySet = new HashSet<int>();
-
     public static void Main(string[] args)
     {
-        var ordering = new ConcurrentDictionary<int, ISet<int>>();
+        var ordering = new MultiDictionary<int, int>();
         var updates = new List<List<int>>();
 
         var lines = Input.Lines();
@@ -19,11 +15,7 @@ class AOC_05_2
             var split = line.Split("|");
             var before = int.Parse(split[0]);
             var after = int.Parse(split[1]);
-            ordering.AddOrUpdate(
-                before,
-                _ => new HashSet<int> { after },
-                (_, existing) => { existing.Add(after); return existing; }
-            );
+            ordering.Add(before, after);
         }
         foreach (var line in lines)
         {
@@ -46,13 +38,12 @@ class AOC_05_2
         Console.WriteLine("{0}", result);
     }
 
-    static bool ValidUpdate(IList<int> update, IDictionary<int, ISet<int>> ordering)
+    static bool ValidUpdate(IList<int> update, MultiDictionary<int, int> ordering)
     {
         var seen = new HashSet<int>();
         foreach (var value in update)
         {
-            var intersected = (ordering.GetValue(value) ?? emptySet).Intersect(seen).Count();
-            if (intersected > 0)
+            if (seen.Overlaps(ordering.GetValues(value)))
             {
                 return false;
             }
@@ -61,20 +52,18 @@ class AOC_05_2
         return true;
     }
 
-    static IList<int> ReorderUpdate(IList<int> update, IDictionary<int, ISet<int>> ordering)
+    static IList<int> ReorderUpdate(IList<int> update, MultiDictionary<int, int> ordering)
     {
         var values = new HashSet<int>(update);
-        var subOrdering =
-            ordering
-                .Where(pair => values.Contains(pair.Key))
-                .Select(pair => (pair.Key, values.Intersect(pair.Value).ToHashSet()))
-                .Where(pair => pair.Item2.Count > 0)
-                .ToDictionary();
+        var subOrdering = ordering.Filtered(pair => values.Contains(pair.Key) || values.Contains(pair.Value));
         var reordered = new List<int>();
         foreach (var before in values)
         {
-            var after = subOrdering.GetValue(before) ?? emptySet;
-            var index = after.Select(a => reordered.IndexOf(a)).Select<int, int?>(i => i >= 0 ? i : null).Min();
+            var index =
+                subOrdering.GetValues(before)
+                    .Select(a => reordered.IndexOf(a))
+                    .Select<int, int?>(i => i >= 0 ? i : null)
+                    .Min();
             reordered.Insert(index ?? reordered.Count, before);
         }
         return reordered;

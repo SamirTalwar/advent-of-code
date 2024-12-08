@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-
 class AOC_06_1
 {
     public static void Main(string[] args)
@@ -27,13 +25,11 @@ class AOC_06_1
 
     class Grid
     {
-        static readonly SortedSet<int> emptySet = new();
-
         Guard guard = new Guard { Direction = Direction.Up };
         int rows;
         int columns;
-        ConcurrentDictionary<int, SortedSet<int>> obstaclesByY = new();
-        ConcurrentDictionary<int, SortedSet<int>> obstaclesByX = new();
+        MultiDictionary<int, int> obstaclesByY = new();
+        MultiDictionary<int, int> obstaclesByX = new();
 
         public Grid(char[,] grid)
         {
@@ -59,8 +55,8 @@ class AOC_06_1
 
             foreach (var obstacle in obstacles)
             {
-                obstaclesByY.AddOrUpdate(obstacle.Y, _ => new SortedSet<int> { obstacle.X }, (_, xs) => { xs.Add(obstacle.X); return xs; });
-                obstaclesByX.AddOrUpdate(obstacle.X, _ => new SortedSet<int> { obstacle.Y }, (_, ys) => { ys.Add(obstacle.Y); return ys; });
+                obstaclesByY.Add(obstacle.Y, obstacle.X);
+                obstaclesByX.Add(obstacle.X, obstacle.Y);
             }
         }
 
@@ -83,9 +79,9 @@ class AOC_06_1
             {
                 case Direction.Up:
                     {
-                        var view = (obstaclesByX.GetValue(guard.Position.X) ?? emptySet).GetViewBetween(0, guard.Position.Y);
+                        var view = obstaclesByX.GetValueSet(guard.Position.X).GetViewBetween(0, guard.Position.Y);
                         var running = view.Count > 0;
-                        var newPositionY = running ? view.Last() + 1 : 0;
+                        var newPositionY = running ? view.Max + 1 : 0;
                         var visited = Enumerable.Range(newPositionY, guard.Position.Y - newPositionY + 1).Select(y => new Point2D { Y = y, X = guard.Position.X }).ToHashSet();
                         guard.Position = new Point2D { Y = newPositionY, X = guard.Position.X };
                         guard.Direction = Direction.Right;
@@ -93,9 +89,9 @@ class AOC_06_1
                     }
                 case Direction.Down:
                     {
-                        var view = (obstaclesByX.GetValue(guard.Position.X) ?? emptySet).GetViewBetween(guard.Position.Y, rows);
+                        var view = obstaclesByX.GetValueSet(guard.Position.X).GetViewBetween(guard.Position.Y, rows);
                         var running = view.Count > 0;
-                        var newPositionY = running ? view.First() - 1 : rows - 1;
+                        var newPositionY = running ? view.Min - 1 : rows - 1;
                         var visited = Enumerable.Range(guard.Position.Y, newPositionY - guard.Position.Y + 1).Select(y => new Point2D { Y = y, X = guard.Position.X }).ToHashSet();
                         guard.Position = new Point2D { Y = newPositionY, X = guard.Position.X };
                         guard.Direction = Direction.Left;
@@ -103,9 +99,9 @@ class AOC_06_1
                     }
                 case Direction.Left:
                     {
-                        var view = (obstaclesByY.GetValue(guard.Position.Y) ?? emptySet).GetViewBetween(0, guard.Position.X);
+                        var view = obstaclesByY.GetValueSet(guard.Position.Y).GetViewBetween(0, guard.Position.X);
                         var running = view.Count > 0;
-                        var newPositionX = running ? view.Last() + 1 : 0;
+                        var newPositionX = running ? view.Max + 1 : 0;
                         var visited = Enumerable.Range(newPositionX, guard.Position.X - newPositionX + 1).Select(x => new Point2D { Y = guard.Position.Y, X = x }).ToHashSet();
                         guard.Position = new Point2D { Y = guard.Position.Y, X = newPositionX };
                         guard.Direction = Direction.Up;
@@ -113,9 +109,9 @@ class AOC_06_1
                     }
                 case Direction.Right:
                     {
-                        var view = (obstaclesByY.GetValue(guard.Position.Y) ?? emptySet).GetViewBetween(guard.Position.X, columns);
+                        var view = obstaclesByY.GetValueSet(guard.Position.Y).GetViewBetween(guard.Position.X, columns);
                         var running = view.Count > 0;
-                        var newPositionX = running ? view.First() - 1 : columns - 1;
+                        var newPositionX = running ? view.Min - 1 : columns - 1;
                         var visited = Enumerable.Range(guard.Position.X, newPositionX - guard.Position.X + 1).Select(x => new Point2D { Y = guard.Position.Y, X = x }).ToHashSet();
                         guard.Position = new Point2D { Y = guard.Position.Y, X = newPositionX };
                         guard.Direction = Direction.Down;
