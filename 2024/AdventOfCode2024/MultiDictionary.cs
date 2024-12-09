@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 
-class MultiDictionary<K, V> : IEnumerable<KeyValuePair<K, V>> where K : notnull
+public class MultiDictionary<K, V> : IEnumerable<KeyValuePair<K, V>> where K : notnull
 {
     static readonly SortedSet<V> emptySet = new SortedSet<V>();
 
@@ -15,6 +15,11 @@ class MultiDictionary<K, V> : IEnumerable<KeyValuePair<K, V>> where K : notnull
         {
             Add(pair);
         }
+    }
+
+    public V this[K key]
+    {
+        set => Add(key, value);
     }
 
     public IEnumerable<V> GetValues(K key) =>
