@@ -1,6 +1,6 @@
 class AOC_06_1
 {
-    public static void Main(string[] args)
+    public static void Run(string[] args)
     {
         var grid = new Grid(Input.Grid());
 

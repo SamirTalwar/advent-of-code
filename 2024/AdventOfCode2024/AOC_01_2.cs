@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 class AOC_01_2
 {
-    public static void Main(string[] args)
+    public static void Run(string[] args)
     {
         var parser = new Regex(@"(\d+) +(\d+)");
         var inputs =

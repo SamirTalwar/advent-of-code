@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 class AOC_03_1
 {
-    public static void Main(string[] args)
+    public static void Run(string[] args)
     {
         var parser = new Regex(@"mul\((\d+),(\d+)\)");
         var input = Input.String();

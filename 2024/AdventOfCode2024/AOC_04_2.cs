@@ -3,7 +3,7 @@ class AOC_04_2
     static readonly char[] wordForwards = new char[] { 'M', 'A', 'S' };
     static readonly char[] wordBackwards = new char[] { 'S', 'A', 'M' };
 
-    public static void Main(string[] args)
+    public static void Run(string[] args)
     {
         var grid = Input.Grid();
 

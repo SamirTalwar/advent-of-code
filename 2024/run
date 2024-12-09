@@ -6,22 +6,8 @@ set -o pipefail
 
 cd $(dirname $0)
 
-day=$(printf '%02d' $1)
-shift
-if [[ $# -gt 0 ]]; then
-  part=${1:-}
-  shift
-fi
-
-if (( ${+part} )); then
-  name="AOC_${day}_${part}"
-else
-  name="AOC_${day}"
-fi
-
-touch AdventOfCode2024/AdventOfCode2024.csproj  # Force a rebuild with the new `StartupObject`.
-dotnet build -p:StartupObject=${name} >&2
+dotnet build >&2
 echo >&2
 
-time dotnet run --project=AdventOfCode2024
+time dotnet run --project=AdventOfCode2024 $@
 echo >&2

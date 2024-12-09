@@ -1,6 +1,6 @@
 class AOC_07_1
 {
-    public static void Main(string[] args)
+    public static void Run(string[] args)
     {
         var problems = Input.Lines().Select(line =>
         {

@@ -1,6 +1,6 @@
 class AOC_02_2
 {
-    public static void Main(string[] args)
+    public static void Run(string[] args)
     {
         var inputs = Input.Lines().Select(line => line.Split().Select(int.Parse).ToList());
 

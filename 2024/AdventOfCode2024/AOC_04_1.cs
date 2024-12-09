@@ -2,7 +2,7 @@ class AOC_04_1
 {
     static readonly char[] word = new char[] { 'X', 'M', 'A', 'S' };
 
-    public static void Main(string[] args)
+    public static void Run(string[] args)
     {
         var grid = Input.Grid();
 

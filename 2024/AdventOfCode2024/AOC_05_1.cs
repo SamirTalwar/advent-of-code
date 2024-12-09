@@ -1,6 +1,6 @@
 class AOC_05_1
 {
-    public static void Main(string[] args)
+    public static void Run(string[] args)
     {
         var ordering = new MultiDictionary<int, int>();
         var updates = new List<List<int>>();
