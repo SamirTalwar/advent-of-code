@@ -22,6 +22,9 @@ public class MultiDictionary<K, V> : IEnumerable<KeyValuePair<K, V>> where K : n
         set => Add(key, value);
     }
 
+    public IEnumerable<K> Keys =>
+        inner.Keys;
+
     public IEnumerable<V> GetValues(K key) =>
         GetValueSet(key);
 
