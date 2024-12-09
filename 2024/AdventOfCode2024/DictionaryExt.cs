@@ -1,4 +1,4 @@
-static class DictionaryExt
+public static class DictionaryExt
 {
     public static V? GetValue<K, V>(
         this IDictionary<K, V> dict,
