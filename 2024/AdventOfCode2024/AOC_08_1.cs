@@ -18,7 +18,7 @@ class AOC_08_1
                 .SelectMany(positions => positions.SelectMany(a => positions.Select(b => (a, b))))
                 .Where(pair => pair.Item1 != pair.Item2)
                 .Select(pair => pair.Item2 + (pair.Item2 - pair.Item1))
-                .Where(antinode => antinode.Y >= 0 && antinode.Y < grid.Rows && antinode.X >= 0 && antinode.X < grid.Columns)
+                .Where(grid.Contains)
         );
 
         var result = antinodes.Count;

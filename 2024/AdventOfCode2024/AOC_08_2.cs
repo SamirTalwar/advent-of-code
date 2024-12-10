@@ -12,8 +12,6 @@ class AOC_08_2
             }
         }
 
-        var inBounds = (Point2D point) => point.Y >= 0 && point.Y < grid.Rows && point.X >= 0 && point.X < grid.Columns;
-
         var antinodes = new SortedSet<Point2D>(
             antennas.Keys
                 .Select(frequency => antennas.GetValues(frequency))
@@ -22,8 +20,8 @@ class AOC_08_2
                 .SelectMany(pair =>
                 {
                     var (a, b) = pair;
-                    return a.Expand(x => x + (a - b)).TakeWhile(inBounds)
-                        .Concat(b.Expand(x => x + (b - a)).TakeWhile(inBounds));
+                    return a.Expand(x => x + (a - b)).TakeWhile(grid.Contains)
+                        .Concat(b.Expand(x => x + (b - a)).TakeWhile(grid.Contains));
                 })
         );
 

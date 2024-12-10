@@ -16,6 +16,8 @@ public class Grid2D<T> : IEnumerable<KeyValuePair<Point2D, T>>
 
     public T this[Point2D point] => items[point.Y, point.X];
 
+    public bool Contains(Point2D point) => point.Y >= 0 && point.Y < Rows && point.X >= 0 && point.X < Columns;
+
     public IEnumerable<Point2D> Points
     {
         get
