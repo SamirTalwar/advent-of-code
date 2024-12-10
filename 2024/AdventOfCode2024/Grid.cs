@@ -18,6 +18,13 @@ public class Grid2D<T> : IEnumerable<KeyValuePair<Point2D, T>>
 
     public bool Contains(Point2D point) => point.Y >= 0 && point.Y < Rows && point.X >= 0 && point.X < Columns;
 
+    public SortedSet<Point2D> NeighborsOf(Point2D position) =>
+        new SortedSet<Point2D>(
+            Point2D.Neighbors
+                .Select(direction => position + direction)
+                .Where(Contains)
+        );
+
     public IEnumerable<Point2D> Points
     {
         get
@@ -36,4 +43,14 @@ public class Grid2D<T> : IEnumerable<KeyValuePair<Point2D, T>>
 
     IEnumerator<KeyValuePair<Point2D, T>> IEnumerable<KeyValuePair<Point2D, T>>.GetEnumerator() =>
         Points.Select(point => KeyValuePair.Create(point, items[point.Y, point.X])).GetEnumerator();
+
+    public Grid2D<U> Convert<U>(Converter<T, U> convert)
+    {
+        var convertedItems = new U[Rows, Columns];
+        foreach (var (y, x) in Points)
+        {
+            convertedItems[y, x] = convert(items[y, x]);
+        }
+        return new Grid2D<U>(convertedItems);
+    }
 }
