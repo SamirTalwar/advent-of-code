@@ -1,4 +1,6 @@
-class AOC_05_2
+namespace AdventOfCode2024;
+
+class Day05Part1
 {
     public static void Run(string[] args)
     {
@@ -23,17 +25,16 @@ class AOC_05_2
             updates.Add(update);
         }
 
-        var reorderedUpdateMiddleNumbers = new List<int>();
+        var validUpdateMiddleNumbers = new List<int>();
         foreach (var update in updates)
         {
-            if (!ValidUpdate(update, ordering))
+            if (ValidUpdate(update, ordering))
             {
-                var reordered = ReorderUpdate(update, ordering);
-                reorderedUpdateMiddleNumbers.Add(reordered[reordered.Count / 2]);
+                validUpdateMiddleNumbers.Add(update[update.Count / 2]);
             }
         }
 
-        var result = reorderedUpdateMiddleNumbers.Sum();
+        var result = validUpdateMiddleNumbers.Sum();
 
         Console.WriteLine("{0}", result);
     }
@@ -50,22 +51,5 @@ class AOC_05_2
             seen.Add(value);
         }
         return true;
-    }
-
-    static IList<int> ReorderUpdate(IList<int> update, MultiDictionary<int, int> ordering)
-    {
-        var values = new HashSet<int>(update);
-        var subOrdering = ordering.Filtered(pair => values.Contains(pair.Key) || values.Contains(pair.Value));
-        var reordered = new List<int>();
-        foreach (var before in values)
-        {
-            var index =
-                subOrdering.GetValues(before)
-                    .Select(a => reordered.IndexOf(a))
-                    .Select<int, int?>(i => i >= 0 ? i : null)
-                    .Min();
-            reordered.Insert(index ?? reordered.Count, before);
-        }
-        return reordered;
     }
 }

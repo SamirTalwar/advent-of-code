@@ -1,3 +1,5 @@
+namespace AdventOfCode2024;
+
 public record struct Point2D(int Y, int X) : IComparable
 {
     public static Point2D Up => new Point2D { Y = -1, X = 0 };

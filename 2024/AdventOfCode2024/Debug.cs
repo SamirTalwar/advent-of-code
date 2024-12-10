@@ -1,3 +1,5 @@
+namespace AdventOfCode2024;
+
 class Debug
 {
     public static void Value(Object? value)

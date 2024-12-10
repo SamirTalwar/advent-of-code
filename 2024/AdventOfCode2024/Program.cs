@@ -6,12 +6,12 @@ if (args.Length == 0)
 }
 var day = int.Parse(args[0]);
 var part = int.Parse(args[1]);
-var name = string.Format("AOC_{0:D2}_{1}", day, part);
+var className = string.Format("AdventOfCode2024.Day{0:D2}Part{1}", day, part);
 
-var entrypointType = assembly.GetType(name);
+var entrypointType = assembly.GetType(className);
 if (entrypointType is null)
 {
-    throw new NullReferenceException(string.Format("No such type: {0}", name));
+    throw new NullReferenceException(string.Format("No such type: {0}", className));
 }
 var entrypointMethod = entrypointType.GetMethod("Run");
 if (entrypointMethod is null)

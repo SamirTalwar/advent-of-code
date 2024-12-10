@@ -1,4 +1,6 @@
-class AOC_08_2
+namespace AdventOfCode2024;
+
+class Day08Part1
 {
     public static void Run(string[] args)
     {
@@ -17,12 +19,8 @@ class AOC_08_2
                 .Select(frequency => antennas.GetValues(frequency))
                 .SelectMany(positions => positions.SelectMany(a => positions.Select(b => (a, b))))
                 .Where(pair => pair.Item1 != pair.Item2)
-                .SelectMany(pair =>
-                {
-                    var (a, b) = pair;
-                    return a.Expand(x => x + (a - b)).TakeWhile(grid.Contains)
-                        .Concat(b.Expand(x => x + (b - a)).TakeWhile(grid.Contains));
-                })
+                .Select(pair => pair.Item2 + (pair.Item2 - pair.Item1))
+                .Where(grid.Contains)
         );
 
         var result = antinodes.Count;

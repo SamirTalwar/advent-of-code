@@ -1,4 +1,6 @@
-class AOC_04_2
+namespace AdventOfCode2024;
+
+class Day04Part2
 {
     static readonly char[] wordForwards = new char[] { 'M', 'A', 'S' };
     static readonly char[] wordBackwards = new char[] { 'S', 'A', 'M' };

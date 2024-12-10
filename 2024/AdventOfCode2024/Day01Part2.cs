@@ -1,6 +1,8 @@
 using System.Text.RegularExpressions;
 
-class AOC_01_1
+namespace AdventOfCode2024;
+
+class Day01Part2
 {
     public static void Run(string[] args)
     {
@@ -14,15 +16,10 @@ class AOC_01_1
                 })
                 .ToList();
 
-        var left = inputs.Select(input => input.Item1).ToList();
-        var right = inputs.Select(input => input.Item2).ToList();
-        left.Sort();
-        right.Sort();
+        var left = inputs.Select(input => input.Item1);
+        var right = inputs.CountBy(input => input.Item2).ToDictionary();
 
-        var result =
-            left.Zip(right)
-                .Select(pair => Math.Abs(pair.Item1 - pair.Item2))
-                .Sum();
+        var result = left.Select(n => n * right.GetValue(n, 0)).Sum();
 
         Console.WriteLine("{0}", result);
     }

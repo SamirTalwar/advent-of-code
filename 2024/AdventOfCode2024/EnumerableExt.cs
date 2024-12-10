@@ -1,5 +1,7 @@
 using System.Collections;
 
+namespace AdventOfCode2024;
+
 public static class EnumerableExt
 {
     public static IEnumerable<T> Expand<T>(this T value, Func<T, T> next) =>

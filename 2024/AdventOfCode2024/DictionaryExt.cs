@@ -1,3 +1,5 @@
+namespace AdventOfCode2024;
+
 public static class DictionaryExt
 {
     public static V? GetValue<K, V>(

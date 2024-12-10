@@ -1,5 +1,7 @@
 using System.Collections;
 
+namespace AdventOfCode2024;
+
 public class Grid2D<T> : IEnumerable<KeyValuePair<Point2D, T>>
 {
     private readonly T[,] items;

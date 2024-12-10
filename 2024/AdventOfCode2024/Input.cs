@@ -1,3 +1,5 @@
+namespace AdventOfCode2024;
+
 class Input
 {
     public static string String()

@@ -1,6 +1,8 @@
 using System.Numerics;
 
-class AOC_07_2
+namespace AdventOfCode2024;
+
+class Day07Part2
 {
     public static void Run(string[] args)
     {

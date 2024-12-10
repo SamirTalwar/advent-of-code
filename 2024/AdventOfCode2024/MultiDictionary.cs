@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Concurrent;
 
+namespace AdventOfCode2024;
+
 public class MultiDictionary<K, V> : IEnumerable<KeyValuePair<K, V>> where K : notnull
 {
     static readonly SortedSet<V> emptySet = new SortedSet<V>();

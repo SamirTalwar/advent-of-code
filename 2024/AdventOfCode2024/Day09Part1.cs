@@ -1,4 +1,6 @@
-class AOC_09_1
+namespace AdventOfCode2024;
+
+class Day09Part1
 {
     public static void Run(string[] args)
     {

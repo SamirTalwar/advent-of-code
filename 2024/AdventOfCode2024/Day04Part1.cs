@@ -1,4 +1,6 @@
-class AOC_04_1
+namespace AdventOfCode2024;
+
+class Day04Part1
 {
     static readonly char[] word = new char[] { 'X', 'M', 'A', 'S' };
 

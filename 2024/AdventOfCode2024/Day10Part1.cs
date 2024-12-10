@@ -1,4 +1,6 @@
-class AOC_10_1
+namespace AdventOfCode2024;
+
+class Day10Part1
 {
     public static void Run(string[] args)
     {
@@ -15,7 +17,7 @@ class AOC_10_1
 
     private static IEnumerable<IEnumerable<Point2D>> HikingTrailsFrom(Point2D position, int value, Grid2D<int> grid) =>
         value == 9
-            ? new List<List<Point2D>> { new List<Point2D> { position } }
+            ? new List<List<Point2D>> { new() { position } }
             : grid.NeighborsOf(position)
                 .Where(neighbor => grid[neighbor] == value + 1)
                 .SelectMany(neighbor => HikingTrailsFrom(neighbor, value + 1, grid).Select(trail => trail.Prepend(position)));

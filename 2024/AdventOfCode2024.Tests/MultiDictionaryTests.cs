@@ -1,5 +1,7 @@
 ﻿using Xunit;
 
+namespace AdventOfCode2024.Tests;
+
 public class MultiDictionaryTests
 {
     [Fact]
