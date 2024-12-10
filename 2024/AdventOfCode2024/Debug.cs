@@ -2,14 +2,14 @@ class Debug
 {
     public static void Value(Object? value)
     {
-        Console.WriteLine(value);
+        Console.Error.WriteLine(value);
     }
 
     public static void Lines(IEnumerable<string> lines)
     {
         foreach (var line in lines)
         {
-            Console.WriteLine(line);
+            Console.Error.WriteLine(line);
         }
     }
 
@@ -17,46 +17,46 @@ class Debug
     {
         if (list == null)
         {
-            Console.WriteLine("null");
+            Console.Error.WriteLine("null");
             return;
         }
-        Console.Write("[");
+        Console.Error.Write("[");
         var enumerator = list.GetEnumerator();
         if (enumerator.MoveNext())
         {
-            Console.Write(enumerator.Current);
+            Console.Error.Write(enumerator.Current);
             while (enumerator.MoveNext())
             {
-                Console.Write(", ");
-                Console.Write(enumerator.Current);
+                Console.Error.Write(", ");
+                Console.Error.Write(enumerator.Current);
             }
         }
-        Console.WriteLine("]");
+        Console.Error.WriteLine("]");
     }
 
     public static void Dictionary<K, V>(IDictionary<K, V>? dictionary)
     {
         if (dictionary == null)
         {
-            Console.WriteLine("null");
+            Console.Error.WriteLine("null");
             return;
         }
-        Console.Write("[");
+        Console.Error.Write("[");
         var enumerator = dictionary.GetEnumerator();
         if (enumerator.MoveNext())
         {
-            Console.Write(enumerator.Current.Key);
-            Console.Write(" -> ");
-            Console.Write(enumerator.Current.Value);
+            Console.Error.Write(enumerator.Current.Key);
+            Console.Error.Write(" -> ");
+            Console.Error.Write(enumerator.Current.Value);
             while (enumerator.MoveNext())
             {
-                Console.Write(", ");
-                Console.Write(enumerator.Current.Key);
-                Console.Write(" -> ");
-                Console.Write(enumerator.Current.Value);
+                Console.Error.Write(", ");
+                Console.Error.Write(enumerator.Current.Key);
+                Console.Error.Write(" -> ");
+                Console.Error.Write(enumerator.Current.Value);
             }
         }
-        Console.WriteLine("]");
+        Console.Error.WriteLine("]");
     }
 
     public static void Grid(char[,] grid)
@@ -67,9 +67,9 @@ class Debug
         {
             for (var x = 0; x < columns; x++)
             {
-                Console.Write("{0}", grid[y, x]);
+                Console.Error.Write("{0}", grid[y, x]);
             }
-            Console.WriteLine();
+            Console.Error.WriteLine();
         }
     }
 }
