@@ -25,31 +25,28 @@ class AOC_06_1
 
     class Grid
     {
-        Guard guard = new Guard { Direction = Direction.Up };
-        int rows;
-        int columns;
-        MultiDictionary<int, int> obstaclesByY = new();
-        MultiDictionary<int, int> obstaclesByX = new();
+        private readonly int rows;
+        private readonly int columns;
+        private Guard guard = new Guard { Direction = Direction.Up };
+        private readonly MultiDictionary<int, int> obstaclesByY = new();
+        private readonly MultiDictionary<int, int> obstaclesByX = new();
 
-        public Grid(char[,] grid)
+        public Grid(Grid2D<char> grid)
         {
-            rows = grid.GetLength(0);
-            columns = grid.GetLength(1);
+            this.rows = grid.Rows;
+            this.columns = grid.Columns;
 
             var obstacles = new HashSet<Point2D>();
-            foreach (var row in Enumerable.Range(0, rows))
+            foreach (var (point, value) in grid)
             {
-                foreach (var column in Enumerable.Range(0, columns))
+                switch (value)
                 {
-                    switch (grid[row, column])
-                    {
-                        case '^':
-                            guard.Position = new Point2D { Y = row, X = column };
-                            break;
-                        case '#':
-                            obstacles.Add(new Point2D { Y = row, X = column });
-                            break;
-                    }
+                    case '^':
+                        guard.Position = point;
+                        break;
+                    case '#':
+                        obstacles.Add(point);
+                        break;
                 }
             }
 

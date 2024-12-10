@@ -19,31 +19,16 @@ class AOC_04_1
         Console.WriteLine("{0}", result);
     }
 
-    static int Search(char[,] grid, Point2D move)
-    {
-        var count = 0;
-        var rows = grid.GetLength(0);
-        var columns = grid.GetLength(1);
-        for (var y = 0; y < rows; y++)
-        {
-            for (var x = 0; x < columns; x++)
-            {
-                if (CheckWord(grid, new Point2D { Y = y, X = x }, move))
-                {
-                    count += 1;
-                }
-            }
-        }
-        return count;
-    }
+    static int Search(Grid2D<char> grid, Point2D move) =>
+        grid.Points.Where(point => CheckWord(grid, point, move)).Count();
 
-    static bool CheckWord(char[,] grid, Point2D position, Point2D move)
+    static bool CheckWord(Grid2D<char> grid, Point2D position, Point2D move)
     {
         try
         {
             foreach (var c in word)
             {
-                if (position.In(grid) == c)
+                if (grid[position] == c)
                 {
                     position += move;
                 }

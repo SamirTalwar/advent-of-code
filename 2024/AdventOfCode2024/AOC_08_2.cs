@@ -3,22 +3,16 @@ class AOC_08_2
     public static void Run(string[] args)
     {
         var grid = Input.Grid();
-        var rows = grid.GetLength(0);
-        var columns = grid.GetLength(1);
         var antennas = new MultiDictionary<char, Point2D>();
-        foreach (var y in Enumerable.Range(0, rows))
+        foreach (var (point, frequency) in grid)
         {
-            foreach (var x in Enumerable.Range(0, columns))
+            if (frequency != '.')
             {
-                var frequency = grid[y, x];
-                if (frequency != '.')
-                {
-                    antennas.Add(frequency, new Point2D { Y = y, X = x });
-                }
+                antennas.Add(frequency, point);
             }
         }
 
-        var inBounds = (Point2D point) => point.Y >= 0 && point.Y < rows && point.X >= 0 && point.X < columns;
+        var inBounds = (Point2D point) => point.Y >= 0 && point.Y < grid.Rows && point.X >= 0 && point.X < grid.Columns;
 
         var antinodes = new SortedSet<Point2D>(
             antennas.Keys

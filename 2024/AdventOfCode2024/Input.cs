@@ -17,7 +17,7 @@ class Input
         }
     }
 
-    public static char[,] Grid()
+    public static Grid2D<char> Grid()
     {
         var rows = Lines().ToList();
 
@@ -32,6 +32,6 @@ class Input
         {
             Buffer.BlockCopy(row.ToCharArray(), 0, grid, columnCount * i * sizeof(char), columnCount * sizeof(char));
         }
-        return grid;
+        return new Grid2D<char>(grid);
     }
 }

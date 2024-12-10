@@ -1,4 +1,4 @@
-struct Point2D : IComparable
+public struct Point2D : IComparable
 {
     public int Y { get; init; }
     public int X { get; init; }
@@ -11,9 +11,6 @@ struct Point2D : IComparable
 
     public static Point2D operator -(Point2D a, Point2D b) =>
         new Point2D { Y = a.Y - b.Y, X = a.X - b.X };
-
-    public T In<T>(T[,] grid) =>
-        grid[Y, X];
 
     public override bool Equals(object? obj) => obj is Point2D other && this.Equals(other);
 

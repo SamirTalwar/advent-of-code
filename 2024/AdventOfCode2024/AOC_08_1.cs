@@ -3,18 +3,12 @@ class AOC_08_1
     public static void Run(string[] args)
     {
         var grid = Input.Grid();
-        var rows = grid.GetLength(0);
-        var columns = grid.GetLength(1);
         var antennas = new MultiDictionary<char, Point2D>();
-        foreach (var y in Enumerable.Range(0, rows))
+        foreach (var (point, frequency) in grid)
         {
-            foreach (var x in Enumerable.Range(0, columns))
+            if (frequency != '.')
             {
-                var frequency = grid[y, x];
-                if (frequency != '.')
-                {
-                    antennas.Add(frequency, new Point2D { Y = y, X = x });
-                }
+                antennas.Add(frequency, point);
             }
         }
 
@@ -24,7 +18,7 @@ class AOC_08_1
                 .SelectMany(positions => positions.SelectMany(a => positions.Select(b => (a, b))))
                 .Where(pair => pair.Item1 != pair.Item2)
                 .Select(pair => pair.Item2 + (pair.Item2 - pair.Item1))
-                .Where(antinode => antinode.Y >= 0 && antinode.Y < rows && antinode.X >= 0 && antinode.X < columns)
+                .Where(antinode => antinode.Y >= 0 && antinode.Y < grid.Rows && antinode.X >= 0 && antinode.X < grid.Columns)
         );
 
         var result = antinodes.Count;
