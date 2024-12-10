@@ -22,4 +22,8 @@ if (entrypointMethod is null)
 var entrypointArgs = new string[args.Length - 2];
 Array.Copy(args, 2, entrypointArgs, 0, entrypointArgs.Length);
 
+var watch = System.Diagnostics.Stopwatch.StartNew();
 entrypointMethod.Invoke(null, new object[] { entrypointArgs });
+watch.Stop();
+
+Console.Error.WriteLine("Completed in {0}ms.", watch.ElapsedMilliseconds);
