@@ -2,24 +2,24 @@ namespace AdventOfCode2024;
 
 class Day04Part2
 {
-    static readonly char[] wordForwards = new char[] { 'M', 'A', 'S' };
-    static readonly char[] wordBackwards = new char[] { 'S', 'A', 'M' };
+    static readonly char[] WordForwards = ['M', 'A', 'S'];
+    static readonly char[] WordBackwards = ['S', 'A', 'M'];
 
     public static void Run(string[] args)
     {
         var grid = Input.Grid();
 
         var result = 0;
-        result += Search(grid, wordForwards, wordForwards);
-        result += Search(grid, wordBackwards, wordForwards);
-        result += Search(grid, wordForwards, wordBackwards);
-        result += Search(grid, wordBackwards, wordBackwards);
+        result += Search(grid, WordForwards, WordForwards);
+        result += Search(grid, WordBackwards, WordForwards);
+        result += Search(grid, WordForwards, WordBackwards);
+        result += Search(grid, WordBackwards, WordBackwards);
 
         Console.WriteLine("{0}", result);
     }
 
     static int Search(Grid2D<char> grid, char[] wordOne, char[] wordTwo) =>
-        grid.Points.Where(point => CheckCross(grid, wordOne, wordTwo, point)).Count();
+        grid.Points.Count(point => CheckCross(grid, wordOne, wordTwo, point));
 
     static bool CheckCross(Grid2D<char> grid, char[] wordOne, char[] wordTwo, Point2D position)
     {

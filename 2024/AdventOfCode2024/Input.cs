@@ -1,19 +1,16 @@
 namespace AdventOfCode2024;
 
-class Input
+static class Input
 {
     public static string String()
     {
-        using (var reader = new StreamReader(Console.OpenStandardInput(), Console.InputEncoding))
-        {
-            return reader.ReadToEnd();
-        }
+        using var reader = new StreamReader(Console.OpenStandardInput(), Console.InputEncoding);
+        return reader.ReadToEnd();
     }
 
     public static IEnumerable<string> Lines()
     {
-        string? line;
-        while ((line = Console.ReadLine()) != null)
+        while (Console.ReadLine() is { } line)
         {
             yield return line;
         }

@@ -16,7 +16,7 @@ class Day08Part1
 
         var antinodes = new SortedSet<Point2D>(
             antennas.Keys
-                .Select(frequency => antennas.GetValues(frequency))
+                .Select(frequency => antennas.GetValueSet(frequency))
                 .SelectMany(positions => positions.SelectMany(a => positions.Select(b => (a, b))))
                 .Where(pair => pair.Item1 != pair.Item2)
                 .Select(pair => pair.Item2 + (pair.Item2 - pair.Item1))

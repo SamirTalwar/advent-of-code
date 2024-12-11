@@ -76,7 +76,7 @@ class Day09Part2
         {
             if (grouping.Count() > 1)
             {
-                throw new Exception(string.Format("Block {0} is fragmented.", grouping.Key));
+                throw new Exception($"Block {grouping.Key} is fragmented.");
             }
         }
         var result = blocks.SelectMany(block => Enumerable.Range(block.Offset, block.Size).Select(i => i * block.Id)).Sum();
@@ -84,20 +84,20 @@ class Day09Part2
         Console.WriteLine("{0}", result);
     }
 
-    record class BlockInfo
+    record BlockInfo
     {
         public long Id { get; init; }
         public int Offset { get; set; }
-        public int Size { get; set; }
+        public int Size { get; init; }
 
-        public override string ToString() => string.Format("{{id {0}, offset {1}, size {2}}}", Id, Offset, Size);
+        public override string ToString() => $"{{id {Id}, offset {Offset}, size {Size}}}";
     }
 
-    record class FreeSpace
+    record FreeSpace
     {
         public int Offset { get; set; }
         public int Size { get; set; }
 
-        public override string ToString() => string.Format("{{offset {0}, size {1}}}", Offset, Size);
+        public override string ToString() => $"{{offset {Offset}, size {Size}}}";
     }
 }

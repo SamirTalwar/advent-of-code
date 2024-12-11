@@ -2,7 +2,7 @@ namespace AdventOfCode2024;
 
 class Day04Part1
 {
-    static readonly char[] word = new char[] { 'X', 'M', 'A', 'S' };
+    static readonly char[] Word = ['X', 'M', 'A', 'S'];
 
     public static void Run(string[] args)
     {
@@ -22,13 +22,13 @@ class Day04Part1
     }
 
     static int Search(Grid2D<char> grid, Point2D move) =>
-        grid.Points.Where(point => CheckWord(grid, point, move)).Count();
+        grid.Points.Count(point => CheckWord(grid, point, move));
 
     static bool CheckWord(Grid2D<char> grid, Point2D position, Point2D move)
     {
         try
         {
-            foreach (var c in word)
+            foreach (var c in Word)
             {
                 if (grid[position] == c)
                 {

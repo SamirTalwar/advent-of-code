@@ -17,22 +17,14 @@ class Day03Part1
         Console.WriteLine("{0}", result);
     }
 
-    interface Instruction
+    // ReSharper disable once InconsistentNaming
+    private interface Instruction
     {
         public int Run();
     }
 
-    readonly struct Multiply : Instruction
+    private readonly struct Multiply(int a, int b) : Instruction
     {
-        private int A { get; }
-        private int B { get; }
-
-        public Multiply(int a, int b)
-        {
-            A = a;
-            B = b;
-        }
-
-        public int Run() => A * B;
+        public int Run() => a * b;
     }
 }

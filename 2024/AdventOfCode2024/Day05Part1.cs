@@ -8,6 +8,7 @@ class Day05Part1
         var updates = new List<List<int>>();
 
         var lines = Input.Lines();
+        // ReSharper disable once PossibleMultipleEnumeration
         foreach (var line in lines)
         {
             if (string.IsNullOrEmpty(line))
@@ -19,6 +20,7 @@ class Day05Part1
             var after = int.Parse(split[1]);
             ordering.Add(before, after);
         }
+        // ReSharper disable once PossibleMultipleEnumeration
         foreach (var line in lines)
         {
             var update = line.Split(",").Select(int.Parse).ToList();

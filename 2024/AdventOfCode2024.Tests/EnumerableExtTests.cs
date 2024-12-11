@@ -11,7 +11,7 @@ public class EnumerableExtTests
 
         var output = numbers.Take(10).ToList();
 
-        Assert.Equal(output, new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
+        Assert.Equal(output, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     }
 }
 

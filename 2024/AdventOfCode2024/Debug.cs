@@ -23,7 +23,7 @@ class Debug
             return;
         }
         Console.Error.Write("[");
-        var enumerator = list.GetEnumerator();
+        using var enumerator = list.GetEnumerator();
         if (enumerator.MoveNext())
         {
             Console.Error.Write(enumerator.Current);
@@ -36,7 +36,7 @@ class Debug
         Console.Error.WriteLine("]");
     }
 
-    public static void Dictionary<K, V>(IDictionary<K, V>? dictionary)
+    public static void Dictionary<TKey, TValue>(IDictionary<TKey, TValue>? dictionary)
     {
         if (dictionary == null)
         {
@@ -44,7 +44,7 @@ class Debug
             return;
         }
         Console.Error.Write("[");
-        var enumerator = dictionary.GetEnumerator();
+        using var enumerator = dictionary.GetEnumerator();
         if (enumerator.MoveNext())
         {
             Console.Error.Write(enumerator.Current.Key);

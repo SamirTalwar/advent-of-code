@@ -3,15 +3,15 @@ using System.Collections.Concurrent;
 
 namespace AdventOfCode2024;
 
-public class MultiDictionary<K, V> : IEnumerable<KeyValuePair<K, V>> where K : notnull
+public class MultiDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>> where TKey : notnull
 {
-    static readonly SortedSet<V> emptySet = new SortedSet<V>();
+    private static readonly SortedSet<TValue> EmptySet = new();
 
-    ConcurrentDictionary<K, SortedSet<V>> inner = new();
+    private ConcurrentDictionary<TKey, SortedSet<TValue>> _inner = new();
 
     public MultiDictionary() { }
 
-    public MultiDictionary(IEnumerable<KeyValuePair<K, V>> pairs)
+    public MultiDictionary(IEnumerable<KeyValuePair<TKey, TValue>> pairs)
     {
         foreach (var pair in pairs)
         {
@@ -19,40 +19,40 @@ public class MultiDictionary<K, V> : IEnumerable<KeyValuePair<K, V>> where K : n
         }
     }
 
-    public V this[K key]
+    public TValue this[TKey key]
     {
         set => Add(key, value);
     }
 
-    public IEnumerable<K> Keys =>
-        inner.Keys;
+    public IEnumerable<TKey> Keys =>
+        _inner.Keys;
 
-    public IEnumerable<V> GetValues(K key) =>
+    public IEnumerable<TValue> GetValues(TKey key) =>
         GetValueSet(key);
 
-    public SortedSet<V> GetValueSet(K key) =>
-        inner.GetValue(key) ?? emptySet;
+    public SortedSet<TValue> GetValueSet(TKey key) =>
+        _inner.GetValue(key) ?? EmptySet;
 
     IEnumerator IEnumerable.GetEnumerator() =>
-        ((IEnumerable<KeyValuePair<K, V>>)this).GetEnumerator();
+        ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
 
-    IEnumerator<KeyValuePair<K, V>> IEnumerable<KeyValuePair<K, V>>.GetEnumerator() =>
-            inner
+    IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator() =>
+            _inner
                 .SelectMany(pair => pair.Value.Select(value => KeyValuePair.Create(pair.Key, value)))
                 .GetEnumerator();
 
-    public void Add(KeyValuePair<K, V> pair) =>
+    public void Add(KeyValuePair<TKey, TValue> pair) =>
         Add(pair.Key, pair.Value);
 
-    public void Add(K key, V value)
+    public void Add(TKey key, TValue value)
     {
-        inner.AddOrUpdate(
+        _inner.AddOrUpdate(
             key,
-            _ => new SortedSet<V> { value },
+            _ => [value],
             (_, existing) => { existing.Add(value); return existing; }
         );
     }
 
-    public MultiDictionary<K, V> Filtered(Func<KeyValuePair<K, V>, bool> predicate) =>
-        new MultiDictionary<K, V>(this.Where(predicate));
+    public MultiDictionary<TKey, TValue> Filtered(Func<KeyValuePair<TKey, TValue>, bool> predicate) =>
+        new(this.Where(predicate));
 }

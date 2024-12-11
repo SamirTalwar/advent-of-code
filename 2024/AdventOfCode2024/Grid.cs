@@ -2,19 +2,10 @@ using System.Collections;
 
 namespace AdventOfCode2024;
 
-public class Grid2D<T> : IEnumerable<KeyValuePair<Point2D, T>>
+public class Grid2D<T>(T[,] items) : IEnumerable<KeyValuePair<Point2D, T>>
 {
-    private readonly T[,] items;
-
-    public int Rows { get; private init; }
-    public int Columns { get; private init; }
-
-    public Grid2D(T[,] items)
-    {
-        this.items = items;
-        this.Rows = items.GetLength(0);
-        this.Columns = items.GetLength(1);
-    }
+    public int Rows { get; } = items.GetLength(0);
+    public int Columns { get; } = items.GetLength(1);
 
     public T this[Point2D point] => items[point.Y, point.X];
 
@@ -46,13 +37,13 @@ public class Grid2D<T> : IEnumerable<KeyValuePair<Point2D, T>>
     IEnumerator<KeyValuePair<Point2D, T>> IEnumerable<KeyValuePair<Point2D, T>>.GetEnumerator() =>
         Points.Select(point => KeyValuePair.Create(point, items[point.Y, point.X])).GetEnumerator();
 
-    public Grid2D<U> Convert<U>(Converter<T, U> convert)
+    public Grid2D<TNew> Convert<TNew>(Converter<T, TNew> convert)
     {
-        var convertedItems = new U[Rows, Columns];
+        var convertedItems = new TNew[Rows, Columns];
         foreach (var (y, x) in Points)
         {
             convertedItems[y, x] = convert(items[y, x]);
         }
-        return new Grid2D<U>(convertedItems);
+        return new Grid2D<TNew>(convertedItems);
     }
 }

@@ -11,10 +11,10 @@ class Day06Part2
         Console.WriteLine("{0}", result);
     }
 
-    struct Guard
+    private record struct Guard
     {
         public Point2D Position { get; set; }
-        public Direction Direction { get; set; }
+        public Direction Direction { get; init; }
     }
 
     enum Direction
@@ -27,41 +27,39 @@ class Day06Part2
 
     class Obstacles
     {
-        static readonly SortedSet<int> emptySet = new();
-
-        HashSet<Point2D> positions;
-        MultiDictionary<int, int> obstaclesByY = new();
-        MultiDictionary<int, int> obstaclesByX = new();
+        private readonly HashSet<Point2D> _positions;
+        private readonly MultiDictionary<int, int> _obstaclesByY = new();
+        private readonly MultiDictionary<int, int> _obstaclesByX = new();
 
         public Obstacles(ISet<Point2D> positions)
         {
-            this.positions = new(positions);
+            _positions = [..positions];
 
             foreach (var position in positions)
             {
-                obstaclesByY.Add(position.Y, position.X);
-                obstaclesByX.Add(position.X, position.Y);
+                _obstaclesByY.Add(position.Y, position.X);
+                _obstaclesByX.Add(position.X, position.Y);
             }
         }
 
-        public SortedSet<int> ByY(int y) => obstaclesByY.GetValueSet(y);
-        public SortedSet<int> ByX(int x) => obstaclesByX.GetValueSet(x);
+        public SortedSet<int> ByY(int y) => _obstaclesByY.GetValueSet(y);
+        public SortedSet<int> ByX(int x) => _obstaclesByX.GetValueSet(x);
 
         public Obstacles WithExtra(Point2D extraPosition) =>
-            new Obstacles(positions.Union(new HashSet<Point2D> { extraPosition }).ToHashSet());
+            new(_positions.Union(new HashSet<Point2D> { extraPosition }).ToHashSet());
     }
 
     class Grid
     {
-        private readonly int rows;
-        private readonly int columns;
-        private readonly Guard guard = new Guard { Direction = Direction.Up };
-        private readonly Obstacles obstacles;
+        private readonly int _rows;
+        private readonly int _columns;
+        private readonly Guard _guard = new() { Direction = Direction.Up };
+        private readonly Obstacles _obstacles;
 
         public Grid(Grid2D<char> grid)
         {
-            this.rows = grid.Rows;
-            this.columns = grid.Columns;
+            _rows = grid.Rows;
+            _columns = grid.Columns;
 
             var obstacles = new HashSet<Point2D>();
             foreach (var (point, value) in grid)
@@ -69,14 +67,14 @@ class Day06Part2
                 switch (value)
                 {
                     case '^':
-                        guard.Position = point;
+                        _guard.Position = point;
                         break;
                     case '#':
                         obstacles.Add(point);
                         break;
                 }
             }
-            this.obstacles = new Obstacles(obstacles);
+            _obstacles = new Obstacles(obstacles);
         }
 
         public int Run()
@@ -84,32 +82,30 @@ class Day06Part2
             var potentialObstacles = new HashSet<Point2D>();
             {
                 var running = true;
-                var currentGuard = guard;
+                var currentGuard = _guard;
                 while (running)
                 {
-                    IEnumerable<Point2D> visited;
-                    (running, currentGuard, visited) = Hop(currentGuard, obstacles);
+                    (running, currentGuard, var visited) = Hop(currentGuard, _obstacles);
                     potentialObstacles.UnionWith(visited);
                 }
             }
-            potentialObstacles.Remove(guard.Position);
+            potentialObstacles.Remove(_guard.Position);
 
             return
                 potentialObstacles
                     .Select(obstacle =>
                     {
-                        var os = obstacles.WithExtra(obstacle);
+                        var os = _obstacles.WithExtra(obstacle);
                         var running = true;
-                        var guards = new HashSet<Guard> { guard };
-                        var currentGuard = guard;
+                        var guards = new HashSet<Guard> { _guard };
+                        var currentGuard = _guard;
                         while (running)
                         {
                             (running, currentGuard, _) = Hop(currentGuard, os);
-                            if (guards.Contains(currentGuard))
+                            if (!guards.Add(currentGuard))
                             {
                                 return true;
                             }
-                            guards.Add(currentGuard);
                         }
                         return false;
                     })
@@ -130,20 +126,20 @@ class Day06Part2
                             Position = new Point2D { Y = newPositionY, X = guard.Position.X },
                             Direction = Direction.Right,
                         };
-                        var visited = Enumerable.Range(newPositionY, guard.Position.Y - newPositionY + 1).Select(y => new Point2D { Y = y, X = guard.Position.X });
+                        var visited = Enumerable.Range(newPositionY, guard.Position.Y - newPositionY + 1).Select(y => guard.Position with { Y = y });
                         return (running, newGuard, visited);
                     }
                 case Direction.Down:
                     {
-                        var view = obstacles.ByX(guard.Position.X).GetViewBetween(guard.Position.Y, rows);
+                        var view = obstacles.ByX(guard.Position.X).GetViewBetween(guard.Position.Y, _rows);
                         var running = view.Count > 0;
-                        var newPositionY = running ? view.Min - 1 : rows - 1;
+                        var newPositionY = running ? view.Min - 1 : _rows - 1;
                         var newGuard = new Guard
                         {
                             Position = new Point2D { Y = newPositionY, X = guard.Position.X },
                             Direction = Direction.Left,
                         };
-                        var visited = Enumerable.Range(guard.Position.Y, newPositionY - guard.Position.Y + 1).Select(y => new Point2D { Y = y, X = guard.Position.X });
+                        var visited = Enumerable.Range(guard.Position.Y, newPositionY - guard.Position.Y + 1).Select(y => guard.Position with { Y = y });
                         return (running, newGuard, visited);
                     }
                 case Direction.Left:
@@ -156,20 +152,20 @@ class Day06Part2
                             Position = new Point2D { Y = guard.Position.Y, X = newPositionX },
                             Direction = Direction.Up,
                         };
-                        var visited = Enumerable.Range(newPositionX, guard.Position.X - newPositionX + 1).Select(x => new Point2D { Y = guard.Position.Y, X = x });
+                        var visited = Enumerable.Range(newPositionX, guard.Position.X - newPositionX + 1).Select(x => guard.Position with { X = x });
                         return (running, newGuard, visited);
                     }
                 case Direction.Right:
                     {
-                        var view = obstacles.ByY(guard.Position.Y).GetViewBetween(guard.Position.X, columns);
+                        var view = obstacles.ByY(guard.Position.Y).GetViewBetween(guard.Position.X, _columns);
                         var running = view.Count > 0;
-                        var newPositionX = running ? view.Min - 1 : columns - 1;
+                        var newPositionX = running ? view.Min - 1 : _columns - 1;
                         var newGuard = new Guard
                         {
                             Position = new Point2D { Y = guard.Position.Y, X = newPositionX },
                             Direction = Direction.Down,
                         };
-                        var visited = Enumerable.Range(guard.Position.X, newPositionX - guard.Position.X + 1).Select(x => new Point2D { Y = guard.Position.Y, X = x });
+                        var visited = Enumerable.Range(guard.Position.X, newPositionX - guard.Position.X + 1).Select(x => guard.Position with { X = x });
                         return (running, newGuard, visited);
                     }
                 // This should not be necessary.

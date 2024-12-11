@@ -12,13 +12,13 @@ public class MultiDictionaryTests
         var list = dictionary.Select(pair => (pair.Key, pair.Value)).ToList();
         list.Sort();
 
-        Assert.Equal(list, new List<(int, char)> {
+        Assert.Equal(list, [
             (1, 'a'),
             (1, 'b'),
             (2, 'c'),
             (2, 'e'),
             (3, 'd'),
-        });
+        ]);
     }
 
     [Fact]
@@ -28,6 +28,6 @@ public class MultiDictionaryTests
 
         var values = dictionary.GetValueSet(2);
 
-        Assert.Equal(values, new SortedSet<char> { 'c', 'e' });
+        Assert.Equal(values, ['c', 'e']);
     }
 }

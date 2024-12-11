@@ -36,16 +36,17 @@ class Day03Part2
 
         public override string ToString()
         {
-            return string.Format("State {{ Value = {0}, Enabled = {1} }}", this.Value, this.Enabled);
+            return $"State {{ Value = {Value}, Enabled = {Enabled} }}";
         }
     }
 
-    interface Instruction
+    // ReSharper disable once InconsistentNaming
+    private interface Instruction
     {
         public State Run(State state);
     }
 
-    readonly struct Enable : Instruction
+    private readonly struct Enable : Instruction
     {
         public State Run(State state)
         {
@@ -54,7 +55,7 @@ class Day03Part2
         }
     }
 
-    readonly struct Disable : Instruction
+    private readonly struct Disable : Instruction
     {
         public State Run(State state)
         {
@@ -63,22 +64,13 @@ class Day03Part2
         }
     }
 
-    readonly struct Multiply : Instruction
+    private readonly struct Multiply(int a, int b) : Instruction
     {
-        private int A { get; }
-        private int B { get; }
-
-        public Multiply(int a, int b)
-        {
-            A = a;
-            B = b;
-        }
-
         public State Run(State state)
         {
             if (state.Enabled)
             {
-                state.Value += A * B;
+                state.Value += a * b;
             }
             return state;
         }

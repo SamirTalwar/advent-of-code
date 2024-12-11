@@ -13,9 +13,9 @@ class Day02Part1
 
     static bool Solve(IList<int> input)
     {
-        var differences = input.Zip(input.Skip(1), (a, b) => b - a);
-        var safelyIncreasing = differences.All(d => d >= 1 && d <= 3);
-        var safelyDecreasing = differences.All(d => d >= -3 && d <= -1);
+        var differences = input.Zip(input.Skip(1), (a, b) => b - a).ToList();
+        var safelyIncreasing = differences.All(d => d is >= 1 and <= 3);
+        var safelyDecreasing = differences.All(d => d is >= -3 and <= -1);
         return safelyIncreasing || safelyDecreasing;
     }
 }

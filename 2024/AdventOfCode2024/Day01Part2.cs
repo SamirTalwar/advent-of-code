@@ -19,7 +19,7 @@ class Day01Part2
         var left = inputs.Select(input => input.Item1);
         var right = inputs.CountBy(input => input.Item2).ToDictionary();
 
-        var result = left.Select(n => n * right.GetValue(n, 0)).Sum();
+        var result = left.Select(n => n * right.GetValue(n)).Sum();
 
         Console.WriteLine("{0}", result);
     }
