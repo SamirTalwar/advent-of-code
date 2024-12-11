@@ -12,42 +12,15 @@ class Expand<T>(T value, Func<T, T> next) : IEnumerable<T>
 {
     public IEnumerator<T> GetEnumerator()
     {
-        return new Enumerator(value, next);
+        var current = value;
+        while (true)
+        {
+            yield return current;
+            current = next(current);
+        }
+        // ReSharper disable once IteratorNeverReturns
     }
 
     IEnumerator IEnumerable.GetEnumerator() =>
         (this as IEnumerable<T>).GetEnumerator();
-
-    class Enumerator(T value, Func<T, T> next) : IEnumerator<T>
-    {
-        private readonly T _value = value;
-        private bool _started;
-
-        public T Current { get; private set; } = value;
-
-        object? IEnumerator.Current => Current;
-
-        public bool MoveNext()
-        {
-            if (_started)
-            {
-                Current = next(Current);
-            }
-            else
-            {
-                _started = true;
-            }
-
-            return true;
-        }
-
-        public void Reset()
-        {
-            Current = _value;
-        }
-
-        public void Dispose()
-        {
-        }
-    }
 }
