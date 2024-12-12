@@ -9,7 +9,9 @@ public class MultiDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TVal
 
     private ConcurrentDictionary<TKey, SortedSet<TValue>> _inner = new();
 
-    public MultiDictionary() { }
+    public MultiDictionary()
+    {
+    }
 
     public MultiDictionary(IEnumerable<KeyValuePair<TKey, TValue>> pairs)
     {
@@ -37,22 +39,36 @@ public class MultiDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TVal
         ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
 
     IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator() =>
-            _inner
-                .SelectMany(pair => pair.Value.Select(value => KeyValuePair.Create(pair.Key, value)))
-                .GetEnumerator();
+        _inner
+            .SelectMany(pair => pair.Value.Select(value => KeyValuePair.Create(pair.Key, value)))
+            .GetEnumerator();
 
     public void Add(KeyValuePair<TKey, TValue> pair) =>
         Add(pair.Key, pair.Value);
 
-    public void Add(TKey key, TValue value)
+    public void Add(TKey key, TValue value) =>
+        AddMultiple(key, [value]);
+
+    public void AddMultiple(TKey key, IEnumerable<TValue> values)
     {
         _inner.AddOrUpdate(
             key,
-            _ => [value],
-            (_, existing) => { existing.Add(value); return existing; }
+            _ => new SortedSet<TValue>(values),
+            (_, existing) =>
+            {
+                existing.UnionWith(values);
+                return existing;
+            }
         );
     }
 
     public MultiDictionary<TKey, TValue> Filtered(Func<KeyValuePair<TKey, TValue>, bool> predicate) =>
         new(this.Where(predicate));
+
+    public override string ToString() =>
+        "[" +
+        string.Join(", ",
+            _inner.Select(pair =>
+                pair.Key + " -> [" + string.Join(", ", pair.Value) + "]")) +
+        "]";
 }
